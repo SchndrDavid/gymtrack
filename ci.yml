@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt httpx
+
+      - name: Smoke test the API
+        run: python tests/smoke.py
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build image
+        run: docker build -t gymtrack:ci .
+      - name: Boot the container and check /health
+        run: |
+          docker run -d --name gymtrack-ci -p 8101:8000 -v "$PWD/data:/data" gymtrack:ci
+          for i in $(seq 1 20); do
+            code=$(curl -so /dev/null -w '%{http_code}' http://localhost:8101/health || true)
+            [ "$code" = "200" ] && echo "healthy" && exit 0
+            sleep 1
+          done
+          docker logs gymtrack-ci
+          exit 1

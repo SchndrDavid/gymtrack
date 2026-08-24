@@ -1,0 +1,12 @@
+.git
+.github
+data
+docs
+*.md
+LICENSE
+.gitignore
+.dockerignore
+__pycache__
+*.py[cod]
+.venv
+.env
