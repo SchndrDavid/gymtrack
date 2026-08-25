@@ -8,7 +8,7 @@ below is written with that in mind.
 ```bash
 sudo mkdir -p /srv/gymtrack/app /srv/gymtrack/data
 sudo chown -R "$USER:$USER" /srv/gymtrack
-git clone https://github.com/YOUR_USERNAME/gymtrack.git /srv/gymtrack/app
+git clone https://github.com/SchndrDavid/gymtrack.git /srv/gymtrack/app
 mkdir -p /srv/gymtrack/data
 docker compose -f /srv/gymtrack/app/docker-compose.yml up -d --build
 ```
@@ -37,7 +37,7 @@ for a one-line change to `index.html`:
 
 ```bash
 git -C /srv/gymtrack/app pull
-docker compose -f /srv/compose/gymtrack.yml up -d --build
+docker compose -f /srv/gymtrack/app/docker-compose.yml up -d --build
 ```
 
 ## Backups

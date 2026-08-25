@@ -12,9 +12,10 @@ __pycache__/
 venv/
 .pytest_cache/
 
-# Environment
+# Environment — the example is the one file here that must be committed
 .env
 .env.*
+!.env.example
 
 # Editors / OS
 .vscode/

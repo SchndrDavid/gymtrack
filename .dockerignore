@@ -1,0 +1,16 @@
+.git
+.github
+data
+docs
+*.md
+LICENSE
+.gitignore
+.dockerignore
+__pycache__
+*.py[cod]
+.venv
+.env
+
+# Nothing below is needed at runtime — keep it out of the build context.
+tests
+requirements-dev.txt

@@ -1,0 +1,4 @@
+-r requirements.txt
+
+# httpx backs fastapi.testclient, which tests/smoke.py runs the API through.
+httpx>=0.27,<1.0

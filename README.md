@@ -57,7 +57,7 @@ prose, which reads bullet lists, block headings like `(4 sets)` and shorthand li
 ## Quick start
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/gymtrack.git
+git clone https://github.com/SchndrDavid/gymtrack.git
 cd gymtrack
 mkdir -p data
 docker compose up -d --build
@@ -66,13 +66,20 @@ docker compose up -d --build
 Open <http://localhost:8101>.
 
 To publish on a different port, or run as a different user, copy `.env.example` to `.env` and edit it.
+For home-server setups, backups and reaching it from your phone, see [docs/deployment.md](docs/deployment.md).
 
 ### Without Docker
 
+Python 3.12 or newer.
+
 ```bash
+python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
+mkdir -p data
 GYMTRACK_DB=./data/gymtrack.db uvicorn main:app --host 0.0.0.0 --port 8000
 ```
+
+Open <http://localhost:8000>.
 
 ### On iOS
 
@@ -150,11 +157,37 @@ exported from an older version still import cleanly.
 ## Project layout
 
 ```
-main.py             FastAPI app, SQLite schema, plan normaliser, text parser
-static/index.html   The entire frontend — markup, styles, logic, no dependencies
-Dockerfile          python:3.12-slim, no build stage
-docker-compose.yml  Service definition, data volume, port mapping
-data/               SQLite database (gitignored, created on first run)
+main.py                    FastAPI app, SQLite schema, plan normaliser, text parser
+static/index.html          The entire frontend — markup, styles, logic, no dependencies
+tests/smoke.py             End-to-end API test, runs against a throwaway database
+requirements.txt           Runtime dependencies
+requirements-dev.txt       Runtime plus httpx, which the test client needs
+Dockerfile                 python:3.12-slim, no build stage
+docker-compose.yml         Service definition, data volume, port mapping
+.env.example               Port and UID/GID overrides — copy to .env
+docs/deployment.md         Home server, backups, reaching it from a phone
+.github/workflows/ci.yml   Runs the smoke test and builds the image
+data/                      SQLite database (gitignored, created on first run)
+```
+
+---
+
+## Development
+
+```bash
+pip install -r requirements-dev.txt
+python tests/smoke.py
+```
+
+The suite spins the API up against a temporary database and checks the parser, the normaliser, the
+workout history, the profile and the backup endpoint. It needs no server running and leaves nothing
+behind. CI runs it on every push, then builds the image and waits for `/health`.
+
+The frontend has no build step — edit `static/index.html` and reload. Running under Docker, the
+frontend is baked into the image, so rebuild to see a change:
+
+```bash
+docker compose up -d --build
 ```
 
 ---

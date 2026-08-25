@@ -18,7 +18,7 @@ jobs:
           cache: pip
 
       - name: Install dependencies
-        run: pip install -r requirements.txt httpx
+        run: pip install -r requirements-dev.txt
 
       - name: Smoke test the API
         run: python tests/smoke.py
