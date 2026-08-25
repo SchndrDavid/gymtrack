@@ -18,6 +18,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
+VERSION = "1.1.0"
 DB_PATH = os.environ.get("GYMTRACK_DB", "/data/gymtrack.db")
 STATIC = Path(__file__).parent / "static"
 TYPES = ("weight", "reps", "time")
@@ -238,7 +239,7 @@ def parse_workout(text: str) -> dict:
     return {"name": name or "New workout", "exercises": exercises}
 
 
-app = FastAPI(title="GymTrack", docs_url=None, redoc_url=None)
+app = FastAPI(title="GymTrack", version=VERSION, docs_url=None, redoc_url=None)
 init_db()
 
 
@@ -293,7 +294,7 @@ def get_state():
             _row_to_workout(r) for r in conn.execute(
                 "SELECT * FROM workouts ORDER BY date DESC, id DESC LIMIT 30")
         ]
-        return {"days": days, "routines": _get_routines(conn),
+        return {"version": VERSION, "days": days, "routines": _get_routines(conn),
                 "workouts": workouts, "profile": _get_profile(conn)}
 
 
@@ -416,4 +417,4 @@ def index():
 
 @app.get("/health")
 def health():
-    return {"ok": True}
+    return {"ok": True, "version": VERSION}

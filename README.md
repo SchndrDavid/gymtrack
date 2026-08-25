@@ -104,7 +104,7 @@ The container must be able to write to the mounted data directory. Set `user:` i
 
 | Method   | Path                    | Purpose                                          |
 |----------|-------------------------|--------------------------------------------------|
-| `GET`    | `/api/state`            | Days, plans, profile and the last 30 workouts    |
+| `GET`    | `/api/state`            | Version, days, plans, profile and the last 30 workouts |
 | `POST`   | `/api/day`              | Set or clear a day's run/gym flags               |
 | `POST`   | `/api/routines`         | Replace all plans (normalised server-side)       |
 | `POST`   | `/api/parse`            | Parse a written plan into exercises — preview only |
@@ -114,7 +114,7 @@ The container must be able to write to the mounted data directory. Set `user:` i
 | `DELETE` | `/api/workout/{id}`     | Remove a logged workout                          |
 | `GET`    | `/api/exercise/{name}`  | Most recent sets for one exercise                |
 | `GET`    | `/api/export`           | Full backup: profile, plans, days, history       |
-| `GET`    | `/health`               | Liveness probe                                   |
+| `GET`    | `/health`               | Liveness probe, reports the version              |
 
 Back the whole thing up with a single request:
 
@@ -182,6 +182,10 @@ python tests/smoke.py
 The suite spins the API up against a temporary database and checks the parser, the normaliser, the
 workout history, the profile and the backup endpoint. It needs no server running and leaves nothing
 behind. CI runs it on every push, then builds the image and waits for `/health`.
+
+The version lives in one place, `VERSION` in `main.py`. It is served by `/health` and `/api/state`,
+and the frontend prints it in the footer, so bumping that constant is the whole release process.
+The footer is desktop-only — it is hidden below 640px and inside the iOS home-screen app.
 
 The frontend has no build step — edit `static/index.html` and reload. Running under Docker, the
 frontend is baked into the image, so rebuild to see a change:

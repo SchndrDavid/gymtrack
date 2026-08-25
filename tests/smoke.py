@@ -4,6 +4,7 @@
 """
 
 import os
+import re
 import sys
 import tempfile
 from pathlib import Path
@@ -34,7 +35,10 @@ state = client.get("/api/state").json()
 check("default plan is seeded", len(state["routines"]) == 1)
 check("exercises carry a type", all(e["type"] in main.TYPES for e in state["routines"][0]["exercises"]))
 check("index page is served", client.get("/").status_code == 200)
-check("health endpoint responds", client.get("/health").json() == {"ok": True})
+check("health endpoint responds",
+      client.get("/health").json() == {"ok": True, "version": main.VERSION})
+check("state reports the version", client.get("/api/state").json()["version"] == main.VERSION)
+check("version looks like a release", re.fullmatch(r"\d+\.\d+\.\d+", main.VERSION) is not None)
 
 # Days cycle and clear
 client.post("/api/day", json={"date": "2026-08-24", "run": True, "gym": True})

@@ -182,6 +182,11 @@ h1{font-size:34px;line-height:1.05;font-weight:700;letter-spacing:-.5px;margin:0
 .pfield input,.pfield select{width:100%;background:none;border:0;font-size:16px;font-family:var(--round);
   font-weight:600;outline:none;padding:0;-webkit-appearance:none;appearance:none}
 .pfield.wide{grid-column:1 / -1}
+.foot{margin:34px 0 0;text-align:center;font-size:11px;line-height:1.5;color:var(--fg-3);letter-spacing:.2px}
+.foot b{font-weight:600;color:var(--fg-2)}
+/* Desktop only — on a phone, and in the home-screen app, the screen is for training. */
+@media (max-width:640px){.foot{display:none}}
+@media (display-mode:standalone){.foot{display:none}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
@@ -225,6 +230,10 @@ h1{font-size:34px;line-height:1.05;font-weight:700;letter-spacing:-.5px;margin:0
     <p class="card-title">Recent workouts <button class="link" id="btn-history">See all</button></p>
     <div id="history"><p class="empty">Nothing yet.</p></div>
   </div>
+
+  <footer class="foot" id="foot" hidden>
+    <b>GymTrack</b> <span id="foot-version"></span> · Built by David Schneider
+  </footer>
 </div>
 
 <div class="sheet" id="sheet-workout">
@@ -1159,7 +1168,13 @@ $('#d-delete').onclick = async () => {
 async function load(){
   try { state = await api('/api/state'); }
   catch(e){ toast('Server unreachable'); }
-  renderGrid(); renderStats(); renderHistory(); renderProfile();
+  renderGrid(); renderStats(); renderHistory(); renderProfile(); renderFooter();
+}
+
+function renderFooter(){
+  if (!state.version) return;                 // server unreachable — say nothing
+  $('#foot-version').textContent = 'v' + state.version;
+  $('#foot').hidden = false;
 }
 
 (function boot(){
