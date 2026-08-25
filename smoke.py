@@ -86,9 +86,48 @@ check("workout is stored", len(state["workouts"]) == 1)
 check("workout marks the day as gym", state["days"]["2026-08-25"]["gym"] is True)
 check("weight history is queryable", client.get("/api/exercise/bench").json()["sets"][0]["kg"] == "60")
 
+# Profile — the numbers the AI prompt needs to estimate calories
+check("profile starts empty", client.get("/api/state").json()["profile"]["weight"] == 0)
+check("profile defaults to gemini", client.get("/api/state").json()["profile"]["ai"] == "gemini")
+saved = client.post("/api/profile", json={"profile": {
+    "weight": "82.4", "height": 184, "age": "31", "sex": "MALE", "ai": "chatgpt"}}).json()["profile"]
+check("bodyweight is stored", saved["weight"] == 82)
+check("sex is lowercased", saved["sex"] == "male")
+check("ai target is stored", saved["ai"] == "chatgpt")
+check("profile survives a reload", client.get("/api/state").json()["profile"]["height"] == 184)
+junk = client.post("/api/profile", json={"profile": {
+    "weight": "nonsense", "age": 999, "sex": "yes", "ai": "skynet"}}).json()["profile"]
+check("junk weight falls back to zero", junk["weight"] == 0)
+check("absurd age is clamped", junk["age"] == 120)
+check("unknown sex is dropped", junk["sex"] == "")
+check("unknown ai target falls back", junk["ai"] == "gemini")
+
+# Full history, newest first and pageable
+for day in ("2026-08-20", "2026-08-21", "2026-08-22"):
+    client.post("/api/workout", json={"date": day, "name": "Session " + day, "seconds": 600,
+                                      "exercises": [{"name": "Row", "type": "weight",
+                                                     "sets": [{"kg": "50", "reps": "10"}]}]})
+history = client.get("/api/workouts").json()
+check("history counts every workout", history["total"] == 4)
+check("history returns every workout", len(history["workouts"]) == 4)
+check("history is newest first", history["workouts"][0]["date"] == "2026-08-25")
+check("history carries the length", history["workouts"][0]["seconds"] == 1800)
+check("history carries the logged sets", history["workouts"][0]["exercises"][0]["sets"][0]["kg"] == "60")
+page = client.get("/api/workouts?limit=2&offset=2").json()
+check("history pages", [w["date"] for w in page["workouts"]] == ["2026-08-21", "2026-08-20"])
+check("a page still reports the total", page["total"] == 4)
+check("an absurd limit is clamped", len(client.get("/api/workouts?limit=99999").json()["workouts"]) == 4)
+
+# Deleting a workout drops it from the history
+victim = history["workouts"][0]["id"]
+client.delete(f"/api/workout/{victim}")
+check("deleted workout leaves the history", client.get("/api/workouts").json()["total"] == 3)
+
 # Backup
 backup = client.get("/api/export").json()
-check("export carries every section", {"gymtrack", "routines", "days", "workouts"} <= backup.keys())
-check("export includes history", len(backup["workouts"]) == 1)
+check("export carries every section",
+      {"gymtrack", "profile", "routines", "days", "workouts"} <= backup.keys())
+check("export includes history", len(backup["workouts"]) == 3)
+check("export includes the profile", backup["profile"] == client.get("/api/state").json()["profile"])
 
 print(f"\n{checks} checks passed")

@@ -151,6 +151,37 @@ h1{font-size:34px;line-height:1.05;font-weight:700;letter-spacing:-.5px;margin:0
 .toast{position:fixed;left:50%;bottom:34px;transform:translate(-50%,20px);background:var(--card-2);
   padding:11px 18px;border-radius:20px;font-size:14px;opacity:0;transition:.25s;z-index:80;pointer-events:none}
 .toast.show{opacity:1;transform:translate(-50%,0)}
+.link{font-size:13px;color:var(--blue);font-weight:600;text-transform:none;letter-spacing:0;float:right}
+.monthhead{font-size:12px;font-weight:600;color:var(--fg-3);text-transform:uppercase;letter-spacing:.6px;margin:22px 0 6px;padding-left:2px}
+.monthhead:first-child{margin-top:0}
+.hcard{background:var(--card);border-radius:var(--r);padding:2px 14px}
+.row.tap{cursor:pointer}
+.row.tap:active{opacity:.55}
+.chev{color:var(--fg-3);flex:none;font-size:20px;line-height:1;margin-left:-4px}
+
+.dstats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:18px}
+.dstat{background:var(--card);border-radius:12px;padding:12px 6px;text-align:center}
+.dstat b{display:block;font-family:var(--round);font-size:19px;font-weight:700;letter-spacing:-.4px}
+.dstat span{display:block;font-size:11px;color:var(--fg-2);margin-top:3px}
+.dstat.b b{color:var(--blue)}
+.dex{background:var(--card);border-radius:var(--r);padding:13px 14px;margin-bottom:10px}
+.dex b{font-size:16px;font-weight:600;letter-spacing:-.2px}
+.dex em{font-style:normal;font-size:12px;color:var(--fg-3);float:right;padding-top:3px}
+.dset{font-size:13px;color:var(--fg-2);font-family:var(--round);margin-top:7px}
+.dset i{font-style:normal;color:var(--fg-3);display:inline-block;width:38px}
+
+.ai{background:var(--card);border-radius:var(--r);padding:16px;margin-top:22px}
+.ai .cta{margin:0}
+.ptext{width:100%;min-height:150px;background:var(--card-2);border:0;border-radius:12px;padding:12px;font-size:12px;
+  line-height:1.45;color:var(--fg-2);font-family:ui-monospace,Menlo,monospace;outline:none;resize:vertical;margin-top:10px;display:none}
+.ptext.show{display:block}
+
+.prof{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.pfield{background:var(--card-2);border-radius:10px;padding:8px 11px}
+.pfield span{display:block;font-size:11px;color:var(--fg-3);margin-bottom:1px}
+.pfield input,.pfield select{width:100%;background:none;border:0;font-size:16px;font-family:var(--round);
+  font-weight:600;outline:none;padding:0;-webkit-appearance:none;appearance:none}
+.pfield.wide{grid-column:1 / -1}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
@@ -191,7 +222,7 @@ h1{font-size:34px;line-height:1.05;font-weight:700;letter-spacing:-.5px;margin:0
   <button class="cta ghost" id="btn-run" style="color:var(--green)">Log a run today</button>
 
   <div class="card" style="margin-top:22px">
-    <p class="card-title">Recent workouts</p>
+    <p class="card-title">Recent workouts <button class="link" id="btn-history">See all</button></p>
     <div id="history"><p class="empty">Nothing yet.</p></div>
   </div>
 </div>
@@ -216,6 +247,29 @@ h1{font-size:34px;line-height:1.05;font-weight:700;letter-spacing:-.5px;margin:0
     <button id="r-add">Add</button>
   </div>
   <div class="sheet-body">
+    <div class="card" id="p-card" style="margin-bottom:22px">
+      <p class="card-title">You</p>
+      <div class="prof">
+        <label class="pfield"><span>Bodyweight (kg)</span>
+          <input id="p-weight" data-p="weight" inputmode="decimal" placeholder="—"></label>
+        <label class="pfield"><span>Height (cm)</span>
+          <input id="p-height" data-p="height" inputmode="numeric" placeholder="—"></label>
+        <label class="pfield"><span>Age</span>
+          <input id="p-age" data-p="age" inputmode="numeric" placeholder="—"></label>
+        <label class="pfield"><span>Sex</span>
+          <select id="p-sex" data-p="sex">
+            <option value="">—</option><option value="male">Male</option><option value="female">Female</option>
+          </select></label>
+        <label class="pfield wide"><span>Send workouts to</span>
+          <select id="p-ai" data-p="ai">
+            <option value="gemini">Gemini</option><option value="chatgpt">ChatGPT</option>
+            <option value="claude">Claude</option><option value="perplexity">Perplexity</option>
+            <option value="copy">Clipboard only</option>
+          </select></label>
+      </div>
+      <p class="hint">Calories can't be estimated without a bodyweight — the rest just sharpens it.</p>
+    </div>
+    <p class="card-title">Plans</p>
     <div id="r-list"></div>
     <button class="cta ghost" id="r-io">Import / export</button>
     <p class="hint">The type decides what a set measures: <b>kg</b> load and reps, <b>reps</b> reps only,
@@ -252,6 +306,43 @@ h1{font-size:34px;line-height:1.05;font-weight:700;letter-spacing:-.5px;margin:0
   </div>
 </div>
 
+<div class="sheet" id="sheet-history">
+  <div class="sheet-bar">
+    <button id="h-close">Done</button>
+    <b>History</b>
+    <button id="h-refresh">Refresh</button>
+  </div>
+  <div class="sheet-body">
+    <div class="dstats" id="h-totals"></div>
+    <div id="h-list"><p class="empty">Loading…</p></div>
+  </div>
+</div>
+
+<div class="sheet" id="sheet-detail">
+  <div class="sheet-bar">
+    <button id="d-close">Back</button>
+    <b id="d-title">Workout</b>
+    <button class="red" id="d-delete">Delete</button>
+  </div>
+  <div class="sheet-body">
+    <p class="eyebrow" id="d-date" style="margin-bottom:14px">—</p>
+    <div class="dstats" id="d-stats"></div>
+    <div id="d-exercises"></div>
+    <div class="ai">
+      <p class="card-title">Ask AI about this workout</p>
+      <p class="hint" style="margin:-6px 0 14px">Calories burned, a muscle map, how to adapt next time,
+        and an easy recovery recipe. The whole workout goes with it.</p>
+      <button class="cta" id="d-ask">Ask Gemini</button>
+      <div class="btnrow">
+        <button id="d-copy">Copy prompt</button>
+        <button id="d-other">Other AI…</button>
+        <button id="d-show">Show prompt</button>
+      </div>
+      <textarea class="ptext" id="d-prompt" readonly></textarea>
+    </div>
+  </div>
+</div>
+
 <div class="pick" id="pick"><div class="pick-inner">
   <div class="pick-group" id="pick-body"></div>
   <div class="pick-group" style="margin-top:8px"><button id="pick-cancel" style="color:var(--blue);font-weight:600">Cancel</button></div>
@@ -275,7 +366,8 @@ const PLAY = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13l11
 const STOP = '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="7" y="7" width="10" height="10" rx="2"/></svg>';
 const TYPE_LABEL = {weight:'kg', reps:'reps', time:'time'};
 
-let state = {days:{}, routines:[], workouts:[]};
+let state = {days:{}, routines:[], workouts:[], profile:{}};
+let historyList = [], detailW = null;
 let active = null, elapsedId = null, countdown = null, audio = null;
 
 function toast(msg){
@@ -355,19 +447,241 @@ function renderStats(){
   $('#s-gym').textContent = gym; $('#s-run').textContent = run; $('#s-streak').textContent = streak;
 }
 
+function workoutStats(w){
+  let sets = 0, reps = 0, volume = 0, holds = 0;
+  (w.exercises || []).forEach(ex => (ex.sets || []).forEach(set => {
+    sets++;
+    const r = parseInt(set.reps, 10) || 0, kg = parseFloat(set.kg) || 0;
+    reps += r;
+    volume += kg * r;
+    holds += +set.sec || 0;
+  }));
+  return {sets, reps, volume, holds};
+}
+
+function workoutRow(w){
+  const st = workoutStats(w);
+  const [, month, dayNo] = w.date.split('-');
+  const bits = [`${MONTHS[+month-1]} ${+dayNo}`, `${st.sets} sets`];
+  if (st.volume) bits.push(`${Math.round(st.volume)} kg`);
+  else if (st.reps) bits.push(`${st.reps} reps`);
+  else if (st.holds) bits.push(`${st.holds}s held`);
+  return `<div class="row tap" data-id="${w.id}"><div class="main"><b>${esc(w.name)}</b>
+    <span>${bits.join(' · ')}</span></div>
+    <div class="side">${clock(w.seconds)}</div><span class="chev">›</span></div>`;
+}
+
 function renderHistory(){
   const el = $('#history');
-  if (!state.workouts.length){ el.innerHTML = '<p class="empty">Nothing yet.</p>'; return; }
-  el.innerHTML = state.workouts.slice(0,8).map(w => {
-    const sets = w.exercises.reduce((n,e) => n + (e.sets ? e.sets.length : 0), 0);
-    const volume = w.exercises.reduce((n,e) =>
-      n + (e.sets||[]).reduce((m,s) => m + (+s.kg || 0) * (+s.reps || 0), 0), 0);
-    const [, month, dayNo] = w.date.split('-');
-    return `<div class="row"><div class="main"><b>${esc(w.name)}</b>
-      <span>${MONTHS[+month-1]} ${+dayNo} · ${sets} sets${volume ? ` · ${Math.round(volume)} kg volume` : ''}</span></div>
-      <div class="side">${clock(w.seconds)}</div></div>`;
-  }).join('');
+  el.innerHTML = state.workouts.length
+    ? state.workouts.slice(0,8).map(workoutRow).join('')
+    : '<p class="empty">Nothing yet.</p>';
 }
+
+const findWorkout = id =>
+  historyList.find(w => w.id == id) || state.workouts.find(w => w.id == id);
+
+/* ---------- full history ---------- */
+async function openHistory(){
+  $('#sheet-history').classList.add('open');
+  try {
+    const res = await api('/api/workouts?limit=500');
+    historyList = res.workouts;
+  } catch(e){ historyList = state.workouts.slice(); toast('Showing recent only'); }
+  renderHistorySheet();
+}
+
+function renderHistorySheet(){
+  const totals = historyList.reduce((t, w) => {
+    const st = workoutStats(w);
+    t.seconds += w.seconds; t.sets += st.sets; t.volume += st.volume;
+    return t;
+  }, {seconds:0, sets:0, volume:0});
+  $('#h-totals').innerHTML = `
+    <div class="dstat b"><b>${historyList.length}</b><span>workouts</span></div>
+    <div class="dstat"><b>${(totals.seconds/3600).toFixed(totals.seconds < 36000 ? 1 : 0)}h</b><span>total time</span></div>
+    <div class="dstat"><b>${totals.sets}</b><span>sets</span></div>
+    <div class="dstat"><b>${Math.round(totals.volume/1000)}t</b><span>volume</span></div>`;
+
+  if (!historyList.length){
+    $('#h-list').innerHTML = '<p class="empty">No workouts logged yet.</p>';
+    return;
+  }
+  let month = '', out = '';
+  historyList.forEach(w => {
+    const [year, m] = w.date.split('-');
+    if (year + m !== month){
+      if (month) out += '</div>';
+      month = year + m;
+      out += `<p class="monthhead">${MONTHS[+m-1]} ${year}</p><div class="hcard">`;
+    }
+    out += workoutRow(w);
+  });
+  $('#h-list').innerHTML = out + '</div>';
+}
+
+/* ---------- one workout, and the prompt it turns into ---------- */
+const TYPE_TEXT = {
+  weight: 'weighted, load x reps',
+  reps:   'bodyweight, reps only',
+  time:   'timed hold',
+};
+
+function setText(type, set){
+  if (type === 'time' || (set.sec && !set.reps && !set.kg)) return `${set.sec} s`;
+  if (set.kg) return `${set.kg} kg x ${set.reps || '?'} reps`;
+  return `${set.reps || '?'} reps (bodyweight)`;
+}
+
+function openDetail(w){
+  if (!w) return;
+  detailW = w;
+  const st = workoutStats(w);
+  const [year, month, dayNo] = w.date.split('-');
+  const weekday = DAYS[new Date(+year, +month-1, +dayNo).getDay()];
+  $('#d-title').textContent = w.name;
+  $('#d-date').textContent = `${weekday} ${+dayNo} ${MONTHS[+month-1]} ${year}`;
+  $('#d-stats').innerHTML = `
+    <div class="dstat b"><b>${clock(w.seconds)}</b><span>length</span></div>
+    <div class="dstat"><b>${st.sets}</b><span>sets</span></div>
+    <div class="dstat"><b>${st.reps || '—'}</b><span>reps</span></div>
+    <div class="dstat"><b>${st.volume ? Math.round(st.volume) : '—'}</b><span>kg volume</span></div>`;
+  $('#d-exercises').innerHTML = (w.exercises || []).map(ex => `
+    <div class="dex"><em>${esc(TYPE_TEXT[ex.type] || '')}</em><b>${esc(ex.name)}</b>
+      ${(ex.sets || []).map((set, j) =>
+        `<div class="dset"><i>set ${j+1}</i>${esc(setText(ex.type, set))}</div>`).join('')}
+    </div>`).join('') || '<p class="empty">No sets were logged.</p>';
+  $('#d-prompt').value = buildPrompt(w);
+  $('#d-prompt').classList.remove('show');
+  $('#d-ask').textContent = 'Ask ' + AI[(state.profile || {}).ai || 'gemini'].label;
+  $('#sheet-detail').classList.add('open');
+}
+
+function buildPrompt(w){
+  const profile = state.profile || {}, st = workoutStats(w);
+  const [year, month, dayNo] = w.date.split('-');
+  const weekday = DAYS[new Date(+year, +month-1, +dayNo).getDay()];
+  const L = [];
+
+  L.push('I just finished a workout and logged every single set. Analyse it for me.');
+  L.push('');
+  L.push('## ME');
+  L.push(profile.weight
+    ? `Bodyweight: ${profile.weight} kg`
+    : 'Bodyweight: NOT PROVIDED — assume 75 kg, and say clearly that you assumed it.');
+  if (profile.height) L.push(`Height: ${profile.height} cm`);
+  if (profile.age) L.push(`Age: ${profile.age}`);
+  if (profile.sex) L.push(`Sex: ${profile.sex}`);
+  L.push('');
+  L.push('## THE SESSION');
+  L.push(`Workout: ${w.name}`);
+  L.push(`Date: ${w.date} (${weekday})`);
+  L.push(`Length: ${clock(w.seconds)} — ${w.seconds} seconds from the first set to the last, rest included`);
+  L.push(`Working sets: ${st.sets}`);
+  if (st.reps) L.push(`Total reps: ${st.reps}`);
+  if (st.volume) L.push(`Total volume lifted: ${Math.round(st.volume)} kg`);
+  if (st.holds) L.push(`Time under tension in timed holds: ${st.holds} seconds`);
+  if ((state.days[w.date] || {}).run) L.push('I also went for a run this day. It is NOT counted above — treat it separately.');
+  L.push('');
+  L.push('## EVERY SET');
+  (w.exercises || []).forEach((ex, i) => {
+    L.push(`${i+1}. ${ex.name} (${TYPE_TEXT[ex.type] || 'unknown type'})`);
+    (ex.sets || []).forEach((set, j) => L.push(`   set ${j+1}: ${setText(ex.type, set)}`));
+  });
+
+  const prior = (historyList.length ? historyList : state.workouts)
+    .filter(x => x.id !== w.id && x.date <= w.date).slice(0, 5);
+  if (prior.length){
+    L.push('');
+    L.push('## THE SESSIONS BEFORE THIS ONE (context for your advice)');
+    prior.forEach(x => {
+      const s = workoutStats(x);
+      L.push(`- ${x.date}: ${x.name}, ${clock(x.seconds)}, ${s.sets} sets` +
+             (s.volume ? `, ${Math.round(s.volume)} kg volume` : ''));
+    });
+  }
+
+  L.push('');
+  L.push('## WHAT I WANT BACK, IN THIS ORDER');
+  L.push('1. CALORIES BURNED — this is the most important part, so lead with it. Give me one best-estimate');
+  L.push('   number in kcal and a realistic range around it. Show the MET value or the reasoning you used per');
+  L.push('   exercise so I can sanity-check the maths. Keep the calories burned during the session separate');
+  L.push('   from the afterburn (EPOC).');
+  L.push('2. MUSCLE MAP — which muscles this actually worked. Split them into primary movers, secondary and');
+  L.push('   stabilisers, and give each a rough share of the total work as a percentage. Draw it as a simple');
+  L.push('   text diagram of the front and the back of the body so I can see it at a glance, then name the');
+  L.push('   major muscle groups I missed.');
+  L.push('3. HOW TO ADAPT — what to change next time: load, reps, rest, exercise order or swaps. Flag anything');
+  L.push('   unbalanced or risky, then tell me what my next session should target and how many rest days I need.');
+  L.push('4. RECOVERY FOOD — one easy recipe I can make tonight that suits this workout. Five ingredients or');
+  L.push('   fewer, under 20 minutes, nothing exotic. Give me the ingredients, the steps, and its protein and');
+  L.push('   calorie count. Add one thing to eat or drink within 30 minutes of finishing.');
+  L.push('');
+  L.push('Be concrete and numeric. Do not ask me follow-up questions first — estimate, and state your assumptions.');
+  return L.join('\n');
+}
+
+/* ---------- handing the prompt to an AI ---------- */
+/* Gemini has no official prefill parameter, so its prompt is carried on the clipboard.
+   The others do read ?q= and open with the prompt already in the box. */
+const AI = {
+  gemini:     {label:'Gemini', paste:true,
+               url: t => 'https://gemini.google.com/app?q=' + encodeURIComponent(t)},
+  chatgpt:    {label:'ChatGPT',    url: t => 'https://chatgpt.com/?q=' + encodeURIComponent(t)},
+  claude:     {label:'Claude',     url: t => 'https://claude.ai/new?q=' + encodeURIComponent(t)},
+  perplexity: {label:'Perplexity', url: t => 'https://www.perplexity.ai/search?q=' + encodeURIComponent(t)},
+  copy:       {label:'the clipboard'},
+};
+
+/* execCommand is the fallback: served over plain http on a home LAN there is no navigator.clipboard. */
+function legacyCopy(text){
+  try {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.setAttribute('readonly', '');
+    ta.style.cssText = 'position:fixed;top:0;left:0;width:1px;height:1px;opacity:0';
+    document.body.appendChild(ta);
+    ta.select(); ta.setSelectionRange(0, text.length);
+    const ok = document.execCommand('copy');
+    ta.remove();
+    return ok;
+  } catch(e){ return false; }
+}
+
+function copyText(text){
+  if (navigator.clipboard && window.isSecureContext)
+    return navigator.clipboard.writeText(text).then(() => true, () => legacyCopy(text));
+  return Promise.resolve(legacyCopy(text));
+}
+
+/* The copy starts and the tab opens inside the same gesture — awaiting first loses the popup. */
+function askAI(target){
+  const ai = AI[target] || AI.gemini, text = $('#d-prompt').value;
+  const copied = copyText(text);
+  if (ai.url) window.open(ai.url(text), '_blank', 'noopener');
+  copied.then(ok => {
+    if (!ok){ $('#d-prompt').classList.add('show'); toast('Copy blocked — select the prompt below'); }
+    else if (!ai.url) toast('Prompt copied');
+    else if (ai.paste) toast(`Prompt copied — paste it into ${ai.label}`);
+    else toast(`Opening ${ai.label}`);
+  });
+}
+
+/* ---------- profile ---------- */
+function renderProfile(){
+  const p = state.profile || {};
+  $('#p-weight').value = p.weight || '';
+  $('#p-height').value = p.height || '';
+  $('#p-age').value = p.age || '';
+  $('#p-sex').value = p.sex || '';
+  $('#p-ai').value = p.ai || 'gemini';
+}
+
+const saveProfile = debounce(() => {
+  post('/api/profile', {profile: state.profile})
+    .then(res => { state.profile = res.profile; })
+    .catch(() => toast('Not saved'));
+}, 600);
 
 /* ---------- action sheet ---------- */
 function picker(title, options){
@@ -518,9 +832,11 @@ async function finishWorkout(){
     const go = await picker('No sets logged.', [{label:'Save anyway', value:1}]);
     if (!go) return;
   }
-  try { await post('/api/workout', payload); toast('Workout saved'); }
+  let saved;
+  try { saved = await post('/api/workout', payload); toast('Workout saved'); }
   catch(e){ toast('Not saved — server unreachable'); return; }
   closeWorkout(); await load();
+  openDetail(findWorkout(saved.id));      // straight to the summary and the AI button
 }
 
 function closeWorkout(){
@@ -699,7 +1015,9 @@ $('#w-cancel').onclick = async () => {
   if (go) closeWorkout();
 };
 
-$('#btn-settings').onclick = () => { renderRoutines(); $('#sheet-routines').classList.add('open'); };
+$('#btn-settings').onclick = () => {
+  renderRoutines(); renderProfile(); $('#sheet-routines').classList.add('open');
+};
 $('#r-close').onclick = () => $('#sheet-routines').classList.remove('open');
 $('#r-add').onclick = () => {
   state.routines.push({id:'r'+Date.now(), name:'New plan',
@@ -788,11 +1106,60 @@ $('#i-apply').onclick = async () => {
   toast(applyMode === 'replace' ? 'Plans replaced' : 'Plans added');
 };
 
+$('#btn-history').onclick = openHistory;
+$('#h-close').onclick = () => $('#sheet-history').classList.remove('open');
+$('#h-refresh').onclick = openHistory;
+
+$('#history').addEventListener('click', e => {
+  const row = e.target.closest('.row.tap');
+  if (row) openDetail(findWorkout(row.dataset.id));
+});
+$('#h-list').addEventListener('click', e => {
+  const row = e.target.closest('.row.tap');
+  if (row) openDetail(findWorkout(row.dataset.id));
+});
+
+$('#d-close').onclick = () => $('#sheet-detail').classList.remove('open');
+$('#d-ask').onclick = () => askAI((state.profile || {}).ai || 'gemini');
+$('#d-copy').onclick = () => askAI('copy');
+$('#d-show').onclick = () => {
+  const box = $('#d-prompt');
+  box.classList.toggle('show');
+  if (box.classList.contains('show') && box.scrollIntoView)
+    box.scrollIntoView({behavior:'smooth', block:'nearest'});
+};
+$('#d-other').onclick = async () => {
+  const target = await picker('Send this workout to', Object.keys(AI).map(key => ({
+    label: AI[key].label + (AI[key].url ? '' : ' (copy only)'), value: key})));
+  if (target) askAI(target);
+};
+$('#d-delete').onclick = async () => {
+  if (!detailW) return;
+  const go = await picker(`Delete "${detailW.name}"?`, [{label:'Delete', value:1}]);
+  if (!go) return;
+  try { await api('/api/workout/' + detailW.id, {method:'DELETE'}); }
+  catch(e){ toast('Not deleted'); return; }
+  historyList = historyList.filter(w => w.id !== detailW.id);
+  $('#sheet-detail').classList.remove('open');
+  renderHistorySheet();
+  await load();
+  toast('Workout deleted');
+};
+
+/* A select fires change rather than input in older Safari. */
+['input', 'change'].forEach(evt => $('#p-card').addEventListener(evt, e => {
+  const field = e.target.closest('[data-p]'); if (!field) return;
+  state.profile = state.profile || {};
+  state.profile[field.dataset.p] = field.value;
+  if (field.dataset.p === 'ai' && detailW) $('#d-ask').textContent = 'Ask ' + AI[field.value].label;
+  saveProfile();
+}));
+
 /* ---------- boot ---------- */
 async function load(){
   try { state = await api('/api/state'); }
   catch(e){ toast('Server unreachable'); }
-  renderGrid(); renderStats(); renderHistory();
+  renderGrid(); renderStats(); renderHistory(); renderProfile();
 }
 
 (function boot(){

@@ -118,6 +118,23 @@ def norm_exercise(e: dict) -> dict:
     }
 
 
+AI_TARGETS = ("gemini", "chatgpt", "claude", "perplexity", "copy")
+
+
+def norm_profile(p: dict) -> dict:
+    """The AI needs a bodyweight to put a number on calories; the rest sharpens it."""
+    p = p or {}
+    sex = str(p.get("sex") or "").lower()
+    ai = str(p.get("ai") or "").lower()
+    return {
+        "weight": max(0, min(400, _int(p.get("weight"), 0))),
+        "height": max(0, min(260, _int(p.get("height"), 0))),
+        "age": max(0, min(120, _int(p.get("age"), 0))),
+        "sex": sex if sex in ("male", "female") else "",
+        "ai": ai if ai in AI_TARGETS else "gemini",
+    }
+
+
 def norm_routine(r: dict, idx: int = 0) -> dict:
     return {
         "id": str(r.get("id") or f"r{idx}"),
@@ -246,9 +263,23 @@ class RawText(BaseModel):
     text: str
 
 
+class ProfileBody(BaseModel):
+    profile: dict[str, Any] = {}
+
+
 def _get_routines(conn) -> list:
     row = conn.execute("SELECT value FROM kv WHERE key='routines'").fetchone()
     return norm_routines(json.loads(row["value"])) if row else []
+
+
+def _get_profile(conn) -> dict:
+    row = conn.execute("SELECT value FROM kv WHERE key='profile'").fetchone()
+    return norm_profile(json.loads(row["value"]) if row else {})
+
+
+def _row_to_workout(r) -> dict:
+    return {"id": r["id"], "date": r["date"], "name": r["name"],
+            "seconds": r["seconds"], "exercises": json.loads(r["payload"])}
 
 
 @app.get("/api/state")
@@ -259,12 +290,11 @@ def get_state():
             for r in conn.execute("SELECT * FROM days WHERE run=1 OR gym=1")
         }
         workouts = [
-            {"id": r["id"], "date": r["date"], "name": r["name"],
-             "seconds": r["seconds"], "exercises": json.loads(r["payload"])}
-            for r in conn.execute(
+            _row_to_workout(r) for r in conn.execute(
                 "SELECT * FROM workouts ORDER BY date DESC, id DESC LIMIT 30")
         ]
-        return {"days": days, "routines": _get_routines(conn), "workouts": workouts}
+        return {"days": days, "routines": _get_routines(conn),
+                "workouts": workouts, "profile": _get_profile(conn)}
 
 
 @app.post("/api/day")
@@ -295,6 +325,18 @@ def set_routines(body: Routines):
     return {"ok": True, "routines": clean}
 
 
+@app.post("/api/profile")
+def set_profile(body: ProfileBody):
+    clean = norm_profile(body.profile)
+    with db() as conn:
+        conn.execute(
+            "INSERT INTO kv (key, value) VALUES ('profile', ?) "
+            "ON CONFLICT(key) DO UPDATE SET value=excluded.value",
+            (json.dumps(clean, ensure_ascii=False),),
+        )
+    return {"ok": True, "profile": clean}
+
+
 @app.post("/api/parse")
 def parse(body: RawText):
     """Preview only — nothing is stored."""
@@ -307,6 +349,7 @@ def export_all():
     with db() as conn:
         return {
             "gymtrack": 1,
+            "profile": _get_profile(conn),
             "routines": _get_routines(conn),
             "days": [dict(r) for r in conn.execute("SELECT * FROM days")],
             "workouts": [
@@ -329,6 +372,20 @@ def add_workout(w: Workout):
             "ON CONFLICT(date) DO UPDATE SET gym=1", (w.date,),
         )
         return {"ok": True, "id": cur.lastrowid}
+
+
+@app.get("/api/workouts")
+def list_workouts(limit: int = 200, offset: int = 0):
+    """The full history, newest first. /api/state only carries the recent slice."""
+    limit, offset = max(1, min(500, limit)), max(0, offset)
+    with db() as conn:
+        total = conn.execute("SELECT COUNT(*) AS c FROM workouts").fetchone()["c"]
+        rows = conn.execute(
+            "SELECT * FROM workouts ORDER BY date DESC, id DESC LIMIT ? OFFSET ?",
+            (limit, offset),
+        ).fetchall()
+    return {"total": total, "offset": offset,
+            "workouts": [_row_to_workout(r) for r in rows]}
 
 
 @app.delete("/api/workout/{workout_id}")

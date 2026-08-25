@@ -29,6 +29,22 @@ hours.
 | `reps`   | reps only           | For bodyweight work                                                |
 | `time`   | seconds             | Countdown with a start button; the set ticks itself off at zero, beeps and vibrates |
 
+**History.** Every session you have logged, newest first and grouped by month, with its length, set
+count and volume. Tap one to see every set you did, exercise by exercise.
+
+**Ask an AI about a session.** From any workout, one button copies the whole session — your
+bodyweight, the length, every set, and the five sessions before it — as a prompt asking for calories
+burned, a muscle map, what to change next time, and an easy recovery recipe. Calories come first.
+
+| Target | What the button does |
+|--------|----------------------|
+| Gemini | Copies the prompt and opens Gemini. Paste it in — Gemini has no URL parameter for prefilling a prompt |
+| ChatGPT, Claude, Perplexity | Opens with the prompt already in the box, and copies it as well |
+| Clipboard only | Copies and opens nothing |
+
+Pick your default under the gear icon. Calorie estimates need a **bodyweight**, so set one there too —
+without it the prompt tells the AI to assume 75 kg and say so.
+
 **Plan editor.** Build plans in the app — name, exercise, type, sets, reps or seconds. Saves as you
 type.
 
@@ -81,14 +97,16 @@ The container must be able to write to the mounted data directory. Set `user:` i
 
 | Method   | Path                    | Purpose                                          |
 |----------|-------------------------|--------------------------------------------------|
-| `GET`    | `/api/state`            | Days, plans and the last 30 workouts             |
+| `GET`    | `/api/state`            | Days, plans, profile and the last 30 workouts    |
 | `POST`   | `/api/day`              | Set or clear a day's run/gym flags               |
 | `POST`   | `/api/routines`         | Replace all plans (normalised server-side)       |
 | `POST`   | `/api/parse`            | Parse a written plan into exercises — preview only |
+| `POST`   | `/api/profile`          | Bodyweight, height, age, sex and default AI      |
 | `POST`   | `/api/workout`          | Log a finished workout, marks the day as gym     |
+| `GET`    | `/api/workouts`         | Full history, newest first (`limit`, `offset`)    |
 | `DELETE` | `/api/workout/{id}`     | Remove a logged workout                          |
 | `GET`    | `/api/exercise/{name}`  | Most recent sets for one exercise                |
-| `GET`    | `/api/export`           | Full backup: plans, days, history                |
+| `GET`    | `/api/export`           | Full backup: profile, plans, days, history       |
 | `GET`    | `/health`               | Liveness probe                                   |
 
 Back the whole thing up with a single request:
