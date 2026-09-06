@@ -14,11 +14,11 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Any
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
-VERSION = "1.1.0"
+VERSION = "1.2.0"
 DB_PATH = os.environ.get("GYMTRACK_DB", "/data/gymtrack.db")
 STATIC = Path(__file__).parent / "static"
 TYPES = ("weight", "reps", "time")
@@ -73,11 +73,12 @@ def init_db() -> None:
                 gym  INTEGER NOT NULL DEFAULT 0
             );
             CREATE TABLE IF NOT EXISTS workouts (
-                id       INTEGER PRIMARY KEY AUTOINCREMENT,
-                date     TEXT NOT NULL,
-                name     TEXT NOT NULL,
-                seconds  INTEGER NOT NULL DEFAULT 0,
-                payload  TEXT NOT NULL
+                id         INTEGER PRIMARY KEY AUTOINCREMENT,
+                date       TEXT NOT NULL,
+                name       TEXT NOT NULL,
+                seconds    INTEGER NOT NULL DEFAULT 0,
+                payload    TEXT NOT NULL,
+                started_at TEXT
             );
             CREATE TABLE IF NOT EXISTS kv (
                 key   TEXT PRIMARY KEY,
@@ -86,6 +87,10 @@ def init_db() -> None:
             CREATE INDEX IF NOT EXISTS idx_workouts_date ON workouts(date);
             """
         )
+        cols = {r["name"] for r in conn.execute("PRAGMA table_info(workouts)").fetchall()}
+        if "started_at" not in cols:
+            conn.execute("ALTER TABLE workouts ADD COLUMN started_at TEXT")
+
         row = conn.execute("SELECT value FROM kv WHERE key='routines'").fetchone()
         if row is None:
             conn.execute(
@@ -258,6 +263,7 @@ class Workout(BaseModel):
     name: str
     seconds: int = 0
     exercises: list[dict[str, Any]] = []
+    started_at: str | None = None
 
 
 class RawText(BaseModel):
@@ -280,7 +286,8 @@ def _get_profile(conn) -> dict:
 
 def _row_to_workout(r) -> dict:
     return {"id": r["id"], "date": r["date"], "name": r["name"],
-            "seconds": r["seconds"], "exercises": json.loads(r["payload"])}
+            "seconds": r["seconds"], "exercises": json.loads(r["payload"]),
+            "started_at": r["started_at"]}
 
 
 @app.get("/api/state")
@@ -361,12 +368,53 @@ def export_all():
         }
 
 
+DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+
+
+@app.get("/api/log")
+def get_log(
+    from_date: str | None = Query(None, alias="from"),
+    to_date: str | None = Query(None, alias="to"),
+):
+    if from_date is not None and not DATE_RE.match(from_date):
+        raise HTTPException(400, "from must be YYYY-MM-DD")
+    if to_date is not None and not DATE_RE.match(to_date):
+        raise HTTPException(400, "to must be YYYY-MM-DD")
+
+    query = "SELECT id, date, name, seconds, started_at FROM workouts"
+    params: list[Any] = []
+    if from_date and to_date:
+        query += " WHERE date BETWEEN ? AND ?"
+        params.extend([from_date, to_date])
+    elif from_date:
+        query += " WHERE date >= ?"
+        params.append(from_date)
+    elif to_date:
+        query += " WHERE date <= ?"
+        params.append(to_date)
+    query += " ORDER BY date, id"
+
+    with db() as conn:
+        rows = conn.execute(query, params).fetchall()
+        workouts = [
+            {
+                "id": r["id"],
+                "date": r["date"],
+                "name": r["name"],
+                "seconds": r["seconds"],
+                "started_at": r["started_at"],
+            }
+            for r in rows
+        ]
+    return {"workouts": workouts}
+
+
 @app.post("/api/workout")
 def add_workout(w: Workout):
     with db() as conn:
         cur = conn.execute(
-            "INSERT INTO workouts (date, name, seconds, payload) VALUES (?,?,?,?)",
-            (w.date, w.name, w.seconds, json.dumps(w.exercises, ensure_ascii=False)),
+            "INSERT INTO workouts (date, name, seconds, payload, started_at) VALUES (?,?,?,?,?)",
+            (w.date, w.name, w.seconds, json.dumps(w.exercises, ensure_ascii=False), w.started_at),
         )
         conn.execute(
             "INSERT INTO days (date, run, gym) VALUES (?,0,1) "

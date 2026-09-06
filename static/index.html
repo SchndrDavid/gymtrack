@@ -365,6 +365,7 @@ const api = (path, opts) => fetch(BASE + path, opts).then(r => r.ok ? r.json() :
 const post = (path, body) => api(path, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)});
 const $ = sel => document.querySelector(sel);
 const iso = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+const localIso = d => `${iso(d)}T${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')}`;
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -714,10 +715,12 @@ function blankSet(type, seconds){
 }
 
 function startWorkout(routine){
+  const now = new Date();
   active = {
     name: routine ? routine.name : 'Free workout',
-    date: iso(new Date()),
-    startedAt: Date.now(),
+    date: iso(now),
+    startedAt: now.getTime(),
+    started_at: localIso(now),
     exercises: (routine ? routine.exercises : []).map(e => ({
       name: e.name,
       type: e.type || 'weight',
@@ -827,6 +830,7 @@ async function finishWorkout(){
   const payload = {
     date: active.date,
     name: active.name,
+    started_at: active.started_at || (active.startedAt ? localIso(new Date(active.startedAt)) : null),
     seconds: Math.floor((Date.now() - active.startedAt)/1000),
     exercises: active.exercises.map(ex => ({
       name: ex.name,
