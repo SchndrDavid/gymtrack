@@ -19,7 +19,7 @@ from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
-VERSION = "1.2.0"
+VERSION = "1.2.1"
 DB_PATH = os.environ.get("GYMTRACK_DB", "/data/gymtrack.db")
 STATIC = Path(__file__).parent / "static"
 TYPES = ("weight", "reps", "time")
@@ -424,37 +424,103 @@ def add_workout(w: Workout):
         return {"ok": True, "id": cur.lastrowid}
 
 
+CZECH_MONTHS = {
+    "leden": 1, "ledna": 1, "únor": 2, "února": 2, "březen": 3, "března": 3,
+    "duben": 4, "dubna": 4, "květen": 5, "května": 5, "červen": 6, "června": 6,
+    "červenec": 7, "července": 7, "srpen": 8, "srpna": 8, "září": 9,
+    "říjen": 10, "října": 10, "listopad": 11, "listopadu": 11, "prosinec": 12, "prosince": 12,
+}
+
+
+def _parse_float(s: Any) -> float | None:
+    if s is None:
+        return None
+    clean = re.sub(r"[\s\u00a0\u202f]+", "", str(s))
+    if not clean:
+        return None
+    if "," in clean and "." in clean:
+        if clean.rfind(",") > clean.rfind("."):
+            clean = clean.replace(".", "").replace(",", ".")
+        else:
+            clean = clean.replace(",", "")
+    else:
+        clean = clean.replace(",", ".")
+    try:
+        return float(clean)
+    except (ValueError, TypeError):
+        return None
+
+
+def _parse_int(s: Any) -> int | None:
+    if s is None:
+        return None
+    clean = re.sub(r"[^\d]", "", str(s))
+    if not clean:
+        return None
+    try:
+        return int(clean)
+    except (ValueError, TypeError):
+        return None
+
+
 def parse_apple_run(data: dict) -> dict:
     text = data.get("content") or data.get("text") or ""
     if not isinstance(text, str):
         text = str(text)
 
+    # Normalize unicode whitespace (NBSP, narrow NBSP) to regular spaces
+    norm_text = re.sub(r"[\u00a0\u202f]+", " ", text)
+
     # 1. Date & Start time
     date_str = data.get("date")
     started_at = data.get("started_at")
 
-    if not started_at and text:
+    if not started_at and norm_text:
+        # Standard Czech numeric: "4. 9. 2026 at 15:54" / "04.09.2026 15:54"
         m = re.search(
-            r"(?:Date|Datum)[\s:]+(\d{1,2})\.\s*(\d{1,2})\.\s*(\d{4})[^\d\n\r]*(\d{1,2}):(\d{2})(?::(\d{2}))?",
-            text,
+            r"(?:Date|Datum)[\s:]+(\d{1,2})\.\s*(\d{1,2})\.\s*(\d{4})(?:[^\d\n\r]*(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(am|pm|dop\.|odp\.)?)?",
+            norm_text,
             re.I,
         )
         if m:
-            d, mo, y, h, mi, s = (
-                int(m.group(1)),
-                int(m.group(2)),
-                int(m.group(3)),
-                int(m.group(4)),
-                int(m.group(5)),
-                int(m.group(6) or 0),
-            )
+            d, mo, y = int(m.group(1)), int(m.group(2)), int(m.group(3))
+            h = int(m.group(4) or 0)
+            mi = int(m.group(5) or 0)
+            s = int(m.group(6) or 0)
+            ampm = (m.group(7) or "").lower()
+            if ampm in ("pm", "odp.") and h < 12:
+                h += 12
+            elif ampm in ("am", "dop.") and h == 12:
+                h = 0
             date_str = f"{y:04d}-{mo:02d}-{d:02d}"
             started_at = f"{date_str}T{h:02d}:{mi:02d}:{s:02d}"
         else:
-            iso_m = re.search(r"(\d{4}-\d{2}-\d{2})[T\s](\d{1,2}):(\d{2})(?::(\d{2}))?", text)
-            if iso_m:
-                date_str = iso_m.group(1)
-                started_at = f"{date_str}T{int(iso_m.group(2)):02d}:{int(iso_m.group(3)):02d}:{int(iso_m.group(4) or 0):02d}"
+            # Czech named month: "4. září 2026 at 15:54"
+            m_named = re.search(
+                r"(?:Date|Datum)[\s:]+(\d{1,2})\.\s*([a-záčďéěíňóřšťúůýž]+)\s+(\d{4})(?:[^\d\n\r]*(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(am|pm|dop\.|odp\.)?)?",
+                norm_text,
+                re.I,
+            )
+            if m_named and m_named.group(2).lower() in CZECH_MONTHS:
+                d = int(m_named.group(1))
+                mo = CZECH_MONTHS[m_named.group(2).lower()]
+                y = int(m_named.group(3))
+                h = int(m_named.group(4) or 0)
+                mi = int(m_named.group(5) or 0)
+                s = int(m_named.group(6) or 0)
+                ampm = (m_named.group(7) or "").lower()
+                if ampm in ("pm", "odp.") and h < 12:
+                    h += 12
+                elif ampm in ("am", "dop.") and h == 12:
+                    h = 0
+                date_str = f"{y:04d}-{mo:02d}-{d:02d}"
+                started_at = f"{date_str}T{h:02d}:{mi:02d}:{s:02d}"
+            else:
+                # ISO format: "2026-09-04 15:54"
+                iso_m = re.search(r"(\d{4}-\d{2}-\d{2})[T\s](\d{1,2}):(\d{2})(?::(\d{2}))?", norm_text)
+                if iso_m:
+                    date_str = iso_m.group(1)
+                    started_at = f"{date_str}T{int(iso_m.group(2)):02d}:{int(iso_m.group(3)):02d}:{int(iso_m.group(4) or 0):02d}"
 
     if not date_str:
         date_str = datetime.now().strftime("%Y-%m-%d")
@@ -462,69 +528,99 @@ def parse_apple_run(data: dict) -> dict:
         started_at = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
 
     # 2. Duration / seconds
-    seconds = data.get("seconds")
-    if not seconds and text:
+    seconds = _parse_int(data.get("seconds"))
+    if not seconds and norm_text:
+        # A) Explicit seconds: "Duration: 2 887 secs ()" / "2887 s"
         dur_m = re.search(
             r"(?:Duration|Trvání|Doba trvání)[\s:]+([\d\s]+)\s*(?:secs?|s\b|sekund)",
-            text,
+            norm_text,
             re.I,
         )
         if dur_m:
-            seconds = int(dur_m.group(1).replace(" ", ""))
-        else:
-            clock_m = re.search(r"(?:Duration|Trvání)[\s:]+(\d+):(\d{2})(?::(\d{2}))?", text, re.I)
+            seconds = _parse_int(dur_m.group(1))
+
+        # B) Clock format: "Duration: 48:07" or "Duration: 1:15:30"
+        if not seconds:
+            clock_m = re.search(r"(?:Duration|Trvání|Doba trvání)[\s:]+(\d+):(\d{2})(?::(\d{2}))?", norm_text, re.I)
             if clock_m:
                 if clock_m.group(3):
                     seconds = int(clock_m.group(1)) * 3600 + int(clock_m.group(2)) * 60 + int(clock_m.group(3))
                 else:
                     seconds = int(clock_m.group(1)) * 60 + int(clock_m.group(2))
-            else:
-                end_m = re.search(
-                    r"(?:End date|Konec|Datum ukončení)[\s:]+(\d{1,2})\.\s*(\d{1,2})\.\s*(\d{4})[^\d\n\r]*(\d{1,2}):(\d{2})(?::(\d{2}))?",
-                    text,
-                    re.I,
-                )
-                if end_m and started_at:
-                    try:
-                        ed, emo, ey, eh, emi, es = (
-                            int(end_m.group(1)),
-                            int(end_m.group(2)),
-                            int(end_m.group(3)),
-                            int(end_m.group(4)),
-                            int(end_m.group(5)),
-                            int(end_m.group(6) or 0),
-                        )
-                        end_dt = datetime(ey, emo, ed, eh, emi, es)
-                        start_dt = datetime.fromisoformat(started_at)
-                        diff = int((end_dt - start_dt).total_seconds())
-                        if diff > 0:
-                            seconds = diff
-                    except Exception:
-                        pass
+
+        # C) Hours & minutes: "1 h 12 min" or "48 min"
+        if not seconds:
+            hm_m = re.search(
+                r"(?:Duration|Trvání|Doba trvání)[\s:]+(?:(\d+)\s*(?:h|hod|hours?)\b)?\s*(?:(\d+)\s*(?:m|min|minut)\b)?",
+                norm_text,
+                re.I,
+            )
+            if hm_m and (hm_m.group(1) or hm_m.group(2)):
+                h = int(hm_m.group(1) or 0)
+                m = int(hm_m.group(2) or 0)
+                if h > 0 or m > 0:
+                    seconds = h * 3600 + m * 60
+
+        # D) End date diff fallback
+        if not seconds:
+            end_m = re.search(
+                r"(?:End date|Konec|Datum ukončení)[\s:]+(\d{1,2})\.\s*(\d{1,2})\.\s*(\d{4})[^\d\n\r]*(\d{1,2}):(\d{2})(?::(\d{2}))?",
+                norm_text,
+                re.I,
+            )
+            if end_m and started_at:
+                try:
+                    ed, emo, ey, eh, emi, es = (
+                        int(end_m.group(1)),
+                        int(end_m.group(2)),
+                        int(end_m.group(3)),
+                        int(end_m.group(4)),
+                        int(end_m.group(5)),
+                        int(end_m.group(6) or 0),
+                    )
+                    end_dt = datetime(ey, emo, ed, eh, emi, es)
+                    start_dt = datetime.fromisoformat(started_at)
+                    diff = int((end_dt - start_dt).total_seconds())
+                    if diff > 0:
+                        seconds = diff
+                except Exception:
+                    pass
+
     seconds = int(seconds or 0)
 
     # 3. Distance
-    dist_km = data.get("distance_km") or data.get("distance")
-    if dist_km is None and text:
-        dist_m = re.search(r"(?:Distance|Vzdálenost)[\s:]+([\d\s,\.]+)\s*(km|m\b)?", text, re.I)
+    dist_km = _parse_float(data.get("distance_km") or data.get("distance"))
+    if dist_km is None and norm_text:
+        dist_m = re.search(r"(?:Distance|Vzdálenost)[\s:]+([\d\s,\.]+)\s*(km|m\b|miles?|mi\b)?", norm_text, re.I)
         if dist_m:
-            raw = dist_m.group(1).replace(" ", "").replace(",", ".")
-            unit = (dist_m.group(2) or "km").lower()
-            val = float(raw)
-            dist_km = val if unit == "km" or (unit == "" and val < 100) else val / 1000.0
-    if dist_km is not None:
-        dist_km = float(dist_km)
+            val = _parse_float(dist_m.group(1))
+            if val is not None:
+                unit = (dist_m.group(2) or "").lower()
+                if unit in ("mi", "mile", "miles"):
+                    dist_km = val * 1.60934
+                elif unit == "km":
+                    dist_km = val
+                elif unit == "m":
+                    dist_km = val / 1000.0
+                else:
+                    dist_km = val / 1000.0 if val >= 100 else val
 
-    # 4. Speed
-    speed_kmh = data.get("speed_kmh") or data.get("speed")
-    if speed_kmh is None and text:
-        spd_m = re.search(r"(?:Avg Speed|Rychlost|Průměrná rychlost)[\s:]+([\d\s,\.]+)", text, re.I)
+    # 4. Speed & Pace
+    speed_kmh = _parse_float(data.get("speed_kmh") or data.get("speed"))
+    if speed_kmh is None and norm_text:
+        spd_m = re.search(r"(?:Avg Speed|Rychlost|Průměrná rychlost)[\s:]+([\d\s,\.]+)", norm_text, re.I)
         if spd_m:
-            speed_kmh = float(spd_m.group(1).replace(" ", "").replace(",", "."))
+            speed_kmh = _parse_float(spd_m.group(1))
+
+    if speed_kmh is None and norm_text:
+        pace_m = re.search(r"(?:Avg Pace|Tempo|Průměrné tempo)[\s:]+(\d+):(\d{2})", norm_text, re.I)
+        if pace_m:
+            p_sec = int(pace_m.group(1)) * 60 + int(pace_m.group(2))
+            if p_sec > 0:
+                speed_kmh = 3600.0 / p_sec
+
     if not speed_kmh and dist_km and seconds > 0:
         speed_kmh = (dist_km / seconds) * 3600.0
-    if speed_kmh is not None:
-        speed_kmh = float(speed_kmh)
 
     title = f"Běh {dist_km:.1f} km" if dist_km else "Běh"
 
@@ -532,7 +628,7 @@ def parse_apple_run(data: dict) -> dict:
     if dist_km:
         notes.append(f"{dist_km:.2f} km")
     pace_str = None
-    if speed_kmh:
+    if speed_kmh and speed_kmh > 0.5:
         notes.append(f"{speed_kmh:.1f} km/h")
         pace_sec = int(3600 / speed_kmh)
         pace_str = f"{pace_sec // 60}:{pace_sec % 60:02d} /km"
@@ -564,49 +660,62 @@ def parse_apple_run(data: dict) -> dict:
 async def add_run(request: Request):
     """Log a running workout (from Apple Health/Shortcuts or JSON)."""
     try:
-        data = await request.json()
-    except Exception:
-        raw = (await request.body()).decode("utf-8", errors="ignore")
-        data = {"content": raw}
+        try:
+            data = await request.json()
+        except Exception:
+            raw = (await request.body()).decode("utf-8", errors="ignore")
+            data = {"content": raw}
 
-    if isinstance(data, str):
-        data = {"content": data}
-    elif not isinstance(data, dict):
-        data = {"content": str(data)}
+        if isinstance(data, str):
+            data = {"content": data}
+        elif not isinstance(data, dict):
+            data = {"content": str(data)}
 
-    parsed = parse_apple_run(data)
+        parsed = parse_apple_run(data)
 
-    with db() as conn:
-        existing = conn.execute(
-            "SELECT id FROM workouts WHERE date=? AND started_at=? AND name=?",
-            (parsed["date"], parsed["started_at"], parsed["name"]),
-        ).fetchone()
-        if existing:
+        with db() as conn:
+            existing = None
+            if parsed.get("started_at"):
+                existing = conn.execute(
+                    "SELECT id FROM workouts WHERE date=? AND started_at=?",
+                    (parsed["date"], parsed["started_at"]),
+                ).fetchone()
+            if not existing:
+                existing = conn.execute(
+                    "SELECT id FROM workouts WHERE date=? AND name=?",
+                    (parsed["date"], parsed["name"]),
+                ).fetchone()
+
+            if existing:
+                conn.execute(
+                    "UPDATE workouts SET name=?, seconds=?, payload=? WHERE id=?",
+                    (parsed["name"], parsed["seconds"], json.dumps(parsed["exercises"], ensure_ascii=False), existing["id"]),
+                )
+                workout_id = existing["id"]
+            else:
+                cur = conn.execute(
+                    "INSERT INTO workouts (date, name, seconds, payload, started_at) VALUES (?,?,?,?,?)",
+                    (
+                        parsed["date"],
+                        parsed["name"],
+                        parsed["seconds"],
+                        json.dumps(parsed["exercises"], ensure_ascii=False),
+                        parsed["started_at"],
+                    ),
+                )
+                workout_id = cur.lastrowid
+
             conn.execute(
-                "UPDATE workouts SET seconds=?, payload=? WHERE id=?",
-                (parsed["seconds"], json.dumps(parsed["exercises"], ensure_ascii=False), existing["id"]),
+                "INSERT INTO days (date, run, gym) VALUES (?,1,0) "
+                "ON CONFLICT(date) DO UPDATE SET run=1",
+                (parsed["date"],),
             )
-            workout_id = existing["id"]
-        else:
-            cur = conn.execute(
-                "INSERT INTO workouts (date, name, seconds, payload, started_at) VALUES (?,?,?,?,?)",
-                (
-                    parsed["date"],
-                    parsed["name"],
-                    parsed["seconds"],
-                    json.dumps(parsed["exercises"], ensure_ascii=False),
-                    parsed["started_at"],
-                ),
-            )
-            workout_id = cur.lastrowid
 
-        conn.execute(
-            "INSERT INTO days (date, run, gym) VALUES (?,1,0) "
-            "ON CONFLICT(date) DO UPDATE SET run=1",
-            (parsed["date"],),
-        )
-
-    return {"ok": True, "id": workout_id, "workout": parsed}
+        return {"ok": True, "id": workout_id, "workout": parsed}
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=400, detail=f"Failed to process run: {str(e)}")
 
 
 @app.get("/api/workouts")
