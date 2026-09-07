@@ -11,10 +11,11 @@ import os
 import re
 import sqlite3
 from contextlib import contextmanager
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
@@ -421,6 +422,186 @@ def add_workout(w: Workout):
             "ON CONFLICT(date) DO UPDATE SET gym=1", (w.date,),
         )
         return {"ok": True, "id": cur.lastrowid}
+
+
+def parse_apple_run(data: dict) -> dict:
+    text = data.get("content") or data.get("text") or ""
+    if not isinstance(text, str):
+        text = str(text)
+
+    # 1. Date & Start time
+    date_str = data.get("date")
+    started_at = data.get("started_at")
+
+    if not started_at and text:
+        m = re.search(
+            r"(?:Date|Datum)[\s:]+(\d{1,2})\.\s*(\d{1,2})\.\s*(\d{4})[^\d\n\r]*(\d{1,2}):(\d{2})(?::(\d{2}))?",
+            text,
+            re.I,
+        )
+        if m:
+            d, mo, y, h, mi, s = (
+                int(m.group(1)),
+                int(m.group(2)),
+                int(m.group(3)),
+                int(m.group(4)),
+                int(m.group(5)),
+                int(m.group(6) or 0),
+            )
+            date_str = f"{y:04d}-{mo:02d}-{d:02d}"
+            started_at = f"{date_str}T{h:02d}:{mi:02d}:{s:02d}"
+        else:
+            iso_m = re.search(r"(\d{4}-\d{2}-\d{2})[T\s](\d{1,2}):(\d{2})(?::(\d{2}))?", text)
+            if iso_m:
+                date_str = iso_m.group(1)
+                started_at = f"{date_str}T{int(iso_m.group(2)):02d}:{int(iso_m.group(3)):02d}:{int(iso_m.group(4) or 0):02d}"
+
+    if not date_str:
+        date_str = datetime.now().strftime("%Y-%m-%d")
+    if not started_at:
+        started_at = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
+
+    # 2. Duration / seconds
+    seconds = data.get("seconds")
+    if not seconds and text:
+        dur_m = re.search(
+            r"(?:Duration|Trvání|Doba trvání)[\s:]+([\d\s]+)\s*(?:secs?|s\b|sekund)",
+            text,
+            re.I,
+        )
+        if dur_m:
+            seconds = int(dur_m.group(1).replace(" ", ""))
+        else:
+            clock_m = re.search(r"(?:Duration|Trvání)[\s:]+(\d+):(\d{2})(?::(\d{2}))?", text, re.I)
+            if clock_m:
+                if clock_m.group(3):
+                    seconds = int(clock_m.group(1)) * 3600 + int(clock_m.group(2)) * 60 + int(clock_m.group(3))
+                else:
+                    seconds = int(clock_m.group(1)) * 60 + int(clock_m.group(2))
+            else:
+                end_m = re.search(
+                    r"(?:End date|Konec|Datum ukončení)[\s:]+(\d{1,2})\.\s*(\d{1,2})\.\s*(\d{4})[^\d\n\r]*(\d{1,2}):(\d{2})(?::(\d{2}))?",
+                    text,
+                    re.I,
+                )
+                if end_m and started_at:
+                    try:
+                        ed, emo, ey, eh, emi, es = (
+                            int(end_m.group(1)),
+                            int(end_m.group(2)),
+                            int(end_m.group(3)),
+                            int(end_m.group(4)),
+                            int(end_m.group(5)),
+                            int(end_m.group(6) or 0),
+                        )
+                        end_dt = datetime(ey, emo, ed, eh, emi, es)
+                        start_dt = datetime.fromisoformat(started_at)
+                        diff = int((end_dt - start_dt).total_seconds())
+                        if diff > 0:
+                            seconds = diff
+                    except Exception:
+                        pass
+    seconds = int(seconds or 0)
+
+    # 3. Distance
+    dist_km = data.get("distance_km") or data.get("distance")
+    if dist_km is None and text:
+        dist_m = re.search(r"(?:Distance|Vzdálenost)[\s:]+([\d\s,\.]+)\s*(km|m\b)?", text, re.I)
+        if dist_m:
+            raw = dist_m.group(1).replace(" ", "").replace(",", ".")
+            unit = (dist_m.group(2) or "km").lower()
+            val = float(raw)
+            dist_km = val if unit == "km" or (unit == "" and val < 100) else val / 1000.0
+    if dist_km is not None:
+        dist_km = float(dist_km)
+
+    # 4. Speed
+    speed_kmh = data.get("speed_kmh") or data.get("speed")
+    if speed_kmh is None and text:
+        spd_m = re.search(r"(?:Avg Speed|Rychlost|Průměrná rychlost)[\s:]+([\d\s,\.]+)", text, re.I)
+        if spd_m:
+            speed_kmh = float(spd_m.group(1).replace(" ", "").replace(",", "."))
+    if not speed_kmh and dist_km and seconds > 0:
+        speed_kmh = (dist_km / seconds) * 3600.0
+    if speed_kmh is not None:
+        speed_kmh = float(speed_kmh)
+
+    title = f"Běh {dist_km:.1f} km" if dist_km else "Běh"
+
+    notes = []
+    if dist_km:
+        notes.append(f"{dist_km:.2f} km")
+    if speed_kmh:
+        notes.append(f"{speed_kmh:.1f} km/h")
+        pace_sec = int(3600 / speed_kmh)
+        notes.append(f"tempo {pace_sec // 60}:{pace_sec % 60:02d}/km")
+
+    note = " · ".join(notes)
+    exercises = [
+        {
+            "name": "Běh",
+            "type": "time",
+            "sets": [{"sec": seconds}],
+            "note": note,
+        }
+    ]
+
+    return {
+        "date": date_str,
+        "started_at": started_at,
+        "name": title,
+        "seconds": seconds,
+        "exercises": exercises,
+    }
+
+
+@app.post("/api/run")
+async def add_run(request: Request):
+    """Log a running workout (from Apple Health/Shortcuts or JSON)."""
+    try:
+        data = await request.json()
+    except Exception:
+        raw = (await request.body()).decode("utf-8", errors="ignore")
+        data = {"content": raw}
+
+    if isinstance(data, str):
+        data = {"content": data}
+    elif not isinstance(data, dict):
+        data = {"content": str(data)}
+
+    parsed = parse_apple_run(data)
+
+    with db() as conn:
+        existing = conn.execute(
+            "SELECT id FROM workouts WHERE date=? AND started_at=? AND name=?",
+            (parsed["date"], parsed["started_at"], parsed["name"]),
+        ).fetchone()
+        if existing:
+            conn.execute(
+                "UPDATE workouts SET seconds=?, payload=? WHERE id=?",
+                (parsed["seconds"], json.dumps(parsed["exercises"], ensure_ascii=False), existing["id"]),
+            )
+            workout_id = existing["id"]
+        else:
+            cur = conn.execute(
+                "INSERT INTO workouts (date, name, seconds, payload, started_at) VALUES (?,?,?,?,?)",
+                (
+                    parsed["date"],
+                    parsed["name"],
+                    parsed["seconds"],
+                    json.dumps(parsed["exercises"], ensure_ascii=False),
+                    parsed["started_at"],
+                ),
+            )
+            workout_id = cur.lastrowid
+
+        conn.execute(
+            "INSERT INTO days (date, run, gym) VALUES (?,1,0) "
+            "ON CONFLICT(date) DO UPDATE SET run=1",
+            (parsed["date"],),
+        )
+
+    return {"ok": True, "id": workout_id, "workout": parsed}
 
 
 @app.get("/api/workouts")
