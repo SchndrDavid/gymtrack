@@ -531,16 +531,21 @@ def parse_apple_run(data: dict) -> dict:
     notes = []
     if dist_km:
         notes.append(f"{dist_km:.2f} km")
+    pace_str = None
     if speed_kmh:
         notes.append(f"{speed_kmh:.1f} km/h")
         pace_sec = int(3600 / speed_kmh)
+        pace_str = f"{pace_sec // 60}:{pace_sec % 60:02d} /km"
         notes.append(f"tempo {pace_sec // 60}:{pace_sec % 60:02d}/km")
 
     note = " · ".join(notes)
     exercises = [
         {
             "name": "Běh",
-            "type": "time",
+            "type": "run",
+            "distance_km": round(dist_km, 2) if dist_km else None,
+            "speed_kmh": round(speed_kmh, 1) if speed_kmh else None,
+            "pace": pace_str,
             "sets": [{"sec": seconds}],
             "note": note,
         }

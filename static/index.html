@@ -164,6 +164,7 @@ h1{font-size:34px;line-height:1.05;font-weight:700;letter-spacing:-.5px;margin:0
 .dstat b{display:block;font-family:var(--round);font-size:19px;font-weight:700;letter-spacing:-.4px}
 .dstat span{display:block;font-size:11px;color:var(--fg-2);margin-top:3px}
 .dstat.b b{color:var(--blue)}
+.dstat.g b{color:var(--green)}
 .dex{background:var(--card);border-radius:var(--r);padding:13px 14px;margin-bottom:10px}
 .dex b{font-size:16px;font-weight:600;letter-spacing:-.2px}
 .dex em{font-style:normal;font-size:12px;color:var(--fg-3);float:right;padding-top:3px}
@@ -457,6 +458,59 @@ function renderStats(){
   $('#s-gym').textContent = gym; $('#s-run').textContent = run; $('#s-streak').textContent = streak;
 }
 
+function isRun(w){
+  if (!w) return false;
+  if (/^(běh|run)\b/i.test(w.name || '')) return true;
+  return (w.exercises || []).some(e => e.type === 'run' || /^(běh|run)$/i.test(e.name || ''));
+}
+
+function getRunInfo(w){
+  if (!isRun(w)) return null;
+  const ex = (w.exercises || []).find(e => e.type === 'run' || /^(běh|run)$/i.test(e.name || '')) || (w.exercises || [])[0] || {};
+  let dist = ex.distance_km;
+  let speed = ex.speed_kmh;
+  let pace = ex.pace;
+
+  const note = ex.note || '';
+  if (!dist){
+    const dm = (w.name + ' ' + note).match(/(\d+[.,]?\d*)\s*km/i);
+    if (dm) dist = parseFloat(dm[1].replace(',', '.'));
+  }
+  if (!speed){
+    const sm = note.match(/(\d+[.,]?\d*)\s*km\/h/i);
+    if (sm) speed = parseFloat(sm[1].replace(',', '.'));
+    else if (dist && w.seconds > 0) speed = Math.round((dist / w.seconds) * 3600 * 10) / 10;
+  }
+  if (!pace && speed && speed > 0){
+    const ps = Math.round(3600 / speed);
+    pace = `${Math.floor(ps/60)}:${String(ps%60).padStart(2,'0')} /km`;
+  } else if (!pace){
+    const pm = note.match(/tempo\s*([^\s·]+)/i);
+    if (pm) pace = pm[1] + ' /km';
+  }
+
+  let startStr = '', endStr = '';
+  if (w.started_at){
+    const parts = w.started_at.split('T');
+    if (parts[1]) startStr = parts[1].slice(0, 5);
+    const startD = new Date(w.started_at);
+    if (!isNaN(startD.getTime())){
+      const endD = new Date(startD.getTime() + (w.seconds || 0) * 1000);
+      endStr = `${String(endD.getHours()).padStart(2,'0')}:${String(endD.getMinutes()).padStart(2,'0')}`;
+    }
+  }
+
+  return {
+    distance: dist ? dist.toFixed(2) + ' km' : null,
+    distanceVal: dist,
+    speed: speed ? speed.toFixed(1) + ' km/h' : null,
+    pace: pace || null,
+    duration: clock(w.seconds || 0),
+    start: startStr,
+    end: endStr
+  };
+}
+
 function workoutStats(w){
   let sets = 0, reps = 0, volume = 0, holds = 0;
   (w.exercises || []).forEach(ex => (ex.sets || []).forEach(set => {
@@ -470,12 +524,21 @@ function workoutStats(w){
 }
 
 function workoutRow(w){
-  const st = workoutStats(w);
+  const run = getRunInfo(w);
   const [, month, dayNo] = w.date.split('-');
-  const bits = [`${MONTHS[+month-1]} ${+dayNo}`, `${st.sets} sets`];
-  if (st.volume) bits.push(`${Math.round(st.volume)} kg`);
-  else if (st.reps) bits.push(`${st.reps} reps`);
-  else if (st.holds) bits.push(`${st.holds}s held`);
+  let bits;
+  if (run){
+    bits = [`${MONTHS[+month-1]} ${+dayNo}`];
+    if (run.distance) bits.push(run.distance);
+    if (run.pace) bits.push(run.pace);
+    else if (run.speed) bits.push(run.speed);
+  } else {
+    const st = workoutStats(w);
+    bits = [`${MONTHS[+month-1]} ${+dayNo}`, `${st.sets} sets`];
+    if (st.volume) bits.push(`${Math.round(st.volume)} kg`);
+    else if (st.reps) bits.push(`${st.reps} reps`);
+    else if (st.holds) bits.push(`${st.holds}s held`);
+  }
   return `<div class="row tap" data-id="${w.id}"><div class="main"><b>${esc(w.name)}</b>
     <span>${bits.join(' · ')}</span></div>
     <div class="side">${clock(w.seconds)}</div><span class="chev">›</span></div>`;
@@ -503,8 +566,11 @@ async function openHistory(){
 
 function renderHistorySheet(){
   const totals = historyList.reduce((t, w) => {
-    const st = workoutStats(w);
-    t.seconds += w.seconds; t.sets += st.sets; t.volume += st.volume;
+    t.seconds += w.seconds;
+    if (!isRun(w)){
+      const st = workoutStats(w);
+      t.sets += st.sets; t.volume += st.volume;
+    }
     return t;
   }, {seconds:0, sets:0, volume:0});
   $('#h-totals').innerHTML = `
@@ -546,21 +612,49 @@ function setText(type, set){
 function openDetail(w){
   if (!w) return;
   detailW = w;
-  const st = workoutStats(w);
+  const run = getRunInfo(w);
   const [year, month, dayNo] = w.date.split('-');
   const weekday = DAYS[new Date(+year, +month-1, +dayNo).getDay()];
   $('#d-title').textContent = w.name;
-  $('#d-date').textContent = `${weekday} ${+dayNo} ${MONTHS[+month-1]} ${year}`;
-  $('#d-stats').innerHTML = `
-    <div class="dstat b"><b>${clock(w.seconds)}</b><span>length</span></div>
-    <div class="dstat"><b>${st.sets}</b><span>sets</span></div>
-    <div class="dstat"><b>${st.reps || '—'}</b><span>reps</span></div>
-    <div class="dstat"><b>${st.volume ? Math.round(st.volume) : '—'}</b><span>kg volume</span></div>`;
-  $('#d-exercises').innerHTML = (w.exercises || []).map(ex => `
-    <div class="dex"><em>${esc(TYPE_TEXT[ex.type] || '')}</em><b>${esc(ex.name)}</b>
-      ${(ex.sets || []).map((set, j) =>
-        `<div class="dset"><i>set ${j+1}</i>${esc(setText(ex.type, set))}</div>`).join('')}
-    </div>`).join('') || '<p class="empty">No sets were logged.</p>';
+
+  if (run){
+    const timeRange = (run.start && run.end) ? ` · ${run.start} – ${run.end}` : '';
+    $('#d-date').textContent = `${weekday} ${+dayNo} ${MONTHS[+month-1]} ${year}${timeRange}`;
+    $('#d-stats').innerHTML = `
+      <div class="dstat g"><b>${run.distance || '—'}</b><span>distance</span></div>
+      <div class="dstat"><b>${run.duration}</b><span>duration</span></div>
+      <div class="dstat"><b>${run.pace || '—'}</b><span>avg pace</span></div>
+      <div class="dstat"><b>${run.speed || '—'}</b><span>avg speed</span></div>`;
+
+    const timeDetail = (run.start && run.end)
+      ? `${esc(run.start)} – ${esc(run.end)} (${clock(w.seconds)})`
+      : `${clock(w.seconds)} (${w.seconds} s)`;
+
+    $('#d-exercises').innerHTML = `
+      <div class="dex">
+        <em>Outdoor run</em><b>Run summary</b>
+        <div class="dset"><i>Distance</i>${esc(run.distance || '—')}</div>
+        <div class="dset"><i>Time</i>${timeDetail}</div>
+        <div class="dset"><i>Pace</i>${esc(run.pace || '—')}</div>
+        <div class="dset"><i>Speed</i>${esc(run.speed || '—')}</div>
+      </div>`;
+    $('.ai .card-title').textContent = 'Ask AI about this run';
+  } else {
+    const st = workoutStats(w);
+    $('#d-date').textContent = `${weekday} ${+dayNo} ${MONTHS[+month-1]} ${year}`;
+    $('#d-stats').innerHTML = `
+      <div class="dstat b"><b>${clock(w.seconds)}</b><span>length</span></div>
+      <div class="dstat"><b>${st.sets}</b><span>sets</span></div>
+      <div class="dstat"><b>${st.reps || '—'}</b><span>reps</span></div>
+      <div class="dstat"><b>${st.volume ? Math.round(st.volume) : '—'}</b><span>kg volume</span></div>`;
+    $('#d-exercises').innerHTML = (w.exercises || []).map(ex => `
+      <div class="dex"><em>${esc(TYPE_TEXT[ex.type] || '')}</em><b>${esc(ex.name)}</b>
+        ${(ex.sets || []).map((set, j) =>
+          `<div class="dset"><i>set ${j+1}</i>${esc(setText(ex.type, set))}</div>`).join('')}
+      </div>`).join('') || '<p class="empty">No sets were logged.</p>';
+    $('.ai .card-title').textContent = 'Ask AI about this workout';
+  }
+
   $('#d-prompt').value = buildPrompt(w);
   $('#d-prompt').classList.remove('show');
   $('#d-ask').textContent = 'Ask ' + AI[(state.profile || {}).ai || 'gemini'].label;
@@ -568,11 +662,42 @@ function openDetail(w){
 }
 
 function buildPrompt(w){
-  const profile = state.profile || {}, st = workoutStats(w);
+  const profile = state.profile || {};
   const [year, month, dayNo] = w.date.split('-');
   const weekday = DAYS[new Date(+year, +month-1, +dayNo).getDay()];
+  const run = getRunInfo(w);
   const L = [];
 
+  if (run){
+    L.push('I just finished an outdoor run. Analyse my session for me.');
+    L.push('');
+    L.push('## ME');
+    L.push(profile.weight
+      ? `Bodyweight: ${profile.weight} kg`
+      : 'Bodyweight: NOT PROVIDED — assume 75 kg, and say clearly that you assumed it.');
+    if (profile.height) L.push(`Height: ${profile.height} cm`);
+    if (profile.age) L.push(`Age: ${profile.age}`);
+    if (profile.sex) L.push(`Sex: ${profile.sex}`);
+    L.push('');
+    L.push('## THE RUN');
+    L.push(`Session: ${w.name}`);
+    L.push(`Date: ${w.date} (${weekday})`);
+    if (run.start && run.end) L.push(`Time: ${run.start} to ${run.end}`);
+    L.push(`Duration: ${clock(w.seconds)} (${w.seconds} seconds)`);
+    if (run.distance) L.push(`Distance: ${run.distance}`);
+    if (run.pace) L.push(`Average Pace: ${run.pace}`);
+    if (run.speed) L.push(`Average Speed: ${run.speed}`);
+    L.push('');
+    L.push('## WHAT I WANT BACK, IN THIS ORDER');
+    L.push('1. CALORIES BURNED — give me one best-estimate number in kcal based on distance and bodyweight.');
+    L.push('2. PACING & EFFORT — assess the pace and speed for this distance and give training effect feedback.');
+    L.push('3. RECOVERY & NUTRITION — hydration, post-run meal and muscle recovery tips.');
+    L.push('');
+    L.push('Be concrete and numeric. Do not ask me follow-up questions first — estimate, and state your assumptions.');
+    return L.join('\n');
+  }
+
+  const st = workoutStats(w);
   L.push('I just finished a workout and logged every single set. Analyse it for me.');
   L.push('');
   L.push('## ME');
