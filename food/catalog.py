@@ -161,6 +161,9 @@ def connect():
     conn = sqlite3.connect(DB_PATH, timeout=10)
     conn.row_factory = sqlite3.Row
     conn.execute("ATTACH DATABASE ? AS cat", (FOODS_DB,))
+    # The catalogue may be deleted at any time to re-import it; recreate an empty one.
+    if conn.execute("SELECT 1 FROM cat.sqlite_master WHERE name='foods'").fetchone() is None:
+        conn.executescript(catalog_schema("cat"))
     try:
         yield conn
         conn.commit()

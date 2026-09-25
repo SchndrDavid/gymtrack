@@ -521,4 +521,9 @@ backup = client.get("/api/export").json()
 check("backup includes the food log", len(backup["food"]["log"]) == 7 and len(backup["food"]["goals"]) == 2)
 check("backup keeps the training sections", {"profile", "routines", "days", "workouts"} <= backup.keys())
 
+Path(os.environ["GYMTRACK_FOODS_DB"]).unlink()
+check("deleting the catalogue while running is harmless", client.get("/api/food/search", params={"q": "vejce"}).status_code == 200
+      and client.get("/api/food/catalog").json()["usda"] == 0)
+check("the log survives a deleted catalogue", len(client.get("/api/food/day", params={"date": D1}).json()["entries"]) == 3)
+
 print(f"\n{checks} checks passed")
