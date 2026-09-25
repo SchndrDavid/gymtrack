@@ -3,10 +3,10 @@
 from datetime import date as Date, timedelta
 from typing import Any
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, File, HTTPException, UploadFile
 from pydantic import BaseModel
 
-from . import catalog, log
+from . import barcode, catalog, log
 from .catalog import clean_food, connect, food_dict, get_food, now_iso
 from .search import search as run_search
 
@@ -47,6 +47,46 @@ def get_one(ref: str):
             raise HTTPException(404, "food not found")
         fav = conn.execute("SELECT 1 FROM food_favorites WHERE food_ref=?", (ref,)).fetchone()
         return food_dict(row, favorite=fav is not None)
+
+
+# ─── barcodes ───────────────────────────────────────────────────────────────
+
+def _barcode_result(conn, code: str) -> dict:
+    row, where = barcode.lookup(conn, code, fetch=barcode_fetch)
+    if row is None:
+        return {"barcode": code, "food": None, "found": None}
+    ref = catalog.ref_of(row)
+    fav = conn.execute("SELECT 1 FROM food_favorites WHERE food_ref=?", (ref,)).fetchone()
+    return {"barcode": code, "food": food_dict(row, favorite=fav is not None), "found": where}
+
+
+barcode_fetch = None     # tests swap in a fake OFF API
+
+
+@router.get("/barcode/{code}")
+def barcode_lookup(code: str):
+    code = code.strip()
+    if not code.isdigit() or not 6 <= len(code) <= 14:
+        raise HTTPException(400, "a barcode is 8 to 14 digits")
+    with connect() as conn:
+        return _barcode_result(conn, code)
+
+
+@router.post("/barcode/scan")
+async def barcode_scan(image: UploadFile = File(...)):
+    """Read a barcode from a photo. The upload is held in memory and discarded right after."""
+    try:
+        data = await image.read(barcode.MAX_IMAGE_BYTES + 1)
+    finally:
+        await image.close()
+    if len(data) > barcode.MAX_IMAGE_BYTES:
+        raise HTTPException(413, "image too large")
+    codes = barcode.decode(data)
+    del data
+    if not codes:
+        return {"barcode": None, "food": None, "found": None}
+    with connect() as conn:
+        return _barcode_result(conn, codes[0])
 
 
 class FoodIn(BaseModel):
@@ -349,7 +389,7 @@ def config() -> dict[str, Any]:
         "food_ai_enabled": False,
         "mordorcook_enabled": False,
         "recipes": recipes,
-        "barcode": False,
+        "barcode": True,
         "history": False,
     }
 

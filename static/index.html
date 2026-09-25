@@ -227,6 +227,10 @@ h1{font-size:34px;line-height:1.05;font-weight:700;letter-spacing:-.5px;margin:0
   border-radius:11px;background:var(--card-2);font-size:14px;font-weight:600;min-height:46px}
 .factions button svg{width:17px;height:17px;color:var(--fg-2)}
 .factions button:active{opacity:.7}
+.factions #f-ean-toggle{flex:0 0 auto;min-width:64px}
+.fean{display:flex;gap:8px;margin-top:10px}
+.fean input{flex:1;min-width:0;background:var(--card-2);border:0;border-radius:11px;padding:12px;font-size:17px;outline:none;font-family:var(--round)}
+.fean button{padding:0 16px;border-radius:11px;background:var(--blue);color:#fff;font-weight:600;font-size:15px}
 .meal{margin-top:12px}
 .meal-head{display:flex;align-items:center;gap:8px;margin:0 0 4px}
 .meal-head .card-title{margin:0;flex:1}
@@ -330,9 +334,15 @@ h1{font-size:34px;line-height:1.05;font-weight:700;letter-spacing:-.5px;margin:0
       <div id="f-results" class="fresults"></div>
       <div class="factions">
         <button id="f-scan" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2M7 8v8M10 8v8M13 8v8M17 8v8"/></svg>Scan barcode</button>
+        <button id="f-ean-toggle" hidden>EAN</button>
         <button id="f-quick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg>Quick add</button>
         <button id="f-recognize" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>Recognize meal</button>
       </div>
+      <form class="fean" id="f-ean-form" hidden>
+        <input id="f-ean" inputmode="numeric" pattern="[0-9]*" placeholder="Type the barcode (EAN)" autocomplete="off">
+        <button type="submit">Look up</button>
+      </form>
+      <input type="file" id="f-scan-file" accept="image/*" capture="environment" hidden>
     </div>
     <p class="hint" id="f-catalog-hint" hidden></p>
 
@@ -541,8 +551,8 @@ h1{font-size:34px;line-height:1.05;font-weight:700;letter-spacing:-.5px;margin:0
   <div class="sheet-body">
     <div class="card prof">
       <label class="pfield wide"><span>Name</span><input id="n-name" autocomplete="off" placeholder="Babiččin guláš"></label>
-      <label class="pfield"><span>Brand</span><input id="n-brand" autocomplete="off" placeholder="—"></label>
-      <label class="pfield"><span>Barcode</span><input id="n-barcode" inputmode="numeric" placeholder="—"></label>
+      <label class="pfield wide"><span>Brand</span><input id="n-brand" autocomplete="off" placeholder="—"></label>
+      <label class="pfield wide"><span>Barcode</span><input id="n-barcode" inputmode="numeric" placeholder="—"></label>
     </div>
     <p class="card-title" style="margin-top:20px">Per 100 g</p>
     <div class="card prof">
@@ -1603,7 +1613,7 @@ async function foodShow(){
     fConfig = await api('/api/config');
     $('#f-recognize').hidden = !fConfig.food_ai_enabled;
     $('#f-recipes').hidden = !fConfig.mordorcook_enabled && !fConfig.recipes;
-    $('#f-scan').hidden = !fConfig.barcode;
+    $('#f-scan').hidden = $('#f-ean-toggle').hidden = !fConfig.barcode;
     $('#f-history').hidden = !fConfig.history;
   } catch(e){}
   try {
@@ -1801,6 +1811,64 @@ function openEntry(e){
   }).catch(() => { $('#po-star').hidden = true; });
 }
 
+/* ---------- food: barcodes ---------- */
+/* No getUserMedia over plain http on iOS, so the system camera takes a photo instead.
+   It is shrunk to a JPEG here — which also turns an iPhone HEIC into something the server reads. */
+function shrinkImage(file, maxSide=1600){
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file), img = new Image();
+    img.onload = () => {
+      const k = Math.min(1, maxSide / Math.max(img.naturalWidth, img.naturalHeight));
+      const c = document.createElement('canvas');
+      c.width = Math.round(img.naturalWidth * k); c.height = Math.round(img.naturalHeight * k);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(url);
+      c.toBlob(b => b ? resolve(b) : reject(new Error('encode')), 'image/jpeg', .88);
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('decode')); };
+    img.src = url;
+  });
+}
+
+async function uploadImage(path, file){
+  const form = new FormData();
+  form.append('image', await shrinkImage(file), 'photo.jpg');
+  const r = await fetch(BASE + path, {method:'POST', body: form});
+  return {status: r.status, body: await r.json().catch(() => ({}))};
+}
+
+function barcodeResult(res){
+  if (res.food){ openPortion(res.food, null, 'barcode'); return; }
+  if (res.barcode){
+    toast('Not in the catalogue — add it once, it is remembered');
+    openNewFood({barcode: res.barcode}, 'log');
+    return;
+  }
+  toast('No barcode found — get closer, or type it');
+  $('#f-ean-form').hidden = false; $('#f-ean').focus();
+}
+
+$('#f-scan').onclick = () => $('#f-scan-file').click();
+$('#f-scan-file').addEventListener('change', async e => {
+  const file = e.target.files[0]; e.target.value = '';
+  if (!file) return;
+  toast('Reading barcode…');
+  try {
+    const r = await uploadImage('/api/food/barcode/scan', file);
+    if (r.status !== 200) throw new Error(r.status);
+    barcodeResult(r.body);
+  } catch(err){ toast('Could not read the photo'); }
+});
+$('#f-ean-toggle').onclick = () => { const f = $('#f-ean-form'); f.hidden = !f.hidden; if (!f.hidden) $('#f-ean').focus(); };
+$('#f-ean-form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const code = $('#f-ean').value.replace(/\D/g, '');
+  if (code.length < 8) return toast('A barcode has 8 to 14 digits');
+  toast('Looking up…');
+  try { barcodeResult(await api('/api/food/barcode/' + code)); $('#f-ean').value = ''; }
+  catch(err){ toast('Lookup failed'); }
+});
+
 /* ---------- food: quick add ---------- */
 let qEntry = null;
 function openQuick(entry, meal){
@@ -1873,7 +1941,7 @@ function openNewFood(prefill, after){
   $('#n-delete').hidden = !nFood;
   for (const [id, key] of Object.entries(N_FIELDS)) $('#n-' + id).value = prefill && prefill[key] != null ? prefill[key] : '';
   $('#sheet-newfood').classList.add('open');
-  setTimeout(() => $(prefill && prefill.barcode && !prefill.name ? '#n-name' : '#n-name').focus(), 350);
+  setTimeout(() => $('#n-name').focus(), 350);
 }
 $('#f-newfood').onclick = () => openNewFood(null, 'log');
 $('#n-cancel').onclick = () => $('#sheet-newfood').classList.remove('open');

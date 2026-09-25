@@ -273,6 +273,78 @@ check("absurd weight is rejected", client.post("/api/food/weight", json={"date":
 client.delete("/api/food/weight/2026-09-08")
 check("delete a weight", len(client.get("/api/food/weight", params={"start": "2026-09-01", "end": "2026-09-30"}).json()["weights"]) == 7)
 
+# ─── barcodes ───────────────────────────────────────────────────────────────
+import food.api  # noqa: E402
+import zxingcpp  # noqa: E402
+from PIL import Image  # noqa: E402
+
+
+def ean13(d12):
+    return d12 + str((10 - sum(int(c) * (3 if i % 2 else 1) for i, c in enumerate(d12)) % 10) % 10)
+
+
+def barcode_photo(code):
+    img = zxingcpp.write_barcode_to_image(zxingcpp.create_barcode(code, zxingcpp.BarcodeFormat.EAN13), scale=4)
+    mv = memoryview(img)
+    bars = Image.frombytes("L", (mv.shape[1], mv.shape[0]), bytes(mv)).convert("RGB")
+    photo = Image.new("RGB", (bars.width + 300, bars.height + 400), (235, 230, 220))
+    photo.paste(bars, (150, 200))
+    buf = io.BytesIO()
+    photo.save(buf, "JPEG", quality=90)
+    return buf.getvalue()
+
+
+fetched = []
+OFF_PRODUCTS = {
+    "8594001234565": {"product_name": "Rohlík tukový", "brands": "Pekárna Test", "serving_quantity": 43, "serving_size": "1 ks",
+                      "nutriments": {"energy-kcal_100g": 290, "proteins_100g": 9, "carbohydrates_100g": 52, "fat_100g": 5}},
+    "8594001111110": {"product_name": "Rozbitý", "nutriments": {"energy-kcal_100g": 4000}},
+}
+
+
+def fake_off(code):
+    fetched.append(code)
+    return OFF_PRODUCTS.get(code)
+
+
+food.api.barcode_fetch = fake_off
+hit = client.get("/api/food/barcode/8590000000097").json()
+check("barcode found in the catalogue", hit["food"]["name"] == "Tatranka lísková" and hit["found"] == "local" and not fetched)
+live = client.get("/api/food/barcode/8594001234565").json()
+check("unknown barcode falls back to OFF", live["found"] == "off" and live["food"]["name"] == "Rohlík tukový" and fetched == ["8594001234565"])
+check("OFF result is saved to the catalogue", client.get("/api/food/barcode/8594001234565").json()["found"] == "local" and len(fetched) == 1)
+check("saved OFF product is searchable", names("rohlik tuk")[0] == "Rohlík tukový")
+check("nonsense from OFF is not saved", client.get("/api/food/barcode/8594001111110").json()["food"] is None)
+check("barcode unknown everywhere is not found", client.get("/api/food/barcode/8594009999998").json() == {"barcode": "8594009999998", "food": None, "found": None})
+check("non-digit barcode is rejected", client.get("/api/food/barcode/abc").status_code == 400)
+client.post("/api/food/foods", json={"name": "Americký dovoz", "barcode": "0036000291452", "kcal_100g": 100})
+check("UPC-A matches its EAN-13 form", client.get("/api/food/barcode/036000291452").json()["food"]["name"] == "Americký dovoz")
+
+
+def offline(code):
+    raise AssertionError("must not be called")
+
+
+food.api.barcode_fetch = None
+import food.barcode as fb  # noqa: E402
+fb.OFF_API = "http://127.0.0.1:9/api/v2/product/{code}.json"   # nothing listens there
+check("offline OFF lookup is just not found", client.get("/api/food/barcode/8594007777773").json()["food"] is None)
+food.api.barcode_fetch = fake_off
+
+mine_code = ean13("859400555555")
+client.post("/api/food/foods", json={"name": "Domácí granola", "barcode": mine_code, "kcal_100g": 450, "protein_100g": 10,
+                                     "carbs_100g": 55, "fat_100g": 20})
+scan = client.post("/api/food/barcode/scan", files={"image": ("scan.jpg", barcode_photo(mine_code), "image/jpeg")}).json()
+check("barcode is read from a photo", scan["barcode"] == mine_code)
+check("scanned code finds my own food first", scan["food"]["name"] == "Domácí granola")
+unknown = ean13("859400666666")
+scan = client.post("/api/food/barcode/scan", files={"image": ("scan.jpg", barcode_photo(unknown), "image/jpeg")}).json()
+check("scan of an unknown product returns the code for a new food", scan["barcode"] == unknown and scan["food"] is None)
+blank = io.BytesIO()
+Image.new("RGB", (400, 300), "white").save(blank, "JPEG")
+check("photo without a barcode", client.post("/api/food/barcode/scan", files={"image": ("x.jpg", blank.getvalue(), "image/jpeg")}).json()["barcode"] is None)
+check("non-image upload does not crash", client.post("/api/food/barcode/scan", files={"image": ("x.heic", b"not an image", "image/heic")}).status_code == 200)
+
 backup = client.get("/api/export").json()
 check("backup includes the food log", len(backup["food"]["log"]) == 7 and len(backup["food"]["goals"]) == 2)
 check("backup keeps the training sections", {"profile", "routines", "days", "workouts"} <= backup.keys())
