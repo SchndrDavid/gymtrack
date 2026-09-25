@@ -132,6 +132,18 @@ async def barcode_scan(image: UploadFile = File(...)):
         return _barcode_result(conn, codes[0])
 
 
+@router.post("/barcode/decode")
+async def barcode_decode(image: UploadFile = File(...)):
+    """Codes in one camera frame, nothing else — the live scanner calls this a couple of times a second."""
+    try:
+        data = await image.read(barcode.MAX_IMAGE_BYTES + 1)
+    finally:
+        await image.close()
+    if len(data) > barcode.MAX_IMAGE_BYTES:
+        raise HTTPException(413, "image too large")
+    return {"codes": barcode.decode(data)}
+
+
 class FoodIn(BaseModel):
     name: str
     brand: str = ""

@@ -55,8 +55,11 @@ without it the prompt tells the AI to assume 75 kg and say so.
 - **Portions, not arithmetic.** Picking a food opens a panel with the serving prefilled (1 egg,
   1 pot of yoghurt) and ½ / 1 / 2 × buttons, totals update as you type, and the meal is preselected
   by the time of day. **Quick add** takes just a number for the restaurant guess.
-- **Barcodes from a photo.** Over plain `http://` the iPhone refuses a live camera, so *Scan* takes an
-  ordinary photo and the server reads the code. Unknown codes are looked up live on Open Food Facts
+- **Barcodes, live or from a photo.** On an `https://` address *Scan* opens a live camera view and
+  reads the code as soon as it is in the frame (the browser's own detector where it has one, else
+  the server reads a small frame a few times a second). Over plain `http://` browsers refuse a live
+  camera, so *Scan* takes an ordinary photo and the server reads that — see
+  [HTTPS through Tailscale](docs/deployment.md#live-barcode-scanning-https) to get the live view. Unknown codes are looked up live on Open Food Facts
   and remembered; still unknown, you get a *New food* form with the code filled in. Or type the EAN.
 - **Recipes from [MordorCook](https://github.com/SchndrDavid/mordorcook).** *Recipes* lists the recipes
   of your MordorCook, fetched from it each time you open the list. Every ingredient is matched to a
@@ -261,6 +264,7 @@ Food, all under `/api/food`:
 | `GET` `POST` | `/weight`                 | Body weight with 7-day average; `DELETE /weight/{date}`   |
 | `GET`    | `/barcode/{code}`             | Catalogue, then live Open Food Facts                      |
 | `POST`   | `/barcode/scan`               | Read a barcode from an uploaded photo (not stored)        |
+| `POST`   | `/barcode/decode`             | Codes in one live-camera frame, no lookup                 |
 | `GET`    | `/recipes`                    | Recipes stored as foods                                   |
 | `POST`   | `/recipes/sync`               | Mirror the recipes from MordorCook                        |
 | `POST`   | `/recipes/import`, `/recipes/preview` | Store or just analyse one recipe JSON             |

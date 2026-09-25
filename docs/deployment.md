@@ -78,6 +78,21 @@ is not touched: the Food tables are added to `gymtrack.db` next to the old ones 
 To run the OFF import with lower priority next to other services, prefix it with `nice`:
 `… exec gymtrack nice -n 19 python scripts/import_off.py`.
 
+## Live barcode scanning (HTTPS)
+
+Browsers only open a live camera on a secure page. Over `http://100.108.145.60:8101` the Scan button
+therefore takes a photo instead. Tailscale can put GymTrack on HTTPS with a real certificate, still
+reachable only inside your tailnet:
+
+```bash
+sudo tailscale serve --bg 8101
+tailscale serve status        # prints the https://<server>.<tailnet>.ts.net address
+```
+
+Open that address on the phone (and add it to the home screen again). The old `http://` address keeps
+working with photo scanning. If HTTPS is not enabled for your tailnet yet, the command says where
+to turn it on in the Tailscale admin console. `sudo tailscale serve --https=443 off` undoes it.
+
 ## Backups
 
 Your data is `data/gymtrack.db`; `data/foods.db` is the re-importable catalogue and needs no backup.

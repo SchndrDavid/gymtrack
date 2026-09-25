@@ -304,6 +304,18 @@ h1{font-size:34px;line-height:1.05;font-weight:700;letter-spacing:-.5px;margin:0
 .ctip b{font-family:var(--round)}
 .ctip span{color:var(--fg-2)}
 
+.live{background:#000}
+.lv-body{position:relative;flex:1;overflow:hidden;display:flex;align-items:center;justify-content:center}
+.lv-body video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.lv-frame{position:relative;width:min(84vw,520px);aspect-ratio:2.2/1;border-radius:16px;
+  box-shadow:0 0 0 100vmax rgba(0,0,0,.45);border:2px solid rgba(255,255,255,.85)}
+.lv-frame i{position:absolute;left:8%;right:8%;top:50%;height:2px;background:var(--red);opacity:.8;
+  animation:lvscan 1.6s ease-in-out infinite alternate}
+@keyframes lvscan{from{transform:translateY(-38px)}to{transform:translateY(38px)}}
+.lv-status{position:absolute;left:0;right:0;bottom:calc(env(safe-area-inset-bottom) + 28px);text-align:center;
+  font-size:15px;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.8);margin:0;padding:0 20px}
+.lv-body.hit .lv-frame{border-color:var(--green)}
+
 .attrib{font-size:11px;color:var(--fg-3);text-align:center;margin:26px 0 0;line-height:1.5}
 
 /* Desktop only — on a phone, and in the home-screen app, the screen is for training. */
@@ -551,6 +563,19 @@ h1{font-size:34px;line-height:1.05;font-weight:700;letter-spacing:-.5px;margin:0
     <div class="seg mealseg" id="po-meal"></div>
     <div class="dstats" id="po-stats"></div>
     <button class="cta ghost red" id="po-delete" hidden>Delete entry</button>
+  </div>
+</div>
+
+<div class="sheet live" id="sheet-live">
+  <div class="sheet-bar">
+    <button id="lv-close">Close</button>
+    <b>Scan barcode</b>
+    <button id="lv-photo">Photo</button>
+  </div>
+  <div class="lv-body">
+    <video id="lv-video" playsinline muted autoplay></video>
+    <div class="lv-frame"><i></i></div>
+    <p class="lv-status" id="lv-status">Starting the camera…</p>
   </div>
 </div>
 
@@ -2040,7 +2065,99 @@ function barcodeResult(res){
   $('#f-ean-form').hidden = false; $('#f-ean').focus();
 }
 
-$('#f-scan').onclick = () => $('#f-scan-file').click();
+/* Live scanning needs a secure page (https:// or localhost) — browsers refuse the camera otherwise.
+   Frames are read by the browser's own BarcodeDetector where it exists, otherwise by the server. */
+const liveScanOK = () => window.isSecureContext && !!navigator.mediaDevices?.getUserMedia;
+let lv = null;
+
+$('#f-scan').onclick = () => liveScanOK() ? openLive() : $('#f-scan-file').click();
+
+async function openLive(){
+  $('#lv-status').textContent = 'Starting the camera…';
+  $('.lv-body').classList.remove('hit');
+  $('#sheet-live').classList.add('open');
+  let stream;
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({audio: false,
+      video: {facingMode: {ideal: 'environment'}, width: {ideal: 1280}, height: {ideal: 720}}});
+  } catch(e){
+    $('#sheet-live').classList.remove('open');
+    toast('No camera access — take a photo instead');
+    $('#f-scan-file').click();
+    return;
+  }
+  let detector = null;
+  try {
+    if ('BarcodeDetector' in window){
+      const formats = await BarcodeDetector.getSupportedFormats();
+      const want = ['ean_13', 'ean_8', 'upc_a', 'upc_e'].filter(f => formats.includes(f));
+      if (want.length) detector = new BarcodeDetector({formats: want});
+    }
+  } catch(e){ detector = null; }
+  lv = {stream, detector, busy: false, timer: null, canvas: document.createElement('canvas'), done: false};
+  const video = $('#lv-video');
+  video.srcObject = stream;
+  try { await video.play(); } catch(e){}
+  $('#lv-status').textContent = 'Point the camera at the barcode';
+  lvTick();
+}
+
+function lvStop(){
+  if (!lv) return;
+  clearTimeout(lv.timer);
+  lv.stream.getTracks().forEach(t => t.stop());
+  $('#lv-video').srcObject = null;
+  lv.done = true; lv = null;
+}
+
+/* The middle of the frame, where the guide box is — smaller upload, fewer false reads. */
+function lvFrame(){
+  const v = $('#lv-video'), w = v.videoWidth, h = v.videoHeight;
+  if (!w || !h) return null;
+  const cw = Math.round(w * .9), ch = Math.round(h * .5), k = Math.min(1, 960 / cw);
+  const c = lv.canvas; c.width = Math.round(cw * k); c.height = Math.round(ch * k);
+  c.getContext('2d').drawImage(v, (w - cw) / 2, (h - ch) / 2, cw, ch, 0, 0, c.width, c.height);
+  return c;
+}
+
+async function lvTick(){
+  if (!lv || lv.done) return;
+  const me = lv;
+  let code = null;
+  try {
+    const c = lvFrame();
+    if (c && me.detector){
+      const found = await me.detector.detect(c);
+      code = found.map(f => f.rawValue).find(v => /^\d{8,14}$/.test(v)) || null;
+    } else if (c){
+      const blob = await new Promise(r => c.toBlob(r, 'image/jpeg', .8));
+      const form = new FormData(); form.append('image', blob, 'frame.jpg');
+      const r = await fetch(BASE + '/api/food/barcode/decode', {method: 'POST', body: form});
+      if (r.ok) code = (await r.json()).codes[0] || null;
+    }
+  } catch(e){}
+  if (me.done) return;
+  if (code) return lvFound(code);
+  me.timer = setTimeout(lvTick, me.detector ? 120 : 350);
+}
+
+async function lvFound(code){
+  $('.lv-body').classList.add('hit');
+  $('#lv-status').textContent = `Found ${code} — looking it up…`;
+  try { navigator.vibrate?.(60); } catch(e){}
+  beep();
+  lvStop();
+  let res;
+  try { res = await api('/api/food/barcode/' + code); } catch(e){ res = {barcode: code, food: null}; }
+  $('#sheet-live').classList.remove('open');
+  barcodeResult(res);
+}
+
+$('#lv-close').onclick = () => { lvStop(); $('#sheet-live').classList.remove('open'); };
+$('#lv-photo').onclick = () => { lvStop(); $('#sheet-live').classList.remove('open'); $('#f-scan-file').click(); };
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden && lv){ lvStop(); $('#sheet-live').classList.remove('open'); }
+});
 $('#f-scan-file').addEventListener('change', async e => {
   const file = e.target.files[0]; e.target.value = '';
   if (!file) return;
