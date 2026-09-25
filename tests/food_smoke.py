@@ -172,4 +172,109 @@ check("food lookup by ref", client.get("/api/food/foods/usda:1002").json()["serv
 check("unknown ref is 404", client.get("/api/food/foods/off:0000").status_code == 404)
 check("training state still loads", client.get("/api/state").status_code == 200)
 
+# ─── log, day view, snapshots ───────────────────────────────────────────────
+D1, D2 = "2026-09-20", "2026-09-21"
+r = client.post("/api/food/log", json={"date": D1, "meal": "breakfast", "food_ref": "usda:1002", "grams": 100})
+egg = r.json()["entry"]
+check("logging a food stores a snapshot", egg["kcal"] == 143 and egg["protein"] == 12.6 and egg["name"] == "Vejce slepičí syrové")
+client.post("/api/food/log", json={"date": D1, "meal": "lunch", "food_ref": "usda:1003", "grams": 250})
+quick = client.post("/api/food/log", json={"date": D1, "meal": "dinner", "kcal": 800, "name": "Restaurace"}).json()["entry"]
+check("quick add needs no food", quick["food_ref"] is None and quick["entry_method"] == "quick" and quick["kcal"] == 800)
+check("bad meal is rejected", client.post("/api/food/log", json={"date": D1, "meal": "brunch", "kcal": 10}).status_code == 400)
+check("bad date is rejected", client.post("/api/food/log", json={"date": "yesterday", "meal": "lunch", "kcal": 10}).status_code == 400)
+check("unknown food is rejected", client.post("/api/food/log", json={"date": D1, "meal": "lunch", "food_ref": "usda:9", "grams": 5}).status_code == 400)
+check("zero grams is rejected", client.post("/api/food/log", json={"date": D1, "meal": "lunch", "food_ref": "usda:1002", "grams": 0}).status_code == 400)
+check("quick add without kcal is rejected", client.post("/api/food/log", json={"date": D1, "meal": "lunch"}).status_code == 400)
+
+day = client.get("/api/food/day", params={"date": D1}).json()
+check("day lists its entries", len(day["entries"]) == 3)
+check("day totals add up", day["totals"]["kcal"] == round(143 + 325 + 800, 1))
+check("day splits by meal", day["meals"]["lunch"]["kcal"] == 325 and day["meals"]["snack"]["kcal"] == 0)
+check("no goal yet", day["goal"] is None)
+
+edited = client.patch(f"/api/food/log/{egg['id']}", json={"grams": 50, "meal": "snack"}).json()["entry"]
+check("editing grams rescales the snapshot", edited["kcal"] == 71.5 and edited["grams"] == 50 and edited["meal"] == "snack")
+check("editing a quick add changes kcal",
+      client.patch(f"/api/food/log/{quick['id']}", json={"kcal": 750}).json()["entry"]["kcal"] == 750)
+check("editing a missing entry is 404", client.patch("/api/food/log/99999", json={"grams": 5}).status_code == 404)
+
+cat = import_basic.open_catalog(os.environ["GYMTRACK_FOODS_DB"])
+cat.execute("UPDATE foods SET kcal_100g=999, name='Changed' WHERE source_id='1003'")
+cat.commit()
+cat.close()
+check("catalogue changes never rewrite history",
+      [e for e in client.get("/api/food/day", params={"date": D1}).json()["entries"] if e["meal"] == "lunch"][0]["kcal"] == 325)
+
+copied = client.post("/api/food/log/copy", json={"from_date": D1, "to_date": D2, "meal": "lunch"}).json()
+check("copy a meal to another day", copied["copied"] == 1
+      and client.get("/api/food/day", params={"date": D2}).json()["meals"]["lunch"]["kcal"] == 325)
+client.post("/api/food/log/copy", json={"from_date": D1, "to_date": D2, "meal": "dinner", "to_meal": "lunch"})
+check("copy into a different meal", client.get("/api/food/day", params={"date": D2}).json()["meals"]["lunch"]["kcal"] == 1075)
+check("copy rejects an unknown meal", client.post("/api/food/log/copy", json={"from_date": D1, "to_date": D2, "meal": "x"}).status_code == 400)
+
+batch = client.post("/api/food/log/batch", json={"items": [
+    {"date": D2, "meal": "dinner", "food_ref": "usda:1001", "grams": 150, "entry_method": "recipe"},
+    {"date": D2, "meal": "dinner", "food_ref": "usda:1005", "grams": 10, "entry_method": "recipe"}]}).json()
+check("multi-add logs every item", len(batch["entries"]) == 2 and batch["entries"][0]["entry_method"] == "recipe")
+check("multi-add is all or nothing", client.post("/api/food/log/batch", json={"items": [
+    {"date": D2, "meal": "dinner", "food_ref": "usda:1001", "grams": 150},
+    {"date": D2, "meal": "dinner", "food_ref": "usda:nope", "grams": 10}]}).status_code == 400
+      and len(client.get("/api/food/day", params={"date": D2}).json()["entries"]) == 4)
+
+victim = client.get("/api/food/day", params={"date": D2}).json()["entries"][0]["id"]
+client.delete(f"/api/food/log/{victim}")
+check("delete an entry", len(client.get("/api/food/day", params={"date": D2}).json()["entries"]) == 3)
+
+# ─── goals ──────────────────────────────────────────────────────────────────
+client.post("/api/food/goals", json={"effective_from": "2026-09-01", "kcal": 2200, "protein": 150, "carbs": 220, "fat": 70})
+client.post("/api/food/goals", json={"effective_from": D2, "kcal": 2000, "protein": 160, "carbs": 180, "fat": 65})
+check("goal applies from its date", client.get("/api/food/day", params={"date": D1}).json()["goal"]["kcal"] == 2200)
+check("a later goal takes over", client.get("/api/food/day", params={"date": D2}).json()["goal"]["kcal"] == 2000)
+check("days before any goal have none", client.get("/api/food/day", params={"date": "2026-08-01"}).json()["goal"] is None)
+check("same date replaces the goal",
+      len(client.post("/api/food/goals", json={"effective_from": D2, "kcal": 2100}).json()["goals"]) == 2)
+check("absurd goal is rejected", client.post("/api/food/goals", json={"effective_from": D2, "kcal": 50}).status_code == 400)
+summ = client.get("/api/food/summary", params={"start": "2026-09-01", "end": "2026-09-30"}).json()["days"]
+check("summary has one row per logged day", [d["date"] for d in summ] == [D1, D2])
+check("summary compares with that day's goal", summ[0]["goal"]["kcal"] == 2200 and summ[1]["goal"]["kcal"] == 2100)
+
+# ─── favourites, recent, custom foods ───────────────────────────────────────
+check("recently used foods come back on an empty query", "Rýže bílá dlouhozrnná (jasmínová, basmati) vařená" in names("")
+      or "Changed" in names(""))
+client.put("/api/food/favorites/off:8590000000097")
+check("favourite shows on an empty query", names("")[0] == "Tatranka lísková")
+check("favourite ranks first in search", names("t")[0] == "Tatranka lísková")
+check("favourite flag is returned", client.get("/api/food/foods/off:8590000000097").json()["favorite"] is True)
+client.delete("/api/food/favorites/off:8590000000097")
+check("unfavourite", client.get("/api/food/foods/off:8590000000097").json()["favorite"] is False)
+check("favouriting an unknown food is 404", client.put("/api/food/favorites/usda:0").status_code == 404)
+
+mine = client.post("/api/food/foods", json={"name": "Babiččin guláš", "kcal_100g": 180, "protein_100g": 12,
+                                            "carbs_100g": 8, "fat_100g": 11, "serving_g": 350, "serving_label": "1 talíř"}).json()
+check("custom food is created", mine["ref"].startswith("user:") and mine["source"] == "custom")
+check("custom food is searchable", names("gulas")[0] == "Babiččin guláš")
+check("impossible custom food is rejected", client.post("/api/food/foods", json={"name": "X", "kcal_100g": 5000}).status_code == 400)
+check("catalogue foods cannot be edited", client.put("/api/food/foods/usda:1002", json={"name": "X", "kcal_100g": 1}).status_code == 400)
+client.post("/api/food/log", json={"date": D2, "meal": "lunch", "food_ref": mine["ref"], "grams": 350})
+client.put(f"/api/food/foods/{mine['ref']}", json={"name": "Guláš", "kcal_100g": 100})
+check("editing a custom food keeps logged snapshots",
+      any(e["name"] == "Babiččin guláš" and e["kcal"] == 630 for e in client.get("/api/food/day", params={"date": D2}).json()["entries"]))
+client.delete(f"/api/food/foods/{mine['ref']}")
+check("deleting a custom food keeps the log", len(client.get("/api/food/day", params={"date": D2}).json()["entries"]) == 4)
+
+# ─── body weight ────────────────────────────────────────────────────────────
+for i, kg in enumerate([80, 80.4, 79.8, 80.2, 79.6, 79.9, 79.4, 79.2]):
+    client.post("/api/food/weight", json={"date": f"2026-09-{i + 1:02d}", "kg": kg})
+w = client.get("/api/food/weight", params={"start": "2026-09-01", "end": "2026-09-30"}).json()["weights"]
+check("weights are listed", len(w) == 8)
+check("7-day moving average", w[6]["avg7"] == round(sum([80, 80.4, 79.8, 80.2, 79.6, 79.9, 79.4]) / 7, 2)
+      and w[7]["avg7"] == round(sum([80.4, 79.8, 80.2, 79.6, 79.9, 79.4, 79.2]) / 7, 2))
+check("absurd weight is rejected", client.post("/api/food/weight", json={"date": D1, "kg": 5}).status_code == 400)
+client.delete("/api/food/weight/2026-09-08")
+check("delete a weight", len(client.get("/api/food/weight", params={"start": "2026-09-01", "end": "2026-09-30"}).json()["weights"]) == 7)
+
+backup = client.get("/api/export").json()
+check("backup includes the food log", len(backup["food"]["log"]) == 7 and len(backup["food"]["goals"]) == 2)
+check("backup keeps the training sections", {"profile", "routines", "days", "workouts"} <= backup.keys())
+
 print(f"\n{checks} checks passed")

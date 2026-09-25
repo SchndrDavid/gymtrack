@@ -358,7 +358,7 @@ def parse(body: RawText):
 
 @app.get("/api/export")
 def export_all():
-    """Full backup — plans, days and workout history."""
+    """Full backup — plans, days, workout history and everything logged under Food."""
     with db() as conn:
         return {
             "gymtrack": 1,
@@ -370,6 +370,7 @@ def export_all():
                  "exercises": json.loads(r["payload"])}
                 for r in conn.execute("SELECT * FROM workouts ORDER BY date")
             ],
+            "food": food.api.export(),
         }
 
 
@@ -755,6 +756,11 @@ def exercise_history(name: str):
             if ex.get("name", "").lower() == name.lower() and ex.get("sets"):
                 return {"date": r["date"], "sets": ex["sets"]}
     return {"date": None, "sets": []}
+
+
+@app.get("/api/config")
+def get_config():
+    return {"version": VERSION, **food.api.config()}
 
 
 @app.get("/")
