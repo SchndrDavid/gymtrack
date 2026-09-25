@@ -1789,7 +1789,7 @@ async function catalogStatus(){
     box.hidden = false;
     text.textContent = imp.stage === 'basic' ? 'Downloading basic foods from USDA…'
       : imp.stage === 'index' ? 'Building the search index…'
-      : `Reading Open Food Facts: ${fmt(imp.off_lines)} products checked, ${fmt(imp.off_kept)} Czech and Slovak ones kept. `
+      : `Reading Open Food Facts: ${fmt(imp.off_lines)} products checked, ${fmt(imp.off_kept)} sold here kept. `
         + 'This takes 10–30 minutes; you can close the app meanwhile.';
     clearTimeout(catalogPoll); catalogPoll = setTimeout(catalogStatus, 4000);
     return;
@@ -1802,8 +1802,9 @@ async function catalogStatus(){
   }
   if (c.usda + c.off === 0){
     box.hidden = false; btn.textContent = 'Download food database';
-    text.textContent = 'Search needs the food database — about 400 basic foods (USDA) and Czech and Slovak '
-      + 'products from Open Food Facts. It is downloaded once to your server, 10–30 minutes in the background.';
+    text.textContent = 'Search needs the food database — about 400 basic foods (USDA) and products from Open Food Facts '
+      + 'sold here, own brands of Lidl, Kaufland, Albert, Billa, Penny and Tesco included. It is downloaded once '
+      + 'to your server, 10–30 minutes in the background.';
     return;
   }
   box.hidden = true;

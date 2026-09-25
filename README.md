@@ -50,7 +50,8 @@ without it the prompt tells the AI to assume 75 kg and say so.
 
 - **Search that keeps up with typing.** Prefix match on every word, diacritics optional (`rizek`
   finds *řízek*), favourites and what you ate lately first, then ~400 basic foods with USDA values,
-  then Czech and Slovak products from Open Food Facts.
+  then Open Food Facts products sold here — Czech and Slovak ones plus the own brands of Lidl,
+  Kaufland, Albert, Billa, Penny, Tesco and Globus, whatever country they were entered under.
 - **Portions, not arithmetic.** Picking a food opens a panel with the serving prefilled (1 egg,
   1 pot of yoghurt) and ½ / 1 / 2 × buttons, totals update as you type, and the meal is preselected
   by the time of day. **Quick add** takes just a number for the restaurant guess.
@@ -145,13 +146,18 @@ progress. The same can be done by hand, inside the container:
 #    SR Legacy release, takes values and fdc_id from it and writes data/basic_foods.json.
 docker compose -f /srv/compose/gymtrack.yml exec gymtrack python scripts/import_basic.py --build
 
-# 2. Open Food Facts: streams the whole export and keeps Czech and Slovak products with calories.
+# 2. Open Food Facts: streams the whole export and keeps products sold here (see below).
 docker compose -f /srv/compose/gymtrack.yml exec gymtrack python scripts/import_off.py
 ```
 
 The OFF export is a gzip of several gigabytes. It is decompressed on the fly and never stored, and
-memory use stays flat. Expect 10–30 minutes, mostly the download, on one core; the resulting
-`foods.db` is around 20–40 MB. Re-run it every few months to pick up new products — it upserts by
+memory use stays flat. Kept are products tagged Czechia or Slovakia, plus the own brands of the
+chains here (Lidl: Pilos, Milbona, Chef Select, Freeway…; Kaufland: K-Classic…; Albert, Billa/Clever,
+Penny, Tesco, Globus) and anything listed as sold at those stores, whatever its country — the same
+barcode is sold all over Europe and is often entered only once, in Germany or France, so some names
+will be German. The lists are `BRANDS` and `STORES` in `scripts/import_off.py`. Expect 10–30 minutes,
+mostly the download, on one core; `foods.db` should end up somewhere around 30–100 MB (an estimate —
+it depends on how many chain products Open Food Facts has at the time). Re-run it every few months to pick up new products — it upserts by
 barcode, and your food log is not affected. `--file dump.csv.gz` reads a local copy instead.
 
 **Basic foods.** `seed/basic_foods.src.json` maps each Czech name (*kuřecí prsa syrová*, *rýže

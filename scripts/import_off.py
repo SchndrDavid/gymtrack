@@ -1,4 +1,7 @@
-"""Import Czech and Slovak products from the Open Food Facts dump into data/foods.db.
+"""Import Open Food Facts products you can buy in Czechia into data/foods.db.
+
+Kept: everything tagged Czechia or Slovakia, plus the own brands of the chains here (Lidl,
+Kaufland, Albert, Billa, Penny, Tesco, Globus) whatever country they are tagged with.
 
     python scripts/import_off.py                    # stream the dump from openfoodfacts.org
     python scripts/import_off.py --file dump.csv.gz # or read a local copy
@@ -18,6 +21,7 @@ import gzip
 import io
 import sys
 import time
+import unicodedata
 import urllib.request
 from pathlib import Path
 
@@ -28,6 +32,41 @@ from food.catalog import clean_food, now_iso, open_catalog, rebuild_fts, upsert_
 DUMP_URL = "https://static.openfoodfacts.org/data/en.openfoodfacts.org.products.csv.gz"
 USER_AGENT = "GymTrack/1.0 (self-hosted)"
 COUNTRIES = ("en:czech-republic", "en:slovakia")
+
+# Chains that sell in Czechia, and their own brands. Their products carry the same barcode all
+# over Europe but are often tagged only with the country where someone first added them, so
+# they are kept whatever the country. Matched exactly against the (folded) brand or store name.
+STORES = {"lidl", "kaufland", "albert", "billa", "penny", "penny market", "tesco", "globus"}
+BRANDS = {
+    # Lidl
+    "lidl", "pilos", "milbona", "chef select", "freeway", "crownfield", "solevita", "deluxe",
+    "snack day", "favorina", "combino", "harvest basket", "alesto", "fin carre", "bellarom",
+    "sondey", "mcennedy", "italiamo", "nixe", "kania", "vitasia", "trattoria alfredo", "baresa",
+    "dulano", "pikok", "gelatelli", "sol & mar", "eridanous", "el tequito", "grafschafter",
+    "fairglobe", "envia", "golden seafood", "ocean sea", "belbake", "tastino", "maribel",
+    "freshona", "lord nelson", "bon gelati", "vemondo", "mister choc",
+    # Kaufland
+    "k-classic", "k classic", "k-bio", "k-to go", "k-free", "k-purland", "k-favourites",
+    # Albert, Billa, Penny, Tesco, Globus
+    "albert", "albert quality", "albert excellent", "albert bio", "billa", "clever", "billa bio",
+    "penny", "tesco", "tesco finest", "tesco value", "globus",
+}
+FILTER_COLUMNS = ("countries_tags", "brands", "stores")
+
+
+def fold(text: str) -> str:
+    text = text.lower()
+    if not text.isascii():
+        text = "".join(c for c in unicodedata.normalize("NFKD", text) if not unicodedata.combining(c))
+    return " ".join(text.split())
+
+
+def wanted(countries: str, brands: str, stores: str) -> bool:
+    if countries and any(c in countries.split(",") for c in COUNTRIES):
+        return True
+    if brands and any(fold(b) in BRANDS for b in brands.split(",")):
+        return True
+    return bool(stores) and any(fold(s) in STORES for s in stores.split(","))
 BATCH = 2000
 
 
@@ -47,15 +86,14 @@ def product_row(fields: list[str], col: dict[str, int], stamp: str) -> dict | No
         i = col.get(name)
         return fields[i].strip() if i is not None and i < len(fields) else ""
 
-    tags = get("countries_tags")
-    if not any(c in tags.split(",") for c in COUNTRIES):
+    if not wanted(get("countries_tags"), get("brands"), get("stores")):
         return None
     barcode = get("code")
     if not barcode.isdigit() or get("energy-kcal_100g") == "":
         return None
     serving_g = get("serving_quantity")
     food = clean_food({
-        "name": get("product_name_cs") or get("product_name") or get("generic_name"),
+        "name": get("product_name_cs") or get("product_name_sk") or get("product_name") or get("generic_name"),
         "brand": get("brands").split(",")[0],
         "kcal_100g": get("energy-kcal_100g"),
         "protein_100g": get("proteins_100g"),
@@ -79,6 +117,8 @@ def import_stream(conn, stream, progress=True, on_progress=None) -> tuple[int, i
     if missing:
         raise SystemExit(f"dump has no {', '.join(sorted(missing))} column — format changed?")
 
+    filter_idx = [col.get(c, 10**6) for c in FILTER_COLUMNS]
+    split_at = max(i for i in filter_idx if i < 10**6) + 1
     stamp, batch, kept, lines = now_iso(), [], 0, 0
     started = time.monotonic()
     for line in stream:
@@ -88,7 +128,9 @@ def import_stream(conn, stream, progress=True, on_progress=None) -> tuple[int, i
         if progress and lines % 500_000 == 0:
             print(f"  {lines:>10,} lines read, {kept:,} kept, {time.monotonic() - started:.0f} s",
                   flush=True)
-        if "en:czech-republic" not in line and "en:slovakia" not in line:
+        # Only the first few dozen columns are split to decide; the full split is for keepers.
+        head = line.split("\t", split_at)
+        if not wanted(*(head[i] if i < len(head) else "" for i in filter_idx)):
             continue
         row = product_row(line.rstrip("\r\n").split("\t"), col, stamp)
         if row is None:

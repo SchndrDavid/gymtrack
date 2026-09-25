@@ -116,18 +116,21 @@ check("re-import is an upsert", import_basic.import_seed(cat, seed_file) == 10
       and cat.execute("SELECT COUNT(*) FROM foods").fetchone()[0] == 10)
 
 # ─── a fake Open Food Facts dump ────────────────────────────────────────────
-OFF_HEADER = ["code", "product_name", "brands", "countries_tags", "serving_size", "serving_quantity",
+OFF_HEADER = ["code", "product_name", "brands", "stores", "countries_tags", "serving_size", "serving_quantity",
               "energy-kcal_100g", "proteins_100g", "carbohydrates_100g", "fat_100g", "fiber_100g"]
 OFF_ROWS = [
-    ["8590000000011", "Jogurt bílý", "Mlékárna Test", "en:czech-republic", "150 g", "150", "68", "4.5", "5.1", "3.2", ""],
-    ["8590000000028", "Jogurt jahodový", "Mlékárna Test", "en:czech-republic,en:slovakia", "", "", "95", "3.5", "14", "2.9", "0.2"],
-    ["8580000000035", "Kuřecí prsní řízek", "Řeznictví", "en:slovakia", "", "", "210", "18", "12", "10", ""],
-    ["4000000000042", "Joghurt Natur", "Test DE", "en:germany", "", "", "65", "4", "5", "3", ""],
-    ["8590000000059", "Nesmysl", "", "en:czech-republic", "", "", "1500", "1", "1", "1", ""],
-    ["8590000000066", "", "", "en:czech-republic", "", "", "100", "1", "1", "1", ""],
-    ["8590000000073", "Záporný", "", "en:czech-republic", "", "", "100", "-1", "1", "1", ""],
-    ["8590000000080", "Bez energie", "", "en:czech-republic", "", "", "", "1", "1", "1", ""],
-    ["8590000000097", "Tatranka lísková", "Opavia", "en:czech-republic", "1 ks (50 g)", "50", "520", "6.5", "60", "28", "2"],
+    ["8590000000011", "Jogurt bílý", "Mlékárna Test", "", "en:czech-republic", "150 g", "150", "68", "4.5", "5.1", "3.2", ""],
+    ["8590000000028", "Jogurt jahodový", "Mlékárna Test", "", "en:czech-republic,en:slovakia", "", "", "95", "3.5", "14", "2.9", "0.2"],
+    ["8580000000035", "Kuřecí prsní řízek", "Řeznictví", "", "en:slovakia", "", "", "210", "18", "12", "10", ""],
+    ["4000000000042", "Joghurt Natur", "Test DE", "", "en:germany", "", "", "65", "4", "5", "3", ""],
+    ["8590000000059", "Nesmysl", "", "", "en:czech-republic", "", "", "1500", "1", "1", "1", ""],
+    ["8590000000066", "", "", "", "en:czech-republic", "", "", "100", "1", "1", "1", ""],
+    ["8590000000073", "Záporný", "", "", "en:czech-republic", "", "", "100", "-1", "1", "1", ""],
+    ["8590000000080", "Bez energie", "", "", "en:czech-republic", "", "", "", "1", "1", "1", ""],
+    ["8590000000097", "Tatranka lísková", "Opavia", "", "en:czech-republic", "1 ks (50 g)", "50", "520", "6.5", "60", "28", "2"],
+    ["4056489000011", "Skyr natur", "Milbona", "", "en:germany", "150 g", "150", "63", "11", "4", "0.2", ""],
+    ["4337185000012", "Haferflocken", "Brand X", "Kaufland", "en:germany", "", "", "372", "13", "59", "7", "10"],
+    ["8710400000013", "Yoghurt", "AH", "Albert Heijn", "en:netherlands", "", "", "60", "4", "5", "3", ""],
 ]
 dump = TMP / "off.csv.gz"
 with gzip.open(dump, "wt", encoding="utf-8") as fh:
@@ -139,7 +142,10 @@ with import_off.open_stream(path=str(dump)) as stream:
 import_basic.rebuild_fts(cat)
 cat.commit()
 check("OFF import reads every line", lines == len(OFF_ROWS))
-check("OFF import keeps only valid CZ/SK products", kept == 4)
+check("OFF import keeps valid CZ/SK products and chain brands", kept == 6)
+check("a Lidl brand tagged only for Germany is kept", cat.execute("SELECT 1 FROM foods WHERE barcode='4056489000011'").fetchone() is not None)
+check("a product sold at Kaufland is kept", cat.execute("SELECT 1 FROM foods WHERE barcode='4337185000012'").fetchone() is not None)
+check("Albert Heijn is not Albert", cat.execute("SELECT 1 FROM foods WHERE barcode='8710400000013'").fetchone() is None)
 check("OFF import stores the barcode", cat.execute(
     "SELECT name FROM foods WHERE barcode='8590000000097'").fetchone()[0] == "Tatranka lísková")
 check("OFF import keeps the serving", cat.execute(
@@ -147,7 +153,7 @@ check("OFF import keeps the serving", cat.execute(
 with import_off.open_stream(path=str(dump)) as stream:
     import_off.import_stream(cat, stream, progress=False)
 check("OFF re-import upserts by barcode",
-      cat.execute("SELECT COUNT(*) FROM foods WHERE source='off'").fetchone()[0] == 4)
+      cat.execute("SELECT COUNT(*) FROM foods WHERE source='off'").fetchone()[0] == 6)
 cat.close()
 
 client = TestClient(main.app)
@@ -159,7 +165,7 @@ def names(q, **kw):
 
 
 stats = client.get("/api/food/catalog").json()
-check("catalogue stats", (stats["usda"], stats["off"], stats["user"], stats["import"]) == (10, 4, 0, None))
+check("catalogue stats", (stats["usda"], stats["off"], stats["user"], stats["import"]) == (10, 6, 0, None))
 check("search finds without diacritics: jogurt", "Jogurt bílý" in names("jogurt"))
 check("search folds diacritics: rizek → řízek", any("řízek" in n for n in names("rizek")))
 check("prefix per word: kuř pr → kuřecí prsa", names("kuř pr")[0] == "Kuřecí prsa syrová")
@@ -549,7 +555,7 @@ for _ in range(120):
         break
     time.sleep(0.25)
 check("catalogue import finishes", st["import"]["state"] == "done" and not st["import"]["errors"])
-check("catalogue import fills both sources", st["usda"] > 0 and st["off"] == 4)
+check("catalogue import fills both sources", st["usda"] > 0 and st["off"] == 6)
 check("imported catalogue is searchable", names("tatranka")[0] == "Tatranka lísková")
 
 print(f"\n{checks} checks passed")

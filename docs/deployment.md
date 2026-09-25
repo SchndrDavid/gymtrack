@@ -68,7 +68,7 @@ docker compose -f /srv/compose/gymtrack.yml up -d --build
 
 # basic foods from USDA (a few seconds after the download)
 docker compose -f /srv/compose/gymtrack.yml exec gymtrack python scripts/import_basic.py --build
-# Czech and Slovak products from Open Food Facts (10–30 min, one core, flat memory)
+# Open Food Facts products sold here (10–30 min, one core, flat memory)
 docker compose -f /srv/compose/gymtrack.yml exec gymtrack python scripts/import_off.py
 ```
 
