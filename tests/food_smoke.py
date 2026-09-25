@@ -345,6 +345,129 @@ Image.new("RGB", (400, 300), "white").save(blank, "JPEG")
 check("photo without a barcode", client.post("/api/food/barcode/scan", files={"image": ("x.jpg", blank.getvalue(), "image/jpeg")}).json()["barcode"] is None)
 check("non-image upload does not crash", client.post("/api/food/barcode/scan", files={"image": ("x.heic", b"not an image", "image/heic")}).status_code == 200)
 
+# ─── recipes and MordorCook ─────────────────────────────────────────────────
+import http.server  # noqa: E402
+import threading  # noqa: E402
+
+GARLIC_CHICKEN = {
+    "id": "a1b2c3", "title": "Kuře na česneku", "servings": 4, "updated_at": "2026-09-01T10:00:00Z",
+    "ingredients": [
+        {"amount": 600, "unit": "g", "item": "kuřecí prsa", "note": "", "group": ""},
+        {"amount": 2, "unit": "lžíce", "item": "olivového oleje", "note": "", "group": ""},
+        {"amount": 4, "unit": "stroužky", "item": "česneku", "note": "", "group": ""},
+        {"amount": 1, "unit": "", "item": "cibule", "note": "", "group": ""},
+        {"amount": 2, "unit": "ks", "item": "vejce", "note": "", "group": ""},
+        {"amount": 200, "unit": "ml", "item": "mléka", "note": "", "group": ""},
+        {"amount": None, "unit": "", "item": "sůl", "note": "podle chuti", "group": ""},
+        {"amount": 1, "unit": "špetka", "item": "pepře", "note": "", "group": ""},
+    ],
+}
+MYSTERY = {
+    "id": "d4e5f6", "title": "Smetanová omáčka", "servings": 2, "updated_at": "2026-09-02T10:00:00Z",
+    "ingredients": [
+        {"amount": 1, "unit": "cup", "item": "zakysaná smetana"},
+        {"amount": 1, "unit": "tbsp", "item": "olive oil"},
+        {"amount": None, "unit": "", "item": "olej na smažení"},
+    ],
+}
+ENGLISH = {"id": "e1", "title": "Eggs and onion", "servings": 1, "updated_at": "x",
+           "ingredients": [{"amount": 3, "unit": "", "item": "large eggs"}, {"amount": 1, "unit": "", "item": "onion, chopped"}]}
+
+a = client.post("/api/food/recipes/preview", json=GARLIC_CHICKEN).json()
+by_item = {x["item"]: x for x in a["ingredients"]}
+check("recipe: grams pass through", by_item["kuřecí prsa"]["grams"] == 600 and by_item["kuřecí prsa"]["food"]["name"] == "Kuřecí prsa syrová")
+check("recipe: Czech inflection still matches", by_item["olivového oleje"]["food"]["name"] == "Olivový olej")
+check("recipe: spoons of oil use its density", by_item["olivového oleje"]["grams"] == round(2 * 15 * 0.92, 1))
+check("recipe: cloves use the USDA clove weight", by_item["česneku"]["grams"] == 12)
+check("recipe: a bare count uses the piece weight", by_item["cibule"]["grams"] == 110 and by_item["vejce"]["grams"] == 100)
+check("recipe: millilitres of milk", by_item["mléka"]["grams"] == 206)
+check("recipe: salt and pepper are negligible", by_item["sůl"]["status"] == "ignored" and by_item["pepře"]["status"] == "ignored")
+check("recipe: fully matched", a["ok"] and a["problems"] == 0)
+check("recipe: per portion is a quarter", a["food"]["serving_g"] == round(a["total_grams"] / 4, 1)
+      and a["food"]["per_serving"]["kcal"] == round(a["totals"]["kcal"] / 4, 1))
+
+e = client.post("/api/food/recipes/preview", json=ENGLISH).json()
+check("recipe: English ingredients find basic foods", e["ok"] and e["ingredients"][0]["grams"] == 150 and e["ingredients"][1]["grams"] == 110)
+
+m = client.post("/api/food/recipes/preview", json=MYSTERY).json()
+st = {x["item"]: x for x in m["ingredients"]}
+check("recipe: unknown ingredient is unmatched", st["zakysaná smetana"]["status"] == "unmatched")
+check("recipe: tablespoon of oil is fine", st["olive oil"]["status"] == "matched" and st["olive oil"]["grams"] == 13.8)
+check("recipe: no amount means ask", st["olej na smažení"]["status"] == "unmatched" and st["olej na smažení"]["reason"] == "no amount given")
+check("recipe with problems is not saved", client.post("/api/food/recipes/import", json=MYSTERY).status_code == 422)
+
+client.post("/api/food/mappings", json={"item": "zakysaná smetana", "food_ref": "usda:1004", "grams": 230, "amount": 1, "unit": "cup"})
+client.post("/api/food/mappings", json={"item": "olej na smažení", "food_ref": "usda:1005", "grams": 15})
+m = client.post("/api/food/recipes/preview", json=MYSTERY).json()
+st = {x["item"]: x for x in m["ingredients"]}
+check("mapping: remembered unit weight", st["zakysaná smetana"]["grams"] == 230 and st["zakysaná smetana"]["reason"] == "remembered unit weight")
+check("mapping: remembered fixed amount", st["olej na smažení"]["grams"] == 15)
+check("mapping: scales with the amount", client.post("/api/food/recipes/preview", json={
+    "title": "x", "ingredients": [{"amount": 2, "unit": "cup", "item": "Zakysaná  smetana"}]}).json()["ingredients"][0]["grams"] == 460)
+check("mapping: unknown food is rejected", client.post("/api/food/mappings", json={"item": "x", "food_ref": "usda:0"}).status_code == 400)
+client.post("/api/food/mappings", json={"item": "mléka", "ignore": True})
+check("mapping: ignore on purpose", {x["item"]: x for x in client.post("/api/food/recipes/preview", json=GARLIC_CHICKEN).json()["ingredients"]}["mléka"]["status"] == "ignored")
+client.delete("/api/food/mappings/mleka")
+check("mapping: listed and deletable", all(x["key"] != "mleka" for x in client.get("/api/food/mappings").json()["mappings"]))
+
+imp = client.post("/api/food/recipes/import", json={"recipe": MYSTERY}).json()
+check("recipe import stores a food", imp["ok"] and imp["food"]["source"] == "recipe" and imp["food"]["serving_label"] == "1 portion")
+check("recipe food is searchable", names("smetanova omacka")[0] == "Smetanová omáčka")
+own = client.post("/api/food/recipes/import", json={"title": "Protein shake", "servings": 1,
+      "ingredients": [{"amount": 300, "unit": "g", "item": "x"}],
+      "nutrition": {"per": "serving", "kcal": 350, "protein": 40, "carbs": 30, "fat": 6, "serving_g": 350}}).json()
+check("recipe with its own nutrition uses it", own["ok"] and own["food"]["kcal_100g"] == 100 and own["analysis"]["nutrition_source"] == "recipe")
+check("recipe without a title is rejected", client.post("/api/food/recipes/import", json={"servings": 2}).status_code == 400)
+
+check("sync without MORDORCOOK_URL is refused", client.post("/api/food/recipes/sync").status_code == 400)
+check("config hides MordorCook when unset", client.get("/api/config").json()["mordorcook_enabled"] is False)
+
+
+class FakeMordorCook(http.server.BaseHTTPRequestHandler):
+    recipes = [GARLIC_CHICKEN, MYSTERY, {"title": ""}]
+
+    def do_GET(self):  # noqa: N802
+        body = json.dumps(self.recipes).encode() if self.path == "/api/recipes" else b"{}"
+        self.send_response(200 if self.path == "/api/recipes" else 404)
+        self.send_header("Content-Type", "application/json")
+        self.end_headers()
+        self.wfile.write(body)
+
+    def log_message(self, *a):
+        pass
+
+
+srv = http.server.HTTPServer(("127.0.0.1", 0), FakeMordorCook)
+threading.Thread(target=srv.serve_forever, daemon=True).start()
+os.environ["MORDORCOOK_URL"] = f"http://127.0.0.1:{srv.server_port}/"
+check("config shows MordorCook when set", client.get("/api/config").json()["mordorcook_enabled"] is True)
+sync = client.post("/api/food/recipes/sync").json()
+check("sync reads every recipe", sync["total"] == 3 and len(sync["errors"]) == 1)
+check("sync saves matched recipes", sync["saved"] == ["Kuře na česneku"])
+check("sync recognises a recipe imported before", sync["unchanged"] == 1)
+again = client.post("/api/food/recipes/sync").json()
+check("sync skips unchanged recipes", again["unchanged"] == 2 and again["saved"] == [])
+FakeMordorCook.recipes = [dict(GARLIC_CHICKEN, updated_at="2026-09-03T00:00:00Z",
+                               ingredients=GARLIC_CHICKEN["ingredients"] + [{"amount": 100, "unit": "g", "item": "tajná přísada"}])]
+changed = client.post("/api/food/recipes/sync").json()
+check("changed recipe with a new unknown ingredient waits", changed["saved"] == [] and len(changed["pending"]) == 1
+      and changed["pending"][0]["problems"] == 1)
+listed = client.get("/api/food/recipes").json()
+check("recipes are listed", {r["name"] for r in listed["recipes"]} >= {"Kuře na česneku", "Smetanová omáčka"})
+garlic = [r for r in listed["recipes"] if r["name"] == "Kuře na česneku"][0]
+check("stored recipe keeps its previous values until resolved", garlic["details"]["updated_at"] == "2026-09-01T10:00:00Z")
+items = client.get(f"/api/food/recipes/{garlic['ref']}/items", params={"portions": 2}).json()["items"]
+check("recipe breaks down into ingredients per portion", len(items) == 6 and items[0]["grams"] == 300)
+check("breakdown carries the food", items[0]["food"]["name"] == "Kuřecí prsa syrová")
+srv.shutdown()
+os.environ["MORDORCOOK_URL"] = "http://127.0.0.1:9"
+check("unreachable MordorCook is a clear error", client.post("/api/food/recipes/sync").status_code == 502)
+os.environ.pop("MORDORCOOK_URL")
+logged = client.post("/api/food/log", json={"date": D2, "meal": "dinner", "food_ref": garlic["ref"],
+                                            "grams": garlic["serving_g"], "entry_method": "recipe"}).json()["entry"]
+check("a portion of a recipe is logged", logged["kcal"] == round(garlic["kcal_100g"] * garlic["serving_g"] / 100, 1))
+client.delete(f"/api/food/log/{logged['id']}")
+
 backup = client.get("/api/export").json()
 check("backup includes the food log", len(backup["food"]["log"]) == 7 and len(backup["food"]["goals"]) == 2)
 check("backup keeps the training sections", {"profile", "routines", "days", "workouts"} <= backup.keys())

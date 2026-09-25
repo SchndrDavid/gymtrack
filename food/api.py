@@ -1,12 +1,14 @@
 """HTTP API of the Food module. Mounted by main.py under /api/food."""
 
+import os
 from datetime import date as Date, timedelta
 from typing import Any
 
 from fastapi import APIRouter, File, HTTPException, UploadFile
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
-from . import barcode, catalog, log
+from . import barcode, catalog, log, recipes
 from .catalog import clean_food, connect, food_dict, get_food, now_iso
 from .search import search as run_search
 
@@ -379,6 +381,117 @@ def delete_weight(day: str):
     return {"ok": True}
 
 
+# ─── recipes ────────────────────────────────────────────────────────────────
+
+def mordorcook_url() -> str:
+    return os.environ.get("MORDORCOOK_URL", "").strip().rstrip("/")
+
+
+class RecipeImport(BaseModel):
+    recipe: dict[str, Any] | None = None     # {"recipe": {...}} or the recipe itself
+    origin: str = "import"
+
+    model_config = {"extra": "allow"}
+
+    def payload(self) -> dict:
+        if self.recipe is not None:
+            return self.recipe
+        return {k: v for k, v in (self.model_extra or {}).items()}
+
+
+class MappingIn(BaseModel):
+    item: str
+    food_ref: str | None = None
+    ignore: bool = False
+    grams: float | None = None       # weight of the line as written in the recipe
+    amount: float | None = None
+    unit: str = ""
+
+
+@router.get("/recipes")
+def list_recipes():
+    with connect() as conn:
+        rows = conn.execute("SELECT * FROM user_foods WHERE source='recipe' ORDER BY name COLLATE NOCASE").fetchall()
+        return {"mordorcook": bool(mordorcook_url()), "recipes": [recipes.recipe_dict(r) for r in rows]}
+
+
+@router.post("/recipes/preview")
+def preview_recipe(body: RecipeImport):
+    """Match every ingredient and compute the values. Nothing is stored."""
+    with connect() as conn:
+        try:
+            return recipes.analyse(conn, body.payload())
+        except ValueError as err:
+            bad(err)
+
+
+@router.post("/recipes/import")
+def import_recipe(body: RecipeImport):
+    """Store a recipe as a food — only when every ingredient is accounted for."""
+    with connect() as conn:
+        try:
+            analysis = recipes.analyse(conn, body.payload())
+        except ValueError as err:
+            bad(err)
+        if not analysis["ok"]:
+            return JSONResponse({"error": "unmatched_ingredients", "analysis": analysis}, status_code=422)
+        origin = "mordorcook" if body.origin == "mordorcook" else "import"
+        return {"ok": True, "food": recipes.save(conn, analysis, origin), "analysis": analysis}
+
+
+@router.post("/recipes/sync")
+def sync_recipes(force: bool = False):
+    """Pull every recipe from MordorCook on demand. Nothing runs in the background."""
+    url = mordorcook_url()
+    if not url:
+        raise HTTPException(400, "MORDORCOOK_URL is not set")
+    try:
+        items = recipes.fetch_mordorcook(url)
+    except RuntimeError as err:
+        raise HTTPException(502, str(err)) from None
+    with connect() as conn:
+        if force:
+            conn.execute("UPDATE user_foods SET details=json_set(details, '$.updated_at', '') WHERE source='recipe'")
+        return recipes.sync(conn, items)
+
+
+@router.get("/recipes/{ref}/items")
+def recipe_items(ref: str, portions: float = 1):
+    """A recipe split back into its ingredients, for logging them one by one."""
+    with connect() as conn:
+        row = get_food(conn, ref)
+        if row is None or row["source"] != "recipe":
+            raise HTTPException(404, "recipe not found")
+        portions = max(0.1, min(50.0, portions))
+        items = recipes.breakdown(row, portions)
+        foods = catalog.get_foods(conn, [i["food_ref"] for i in items])
+        return {"name": row["name"], "portions": portions,
+                "items": [{**i, "food": food_dict(foods[i["food_ref"]])} for i in items if i["food_ref"] in foods]}
+
+
+@router.get("/mappings")
+def list_mappings():
+    with connect() as conn:
+        keys = [r["key"] for r in conn.execute("SELECT key FROM ingredient_mappings ORDER BY key")]
+        return {"mappings": [recipes.get_mapping(conn, k) for k in keys]}
+
+
+@router.post("/mappings")
+def set_mapping(body: MappingIn):
+    with connect() as conn:
+        try:
+            return recipes.save_mapping(conn, body.item, body.food_ref, body.ignore, body.grams, body.amount, body.unit)
+        except ValueError as err:
+            bad(err)
+
+
+@router.delete("/mappings/{key}")
+def delete_mapping(key: str):
+    with connect() as conn:
+        conn.execute("DELETE FROM ingredient_mappings WHERE key=?", (key,))
+    return {"ok": True}
+
+
 # ─── config ─────────────────────────────────────────────────────────────────
 
 def config() -> dict[str, Any]:
@@ -387,7 +500,7 @@ def config() -> dict[str, Any]:
         recipes = conn.execute("SELECT COUNT(*) AS n FROM user_foods WHERE source='recipe'").fetchone()["n"]
     return {
         "food_ai_enabled": False,
-        "mordorcook_enabled": False,
+        "mordorcook_enabled": bool(mordorcook_url()),
         "recipes": recipes,
         "barcode": True,
         "history": False,

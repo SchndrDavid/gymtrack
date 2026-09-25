@@ -260,6 +260,28 @@ h1{font-size:34px;line-height:1.05;font-weight:700;letter-spacing:-.5px;margin:0
 .mealseg button{padding:10px 4px;font-size:13px}
 .cta.red{color:var(--red)}
 
+.as-line{font-size:22px;font-weight:700;letter-spacing:-.3px;margin:0}
+.pend{margin-bottom:14px}
+.pend h3{font-size:17px;margin:0 0 4px}
+.pend .row .main span.bad{color:var(--orange)}
+.pend .row button.fix{color:var(--blue);font-size:14px;font-weight:600;flex:none}
+.mu-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--line)}
+.mu-item:first-child{border-top:0}
+.mu-item.off{opacity:.4}
+.mu-item .main{flex:1;min-width:0}
+.mu-item .main b{display:block;font-size:15px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mu-item .main span{display:block;font-size:12px;color:var(--fg-2);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mu-item input{width:70px;background:var(--card-2);border:0;border-radius:9px;padding:9px 6px;text-align:center;
+  font-family:var(--round);font-size:16px;font-weight:600;outline:none}
+.mu-item .kc{width:48px;text-align:right;font-family:var(--round);font-size:14px;font-weight:600;color:var(--fg-2)}
+.mu-item .tog{width:28px;height:28px;border-radius:50%;border:2px solid var(--fg-3);display:grid;place-items:center;flex:none}
+.mu-item .tog svg{width:15px;height:15px;opacity:0}
+.mu-item:not(.off) .tog{background:var(--green);border-color:var(--green)}
+.mu-item:not(.off) .tog svg{opacity:1}
+.mu-portions{display:flex;align-items:center;justify-content:center;gap:14px;margin:0 0 14px;font-size:15px;color:var(--fg-2)}
+.mu-portions button{width:40px;height:40px;border-radius:50%;background:var(--card);font-size:22px;color:var(--fg)}
+.mu-portions b{font-family:var(--round);font-size:22px;min-width:40px;text-align:center;color:var(--fg)}
+
 .attrib{font-size:11px;color:var(--fg-3);text-align:center;margin:26px 0 0;line-height:1.5}
 
 /* Desktop only — on a phone, and in the home-screen app, the screen is for training. */
@@ -333,7 +355,7 @@ h1{font-size:34px;line-height:1.05;font-weight:700;letter-spacing:-.5px;margin:0
       </div>
       <div id="f-results" class="fresults"></div>
       <div class="factions">
-        <button id="f-scan" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2M7 8v8M10 8v8M13 8v8M17 8v8"/></svg>Scan barcode</button>
+        <button id="f-scan" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2M7 8v8M10 8v8M13 8v8M17 8v8"/></svg>Scan</button>
         <button id="f-ean-toggle" hidden>EAN</button>
         <button id="f-quick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg>Quick add</button>
         <button id="f-recognize" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>Recognize meal</button>
@@ -351,7 +373,7 @@ h1{font-size:34px;line-height:1.05;font-weight:700;letter-spacing:-.5px;margin:0
     <div class="btnrow fmore">
       <button id="f-goals">Goals</button>
       <button id="f-history" hidden>History</button>
-      <button id="f-recipes" hidden>Recipes</button>
+      <button id="f-recipes">Recipes</button>
       <button id="f-newfood">New food</button>
     </div>
     <p class="attrib">Food data © Open Food Facts contributors, ODbL · Basic foods: USDA FoodData Central (public domain)</p>
@@ -569,6 +591,67 @@ h1{font-size:34px;line-height:1.05;font-weight:700;letter-spacing:-.5px;margin:0
     </div>
     <p class="hint">Copy the numbers from the label, per 100 g. Only you see this food.</p>
     <button class="cta ghost red" id="n-delete" hidden>Delete food</button>
+  </div>
+</div>
+
+<div class="sheet" id="sheet-recipes">
+  <div class="sheet-bar">
+    <button id="rc-close">Done</button>
+    <b>Recipes</b>
+    <button id="rc-sync" hidden>Sync</button>
+  </div>
+  <div class="sheet-body">
+    <p class="hint" id="rc-status" style="margin:0 0 14px"></p>
+    <div id="rc-pending"></div>
+    <p class="card-title">Your recipes</p>
+    <div class="card" id="rc-list"><p class="empty">Loading…</p></div>
+    <p class="hint">Values come from the ingredients: per portion, and per 100 g of the raw ingredients
+      (the cooked weight is not known).</p>
+    <p class="card-title" style="margin-top:24px">Import a recipe</p>
+    <textarea class="ta" id="rc-json" placeholder='{"title":"Kuře na česneku","servings":4,"ingredients":[{"amount":600,"unit":"g","item":"kuřecí prsa"}]}'></textarea>
+    <div class="btnrow"><button id="rc-import">Import</button></div>
+  </div>
+</div>
+
+<div class="sheet" id="sheet-assign">
+  <div class="sheet-bar">
+    <button id="as-cancel">Cancel</button>
+    <b>Ingredient</b>
+    <button id="as-save">Save</button>
+  </div>
+  <div class="sheet-body">
+    <h2 class="as-line" id="as-line">—</h2>
+    <p class="hint" id="as-reason" style="margin-top:4px"></p>
+    <div class="card fsearch" style="margin-top:14px">
+      <div class="fsearch-box">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input id="as-q" type="search" placeholder="Which food is it?" autocomplete="off" autocorrect="off" spellcheck="false">
+      </div>
+      <div id="as-results" class="fresults"></div>
+    </div>
+    <div class="card" id="as-chosen" style="margin-top:12px" hidden></div>
+    <div class="grams"><input id="as-grams" inputmode="decimal" autocomplete="off" aria-label="Grams"><span>g</span></div>
+    <p class="hint" id="as-grams-hint" style="text-align:center;margin-top:-4px"></p>
+    <button class="cta ghost" id="as-ignore">Ignore this ingredient</button>
+    <p class="hint">Your answer is remembered — the next recipe with this ingredient uses it automatically.</p>
+  </div>
+</div>
+
+<div class="sheet" id="sheet-multi">
+  <div class="sheet-bar">
+    <button id="mu-cancel">Cancel</button>
+    <b id="mu-title">Add items</b>
+    <button id="mu-save">Add all</button>
+  </div>
+  <div class="sheet-body">
+    <div class="mu-portions" id="mu-portions-row" hidden>
+      <span>Portions</span>
+      <button data-step="-0.5" aria-label="Fewer">−</button><b id="mu-portions">1</b><button data-step="0.5" aria-label="More">+</button>
+    </div>
+    <div class="card" id="mu-list"></div>
+    <div class="dstats" id="mu-total" style="margin-top:14px"></div>
+    <div class="seg mealseg" id="mu-meal"></div>
+    <p class="hint" id="mu-hint">Nothing is logged until you tap Add all. Switch off what you did not eat, fix any amount.</p>
   </div>
 </div>
 
@@ -1536,10 +1619,10 @@ function foodSub(f){
   return bits.join(' · ');
 }
 
-function foodRow(f, i){
+function foodRow(f, i, selected = i === fSel){
   const tag = f.favorite ? '<span class="tag">★</span>' : f.source === 'recipe' ? '<span class="tag">RECIPE</span>'
             : f.source === 'custom' ? '<span class="tag">MINE</span>' : '';
-  return `<button class="fres${i === fSel ? ' sel' : ''}" data-i="${i}">
+  return `<button class="fres${selected ? ' sel' : ''}" data-i="${i}">
     <div class="main"><b>${tag}${esc(f.name)}</b><span>${esc(foodSub(f))}</span></div>
     <div class="kc">${fmt(f.kcal_100g)}<small>kcal/100 g</small></div></button>`;
 }
@@ -1612,7 +1695,6 @@ async function foodShow(){
   try {
     fConfig = await api('/api/config');
     $('#f-recognize').hidden = !fConfig.food_ai_enabled;
-    $('#f-recipes').hidden = !fConfig.mordorcook_enabled && !fConfig.recipes;
     $('#f-scan').hidden = $('#f-ean-toggle').hidden = !fConfig.barcode;
     $('#f-history').hidden = !fConfig.history;
   } catch(e){}
@@ -1868,6 +1950,232 @@ $('#f-ean-form').addEventListener('submit', async e => {
   try { barcodeResult(await api('/api/food/barcode/' + code)); $('#f-ean').value = ''; }
   catch(err){ toast('Lookup failed'); }
 });
+
+/* ---------- food: multi-add ---------- */
+/* One confirmation list for everything that arrives as several foods at once: a recipe split into
+   its ingredients now, a recognised photo later. Nothing is written until "Add all". */
+let mu = null;   // {items:[{name,label,food,grams,on}], method, base, portions}
+
+function openMulti(opts){
+  mu = {method: opts.method, portions: opts.portions || null, portions0: opts.portions || 1,
+        items: opts.items.map(i => ({...i, on: i.on !== false, base: i.grams}))};
+  $('#mu-title').textContent = opts.title || 'Add items';
+  $('#mu-portions-row').hidden = !mu.portions;
+  $('#mu-hint').textContent = opts.hint || 'Nothing is logged until you tap Add all. Switch off what you did not eat, fix any amount.';
+  mealSeg($('#mu-meal'), opts.meal || fMeal || mealNow());
+  renderMulti();
+  $('#sheet-multi').classList.add('open');
+}
+
+function muKcal(i){ return i.food ? i.food.kcal_100g * (num(i.grams) || 0) / 100 : 0; }
+
+function renderMulti(){
+  if (mu.portions) $('#mu-portions').textContent = fmt(mu.portions, 1);
+  $('#mu-list').innerHTML = mu.items.length ? mu.items.map((i, n) => `<div class="mu-item${i.on ? '' : ' off'}" data-n="${n}">
+      <button class="tog" data-tog="${n}" aria-label="Include">${TICK}</button>
+      <div class="main"><b>${esc(i.food ? i.food.name : i.name)}</b><span>${esc(i.label || (i.food ? foodSub(i.food) : 'no matching food'))}</span></div>
+      <input data-g="${n}" inputmode="decimal" value="${i.grams ?? ''}" ${i.food ? '' : 'disabled'}>
+      <span class="kc" data-kc="${n}">${fmt(muKcal(i))}</span></div>`).join('')
+    : '<p class="empty">Nothing to add.</p>';
+  muTotals();
+}
+
+function muTotals(){
+  const on = mu.items.filter(i => i.on && i.food);
+  const sum = k => on.reduce((s, i) => s + i.food[k] * (num(i.grams) || 0) / 100, 0);
+  const cell = (v, label, d=0) => `<div class="dstat"><b>${fmt(v, d)}</b><span>${label}</span></div>`;
+  $('#mu-total').innerHTML = cell(sum('kcal_100g'), 'kcal') + cell(sum('protein_100g'), 'protein g', 1)
+    + cell(sum('carbs_100g'), 'carbs g', 1) + cell(sum('fat_100g'), 'fat g', 1);
+  $('#mu-save').textContent = on.length ? `Add ${on.length}` : 'Add all';
+}
+
+$('#mu-list').addEventListener('click', e => {
+  const t = e.target.closest('[data-tog]'); if (!t) return;
+  const i = mu.items[+t.dataset.tog];
+  if (!i.food) return toast('No food matched — search for it instead');
+  i.on = !i.on; t.closest('.mu-item').classList.toggle('off', !i.on); muTotals();
+});
+$('#mu-list').addEventListener('input', e => {
+  const g = e.target.closest('[data-g]'); if (!g) return;
+  const i = mu.items[+g.dataset.g]; i.grams = g.value;
+  $(`[data-kc="${g.dataset.g}"]`).textContent = fmt(muKcal(i)); muTotals();
+});
+$('#mu-portions-row').addEventListener('click', e => {
+  const b = e.target.closest('[data-step]'); if (!b) return;
+  const next = Math.max(.5, Math.min(20, mu.portions + parseFloat(b.dataset.step)));
+  mu.items.forEach(i => { if (i.base != null) i.grams = Math.round(i.base * next / mu.portions0 * 10) / 10; });
+  mu.portions = next; renderMulti();
+});
+$('#mu-cancel').onclick = () => $('#sheet-multi').classList.remove('open');
+$('#mu-save').onclick = async () => {
+  const meal = segValue($('#mu-meal'));
+  const items = mu.items.filter(i => i.on && i.food && num(i.grams) > 0)
+    .map(i => ({date: fDate, meal, food_ref: i.food.ref, grams: num(i.grams), entry_method: mu.method}));
+  if (!items.length) return toast('Nothing selected');
+  try { await post('/api/food/log/batch', {items}); } catch(e){ return toast('Not saved'); }
+  $('#sheet-multi').classList.remove('open');
+  toast(`Added ${items.length} item${items.length > 1 ? 's' : ''} to ${MEAL_LABEL[meal].toLowerCase()}`);
+  loadDay();
+};
+
+/* ---------- food: recipes ---------- */
+let rcPending = [];   // analyses waiting for the user: [{analysis, origin}]
+
+async function openRecipes(){
+  $('#sheet-recipes').classList.add('open');
+  $('#rc-sync').hidden = !fConfig.mordorcook_enabled;
+  renderPending();
+  loadRecipes();
+}
+
+async function loadRecipes(){
+  let res;
+  try { res = await api('/api/food/recipes'); } catch(e){ $('#rc-list').innerHTML = '<p class="empty">Server unreachable.</p>'; return; }
+  $('#rc-list').innerHTML = res.recipes.length ? res.recipes.map(r => {
+    const ps = r.serving_g ? r.kcal_100g * r.serving_g / 100 : null;
+    return `<div class="row" data-recipe="${esc(r.ref)}" style="cursor:pointer">
+      <div class="main"><b>${esc(r.name)}</b><span>${ps != null ? fmt(ps) + ' kcal / portion · ' : ''}${fmt(r.serving_g)} g · ${esc(r.brand)}</span></div>
+      <span class="chev">›</span></div>`;
+  }).join('') : `<p class="empty">${fConfig.mordorcook_enabled ? 'None yet — tap Sync.' : 'None yet — import one below.'}</p>`;
+  $('#rc-list')._recipes = res.recipes;
+}
+
+$('#rc-list').addEventListener('click', async e => {
+  const row = e.target.closest('[data-recipe]'); if (!row) return;
+  const r = $('#rc-list')._recipes.find(x => x.ref === row.dataset.recipe);
+  const choice = await picker(r.name, [
+    {label: 'Log a portion', value: 'portion'},
+    {label: 'Log the ingredients separately', value: 'items'},
+    {label: 'Delete recipe', value: 'delete'},
+  ]);
+  if (choice === 'portion'){ $('#sheet-recipes').classList.remove('open'); openPortion(r, null, 'recipe'); }
+  else if (choice === 'items') openRecipeItems(r);
+  else if (choice === 'delete'){
+    try { await api('/api/food/foods/' + encodeURIComponent(r.ref), {method:'DELETE'}); } catch(err){ return toast('Not deleted'); }
+    toast('Deleted — logged days keep their values'); loadRecipes();
+  }
+});
+
+async function openRecipeItems(r){
+  let res;
+  try { res = await api(`/api/food/recipes/${encodeURIComponent(r.ref)}/items?portions=1`); } catch(e){ return toast('Server unreachable'); }
+  $('#sheet-recipes').classList.remove('open');
+  openMulti({title: r.name, method: 'recipe', portions: 1,
+             items: res.items.map(i => ({name: i.name, label: i.label, food: i.food, grams: i.grams}))});
+}
+
+$('#rc-sync').onclick = async () => {
+  $('#rc-status').textContent = 'Syncing with MordorCook…';
+  let res;
+  try {
+    const r = await fetch(BASE + '/api/food/recipes/sync', {method:'POST'});
+    res = await r.json();
+    if (!r.ok) throw new Error(res.detail || r.status);
+  } catch(e){ $('#rc-status').textContent = 'Sync failed: ' + e.message; return; }
+  rcPending = res.pending.map(a => ({analysis: a, origin: 'mordorcook'}));
+  $('#rc-status').textContent = `${res.total} recipes read · ${res.saved.length} saved · ${res.unchanged} unchanged`
+    + (res.pending.length ? ` · ${res.pending.length} need your help` : '');
+  renderPending(); loadRecipes();
+};
+
+$('#rc-import').onclick = async () => {
+  let recipe;
+  try { recipe = JSON.parse($('#rc-json').value); } catch(e){ return toast('That is not valid JSON'); }
+  const r = await fetch(BASE + '/api/food/recipes/import', {method:'POST', headers:{'Content-Type':'application/json'},
+                                                           body: JSON.stringify({recipe, origin:'import'})});
+  const res = await r.json().catch(() => ({}));
+  if (r.status === 422){
+    rcPending = rcPending.filter(p => p.analysis.recipe.title !== res.analysis.recipe.title);
+    rcPending.unshift({analysis: res.analysis, origin: 'import'});
+    renderPending(); toast('Some ingredients need your help'); return;
+  }
+  if (!r.ok) return toast(res.detail || 'Import failed');
+  $('#rc-json').value = ''; toast(`Saved “${res.food.name}”`); loadRecipes();
+};
+
+function renderPending(){
+  $('#rc-pending').innerHTML = rcPending.map((p, n) => {
+    const a = p.analysis, bad = a.ingredients.filter(x => x.status === 'unmatched' || x.status === 'uncertain');
+    return `<div class="card pend">
+      <h3>${esc(a.recipe.title)}</h3>
+      <p class="hint" style="margin:0 0 6px">${bad.length ? `${bad.length} ingredient${bad.length > 1 ? 's' : ''} to sort out — the recipe is not saved until every one is.`
+                                                   : `Ready: ${fmt(a.food.per_serving.kcal)} kcal per portion.`}</p>
+      ${a.ingredients.map((x, i) => `<div class="row">
+        <div class="main"><b>${esc(x.text)}</b><span class="${x.status === 'matched' || x.status === 'ignored' ? '' : 'bad'}">${
+          x.status === 'ignored' ? 'ignored — ' + esc(x.reason)
+          : x.food ? `${esc(x.food.name)}${x.grams ? ' · ' + fmt(x.grams) + ' g' : ''}${x.status !== 'matched' ? ' — ' + esc(x.reason) : ''}`
+          : esc(x.reason)}</span></div>
+        <button class="fix" data-fix="${n}:${i}">${x.status === 'matched' || x.status === 'ignored' ? 'Change' : x.status === 'uncertain' ? 'Check' : 'Fix'}</button></div>`).join('')}
+      ${bad.length ? '' : `<button class="cta" data-save-pending="${n}" style="margin-top:12px">Save recipe</button>`}
+    </div>`;
+  }).join('');
+}
+
+$('#rc-pending').addEventListener('click', async e => {
+  const fix = e.target.closest('[data-fix]');
+  if (fix){ const [n, i] = fix.dataset.fix.split(':').map(Number); return openAssign(n, i); }
+  const save = e.target.closest('[data-save-pending]'); if (!save) return;
+  const p = rcPending[+save.dataset.savePending];
+  try { await post('/api/food/recipes/import', {recipe: p.analysis.recipe, origin: p.origin}); }
+  catch(err){ return toast('Not saved'); }
+  rcPending.splice(+save.dataset.savePending, 1);
+  toast(`Saved “${p.analysis.recipe.title}”`); renderPending(); loadRecipes();
+});
+
+/* ---------- food: assign an ingredient ---------- */
+let as = null;   // {n, i, line, food}
+
+function openAssign(n, i){
+  const line = rcPending[n].analysis.ingredients[i];
+  as = {n, i, line, food: line.food};
+  $('#as-line').textContent = line.text;
+  $('#as-reason').textContent = line.status === 'uncertain' ? 'Loose match — is this the right food?' : line.reason || '';
+  $('#as-q').value = line.item; $('#as-results').innerHTML = '';
+  $('#as-grams').value = line.grams ?? '';
+  $('#as-grams-hint').textContent = `Weight of “${line.text}” in grams`;
+  asChosen();
+  $('#sheet-assign').classList.add('open');
+  asSearch();
+}
+
+function asChosen(){
+  const el = $('#as-chosen');
+  el.hidden = !as.food;
+  if (as.food) el.innerHTML = `<div class="row"><div class="main"><b>${esc(as.food.name)}</b><span>${esc(foodSub(as.food))}</span></div>
+    <span class="kc" style="font-family:var(--round);font-weight:600">${fmt(as.food.kcal_100g)} kcal</span></div>`;
+}
+
+let asResults = [];
+const asSearch = debounce(async () => {
+  try { asResults = (await api('/api/food/search?limit=8&q=' + encodeURIComponent($('#as-q').value.trim()))).results; }
+  catch(e){ asResults = []; }
+  $('#as-results').innerHTML = asResults.map((f, i) => foodRow(f, i, false)).join('');
+}, 150);
+$('#as-q').addEventListener('input', asSearch);
+$('#as-results').addEventListener('click', e => {
+  const b = e.target.closest('.fres'); if (!b) return;
+  as.food = asResults[+b.dataset.i]; asChosen(); $('#as-results').innerHTML = '';
+  if (!$('#as-grams').value && as.line.unit && /^(g|gr|gram|grams)$/i.test(as.line.unit)) $('#as-grams').value = as.line.amount;
+  $('#as-grams').focus();
+});
+$('#as-cancel').onclick = () => $('#sheet-assign').classList.remove('open');
+
+async function asApply(body){
+  try { await post('/api/food/mappings', body); } catch(e){ return toast('Not saved'); }
+  const p = rcPending[as.n];
+  try { p.analysis = await post('/api/food/recipes/preview', {recipe: p.analysis.recipe}); } catch(e){}
+  $('#sheet-assign').classList.remove('open'); renderPending();
+}
+$('#as-save').onclick = () => {
+  if (!as.food) return toast('Pick a food first');
+  const grams = num($('#as-grams').value);
+  if (!grams || grams <= 0) return toast('How many grams is it?');
+  asApply({item: as.line.item, food_ref: as.food.ref, grams, amount: as.line.amount, unit: as.line.unit});
+};
+$('#as-ignore').onclick = () => asApply({item: as.line.item, ignore: true});
+
+$('#f-recipes').onclick = openRecipes;
+$('#rc-close').onclick = () => { $('#sheet-recipes').classList.remove('open'); loadDay(); };
 
 /* ---------- food: quick add ---------- */
 let qEntry = null;
