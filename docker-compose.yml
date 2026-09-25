@@ -12,6 +12,12 @@ services:
       - "${GYMTRACK_PORT:-8101}:8000"
     volumes:
       - ./data:/data
+    environment:
+      MORDORCOOK_URL: "${MORDORCOOK_URL:-}"
+      FOOD_OFF_LIVE: "${FOOD_OFF_LIVE:-true}"
+      FOOD_AI_ENABLED: "${FOOD_AI_ENABLED:-false}"
+      ANTHROPIC_API_KEY: "${ANTHROPIC_API_KEY:-}"
+      FOOD_AI_MODEL: "${FOOD_AI_MODEL:-claude-haiku-4-5}"
     logging:
       driver: json-file
       options:

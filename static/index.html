@@ -17,6 +17,7 @@
   --round:ui-rounded,"SF Pro Rounded",-apple-system,BlinkMacSystemFont,system-ui,sans-serif;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+[hidden]{display:none!important}
 html,body{margin:0;padding:0;background:var(--bg);color:var(--fg);font-family:var(--sans);
   -webkit-font-smoothing:antialiased;overscroll-behavior-y:none}
 body{padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
@@ -54,6 +55,15 @@ h1{font-size:34px;line-height:1.05;font-weight:700;letter-spacing:-.5px;margin:0
 .cell.gym{background:var(--blue)}
 .cell.run{background:var(--green)}
 .cell.both{background:linear-gradient(135deg,var(--green) 0 50%,var(--blue) 50% 100%)}
+.cell.f4,.legend i.f4{background:#39d353}
+.cell.f3,.legend i.f3{background:#26a641}
+.cell.f2,.legend i.f2{background:#006d32}
+.cell.f1,.legend i.f1{background:#0e4429}
+.cell.fn,.legend i.fn{background:#48484a}
+.gridhead{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+.gridhead .card-title{margin:0}
+.miniseg{margin:0;width:170px}
+.miniseg button{padding:5px 6px;font-size:12px}
 .cell.future{opacity:.25;pointer-events:none}
 .cell.today{box-shadow:0 0 0 1.5px var(--fg),0 0 0 3px var(--bg)}
 .legend{display:flex;align-items:center;gap:14px;margin-top:14px;font-size:12px;color:var(--fg-2);flex-wrap:wrap}
@@ -185,6 +195,117 @@ h1{font-size:34px;line-height:1.05;font-weight:700;letter-spacing:-.5px;margin:0
 .pfield.wide{grid-column:1 / -1}
 .foot{margin:34px 0 0;text-align:center;font-size:11px;line-height:1.5;color:var(--fg-3);letter-spacing:.2px}
 .foot b{font-weight:600;color:var(--fg-2)}
+/* ---------- food ---------- */
+.viewseg{margin:-8px 0 16px}
+.fsearch{padding:10px 12px}
+.fsearch-box{display:flex;align-items:center;gap:8px;background:var(--card-2);border-radius:11px;padding:0 12px}
+.fsearch-box svg{width:17px;height:17px;color:var(--fg-3);flex:none}
+.fsearch-box input{flex:1;min-width:0;background:none;border:0;outline:none;font-size:17px;padding:12px 0;-webkit-appearance:none}
+.fsearch-box input::-webkit-search-cancel-button{-webkit-appearance:none}
+.fresults:empty{display:none}
+.fresults{margin-top:6px}
+.fres{display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:11px 4px;border-top:1px solid var(--line);min-height:54px}
+.fres:first-child{border-top:0}
+.fres.sel,.fres:active{background:var(--card-2);border-radius:10px}
+.fres .main{flex:1;min-width:0}
+.fres .main b{display:block;font-size:15px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fres .main span{display:block;font-size:12px;color:var(--fg-2);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fres .kc{font-family:var(--round);font-size:14px;font-weight:600;color:var(--fg-2);flex:none;text-align:right}
+.fres .kc small{display:block;font-size:10px;font-weight:500;color:var(--fg-3)}
+.fres .tag{font-size:10px;font-weight:700;letter-spacing:.3px;color:var(--orange);margin-right:4px}
+.fhead{font-size:12px;font-weight:600;color:var(--fg-3);text-transform:uppercase;letter-spacing:.6px;padding:10px 4px 2px}
+.fdate{display:flex;align-items:center;gap:10px;margin:0 0 12px}
+.fdate-label{flex:1;position:relative;text-align:center;font-size:17px;font-weight:600;padding:8px 0;cursor:pointer}
+.fdate-label input{position:absolute;inset:0;opacity:0;width:100%;cursor:pointer;-webkit-appearance:none}
+.fdate .icon-btn svg{width:17px;height:17px}
+.fsum{margin-bottom:12px}
+.fsum-top{display:flex;align-items:flex-end;justify-content:space-between;gap:10px}
+.fsum-top b{font-family:var(--round);font-size:34px;font-weight:700;letter-spacing:-.6px;line-height:1}
+.fsum-top span{font-size:13px;color:var(--fg-2)}
+.fsum-top .right{text-align:right}
+.bar{height:8px;border-radius:5px;background:var(--card-2);overflow:hidden;margin:10px 0 4px}
+.bar i{display:block;height:100%;border-radius:5px;background:var(--green);transition:width .25s}
+.bar i.over{background:var(--orange)}
+.macros{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:14px}
+.macros .m b{font-family:var(--round);font-size:15px;font-weight:600}
+.macros .m span{font-size:11px;color:var(--fg-2);display:block}
+.macros .bar{height:5px;margin:5px 0 0}
+.macros .p i{background:var(--blue)} .macros .c i{background:#bf5af2} .macros .f i{background:var(--orange)}
+.factions{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.factions button{flex:1;min-width:120px;display:flex;align-items:center;justify-content:center;gap:7px;padding:12px 10px;
+  border-radius:11px;background:var(--card-2);font-size:14px;font-weight:600;min-height:46px}
+.factions button svg{width:17px;height:17px;color:var(--fg-2)}
+.factions button:active{opacity:.7}
+.factions #f-ean-toggle{flex:0 0 auto;min-width:64px}
+.fean{display:flex;gap:8px;margin-top:10px}
+.fean input{flex:1;min-width:0;background:var(--card-2);border:0;border-radius:11px;padding:12px;font-size:17px;outline:none;font-family:var(--round)}
+.fean button{padding:0 16px;border-radius:11px;background:var(--blue);color:#fff;font-weight:600;font-size:15px}
+.meal{margin-top:12px}
+.meal-head{display:flex;align-items:center;gap:8px;margin:0 0 4px}
+.meal-head .card-title{margin:0;flex:1}
+.meal-head .kc{font-family:var(--round);font-size:14px;font-weight:600;color:var(--fg-2)}
+.meal-head button{color:var(--fg-3);font-size:20px;line-height:1;padding:2px 4px 6px;min-width:34px}
+.fentry{display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:10px 0;border-top:1px solid var(--line)}
+.fentry:first-of-type{border-top:0}
+.fentry .main{flex:1;min-width:0}
+.fentry .main b{display:block;font-size:15px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fentry .main span{display:block;font-size:12px;color:var(--fg-2);margin-top:2px}
+.fentry .kc{font-family:var(--round);font-size:15px;font-weight:600;flex:none}
+.meal .empty{padding:8px 0;text-align:left;font-size:13px}
+.fmore{margin-top:18px}
+.pohead{display:flex;gap:12px;align-items:flex-start}
+.pohead .main{flex:1;min-width:0}
+.pohead h2{font-size:22px;font-weight:700;letter-spacing:-.3px;margin:0}
+.pohead p{font-size:13px;color:var(--fg-2);margin:6px 0 0;line-height:1.4}
+.star{font-size:26px;color:var(--fg-3);padding:0 4px;line-height:1}
+.star.on{color:#ffd60a}
+.grams{display:flex;align-items:baseline;justify-content:center;gap:6px;margin:22px 0 12px}
+.grams input{width:170px;background:var(--card);border:0;border-radius:14px;padding:12px;text-align:center;outline:none;
+  font-family:var(--round);font-size:40px;font-weight:700;letter-spacing:-.5px}
+.grams span{font-size:22px;color:var(--fg-2);font-weight:600}
+.portions{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:16px}
+.portions button{padding:11px 14px;border-radius:11px;background:var(--card);font-size:14px;font-weight:600;min-height:44px}
+.portions button:active{background:var(--card-2)}
+.mealseg button{padding:10px 4px;font-size:13px}
+.cta.red{color:var(--red)}
+
+.as-line{font-size:22px;font-weight:700;letter-spacing:-.3px;margin:0}
+.pend{margin-bottom:14px}
+.pend h3{font-size:17px;margin:0 0 4px}
+.pend .row .main span.bad{color:var(--orange)}
+.pend .row button.fix{color:var(--blue);font-size:14px;font-weight:600;flex:none}
+.mu-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--line)}
+.mu-item:first-child{border-top:0}
+.mu-item.off{opacity:.4}
+.mu-item .main{flex:1;min-width:0}
+.mu-item .main b{display:block;font-size:15px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mu-item .main span{display:block;font-size:12px;color:var(--fg-2);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mu-item input{width:70px;background:var(--card-2);border:0;border-radius:9px;padding:9px 6px;text-align:center;
+  font-family:var(--round);font-size:16px;font-weight:600;outline:none}
+.mu-item .kc{width:48px;text-align:right;font-family:var(--round);font-size:14px;font-weight:600;color:var(--fg-2)}
+.mu-item .tog{width:28px;height:28px;border-radius:50%;border:2px solid var(--fg-3);display:grid;place-items:center;flex:none}
+.mu-item .tog svg{width:15px;height:15px;opacity:0}
+.mu-item:not(.off) .tog{background:var(--green);border-color:var(--green)}
+.mu-item:not(.off) .tog svg{opacity:1}
+.mu-portions{display:flex;align-items:center;justify-content:center;gap:14px;margin:0 0 14px;font-size:15px;color:var(--fg-2)}
+.mu-portions button{width:40px;height:40px;border-radius:50%;background:var(--card);font-size:22px;color:var(--fg)}
+.mu-portions b{font-family:var(--round);font-size:22px;min-width:40px;text-align:center;color:var(--fg)}
+
+.chart-card{padding:16px 14px 14px}
+.chart{position:relative;width:100%}
+.chart svg{display:block;width:100%;overflow:visible}
+.chart .ax{fill:var(--fg-3);font-size:10px;font-family:var(--sans)}
+.chart .gl{stroke:var(--line);stroke-width:1}
+.chart .hit{fill:transparent;cursor:pointer}
+.chart .empty{padding:40px 0}
+.ctip{position:fixed;z-index:90;pointer-events:none;background:rgba(44,44,46,.96);border:1px solid var(--line);
+  border-radius:10px;padding:8px 10px;font-size:12px;line-height:1.45;color:var(--fg);box-shadow:0 6px 20px rgba(0,0,0,.4);
+  transform:translate(-50%,-100%);white-space:nowrap}
+.ctip b{font-family:var(--round)}
+.ctip span{color:var(--fg-2)}
+
+.attrib{font-size:11px;color:var(--fg-3);text-align:center;margin:26px 0 0;line-height:1.5}
+
 /* Desktop only — on a phone, and in the home-screen app, the screen is for training. */
 @media (max-width:640px){.foot{display:none}}
 @media (display-mode:standalone){.foot{display:none}}
@@ -202,6 +323,12 @@ h1{font-size:34px;line-height:1.05;font-weight:700;letter-spacing:-.5px;margin:0
     </button>
   </header>
 
+  <div class="seg viewseg" id="viewseg">
+    <button data-view="training" class="on">Training</button>
+    <button data-view="food">Food</button>
+  </div>
+
+  <div id="view-training">
   <div class="stats">
     <div class="stat b"><b id="s-gym">0</b><span>workouts / 30 days</span></div>
     <div class="stat g"><b id="s-run">0</b><span>runs / 30 days</span></div>
@@ -209,19 +336,25 @@ h1{font-size:34px;line-height:1.05;font-weight:700;letter-spacing:-.5px;margin:0
   </div>
 
   <div class="card">
-    <p class="card-title">Year</p>
+    <div class="gridhead"><p class="card-title">Year</p>
+      <div class="seg miniseg" id="gridseg"><button data-grid="training" class="on">Training</button><button data-grid="food">Food</button></div></div>
     <div class="gridbox" id="gridbox">
       <div class="gridrow">
         <div class="dow"><span>Mon</span><span></span><span>Wed</span><span></span><span>Fri</span><span></span><span>Sun</span></div>
         <div class="cols"><div class="months" id="months"></div><div class="cells" id="cells"></div></div>
       </div>
     </div>
-    <div class="legend">
+    <div class="legend" id="legend-training">
       <span><i style="background:var(--blue)"></i>Workout</span>
       <span><i style="background:var(--green)"></i>Run</span>
       <span><i style="background:linear-gradient(135deg,var(--green) 0 50%,var(--blue) 50% 100%)"></i>Both</span>
     </div>
-    <p class="hint">Tap a day to cycle it manually.</p>
+    <div class="legend" id="legend-food" hidden>
+      <span>Calories vs goal:</span>
+      <span><i class="f4"></i>within 5 %</span><span><i class="f3"></i>10 %</span><span><i class="f2"></i>20 %</span>
+      <span><i class="f1"></i>further</span><span><i class="fn"></i>no goal</span>
+    </div>
+    <p class="hint" id="grid-hint">Tap a day to cycle it manually.</p>
   </div>
 
   <button class="cta" id="btn-start">Start workout</button>
@@ -230,6 +363,49 @@ h1{font-size:34px;line-height:1.05;font-weight:700;letter-spacing:-.5px;margin:0
   <div class="card" style="margin-top:22px">
     <p class="card-title">Recent workouts <button class="link" id="btn-history">See all</button></p>
     <div id="history"><p class="empty">Nothing yet.</p></div>
+  </div>
+  </div>
+
+  <div id="view-food" hidden>
+    <div class="fdate">
+      <button class="icon-btn" id="f-prev" aria-label="Previous day"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="m15 18-6-6 6-6"/></svg></button>
+      <label class="fdate-label"><span id="f-date-label">Today</span>
+        <input type="date" id="f-date-input" aria-label="Pick a day"></label>
+      <button class="icon-btn" id="f-next" aria-label="Next day"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="m9 18 6-6-6-6"/></svg></button>
+    </div>
+
+    <div class="card fsum" id="f-summary"></div>
+
+    <div class="card fsearch">
+      <div class="fsearch-box">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input id="f-q" type="search" placeholder="Search food" autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="search">
+      </div>
+      <div id="f-results" class="fresults"></div>
+      <div class="factions">
+        <button id="f-scan" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2M7 8v8M10 8v8M13 8v8M17 8v8"/></svg>Scan</button>
+        <button id="f-ean-toggle" hidden>EAN</button>
+        <button id="f-quick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg>Quick add</button>
+        <button id="f-recognize" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>Recognize meal</button>
+      </div>
+      <form class="fean" id="f-ean-form" hidden>
+        <input id="f-ean" inputmode="numeric" pattern="[0-9]*" placeholder="Type the barcode (EAN)" autocomplete="off">
+        <button type="submit">Look up</button>
+      </form>
+      <input type="file" id="f-scan-file" accept="image/*" capture="environment" hidden>
+      <input type="file" id="f-photo-file" accept="image/*" capture="environment" hidden>
+    </div>
+    <p class="hint" id="f-catalog-hint" hidden></p>
+
+    <div id="f-meals"></div>
+
+    <div class="btnrow fmore">
+      <button id="f-goals">Goals</button>
+      <button id="f-history" hidden>History</button>
+      <button id="f-recipes">Recipes</button>
+      <button id="f-newfood">New food</button>
+    </div>
+    <p class="attrib">Food data © Open Food Facts contributors, ODbL · Basic foods: USDA FoodData Central (public domain)</p>
   </div>
 
   <footer class="foot" id="foot" hidden>
@@ -353,6 +529,200 @@ h1{font-size:34px;line-height:1.05;font-weight:700;letter-spacing:-.5px;margin:0
   </div>
 </div>
 
+<div class="sheet" id="sheet-portion">
+  <div class="sheet-bar">
+    <button id="po-cancel">Cancel</button>
+    <b id="po-title">Add food</b>
+    <button id="po-save">Add</button>
+  </div>
+  <div class="sheet-body">
+    <div class="pohead">
+      <div class="main"><h2 id="po-name">—</h2><p id="po-sub"></p>
+        <button class="link" id="po-edit" style="float:none;margin-top:6px" hidden>Edit food</button></div>
+      <button class="star" id="po-star" aria-label="Favourite">★</button>
+    </div>
+    <div class="grams">
+      <input id="po-grams" inputmode="decimal" autocomplete="off" aria-label="Grams"><span>g</span>
+    </div>
+    <div class="portions" id="po-portions"></div>
+    <div class="seg mealseg" id="po-meal"></div>
+    <div class="dstats" id="po-stats"></div>
+    <button class="cta ghost red" id="po-delete" hidden>Delete entry</button>
+  </div>
+</div>
+
+<div class="sheet" id="sheet-quick">
+  <div class="sheet-bar">
+    <button id="q-cancel">Cancel</button>
+    <b id="q-title">Quick add</b>
+    <button id="q-save">Add</button>
+  </div>
+  <div class="sheet-body">
+    <div class="card prof">
+      <label class="pfield wide"><span>What (optional)</span><input id="q-name" placeholder="Restaurant dinner" autocomplete="off"></label>
+      <label class="pfield wide"><span>Calories (kcal)</span><input id="q-kcal" inputmode="decimal" placeholder="800"></label>
+      <label class="pfield"><span>Protein (g)</span><input id="q-protein" inputmode="decimal" placeholder="—"></label>
+      <label class="pfield"><span>Carbs (g)</span><input id="q-carbs" inputmode="decimal" placeholder="—"></label>
+      <label class="pfield"><span>Fat (g)</span><input id="q-fat" inputmode="decimal" placeholder="—"></label>
+    </div>
+    <div class="seg mealseg" id="q-meal" style="margin-top:14px"></div>
+    <p class="hint">For when there is no food to pick — a guess at a restaurant, a snack you did not weigh.</p>
+    <button class="cta ghost red" id="q-delete" hidden>Delete entry</button>
+  </div>
+</div>
+
+<div class="sheet" id="sheet-goals">
+  <div class="sheet-bar">
+    <button id="g-close">Done</button>
+    <b>Goals</b>
+    <button id="g-save">Save</button>
+  </div>
+  <div class="sheet-body">
+    <div class="card prof">
+      <label class="pfield wide"><span>Calories (kcal / day)</span><input id="g-kcal" inputmode="decimal" placeholder="2200"></label>
+      <label class="pfield"><span>Protein (g)</span><input id="g-protein" inputmode="decimal" placeholder="150"></label>
+      <label class="pfield"><span>Carbs (g)</span><input id="g-carbs" inputmode="decimal" placeholder="220"></label>
+      <label class="pfield"><span>Fat (g)</span><input id="g-fat" inputmode="decimal" placeholder="70"></label>
+      <label class="pfield"><span>Valid from</span><input id="g-from" type="date"></label>
+    </div>
+    <p class="hint" id="g-macro-hint"></p>
+    <p class="card-title" style="margin-top:24px">History</p>
+    <div class="card" id="g-list"></div>
+    <p class="hint">A goal applies from its date until the next one. Past days are always compared with
+      the goal that was valid on that day.</p>
+  </div>
+</div>
+
+<div class="sheet" id="sheet-newfood">
+  <div class="sheet-bar">
+    <button id="n-cancel">Cancel</button>
+    <b id="n-title">New food</b>
+    <button id="n-save">Save</button>
+  </div>
+  <div class="sheet-body">
+    <div class="card prof">
+      <label class="pfield wide"><span>Name</span><input id="n-name" autocomplete="off" placeholder="Babiččin guláš"></label>
+      <label class="pfield wide"><span>Brand</span><input id="n-brand" autocomplete="off" placeholder="—"></label>
+      <label class="pfield wide"><span>Barcode</span><input id="n-barcode" inputmode="numeric" placeholder="—"></label>
+    </div>
+    <p class="card-title" style="margin-top:20px">Per 100 g</p>
+    <div class="card prof">
+      <label class="pfield wide"><span>Calories (kcal)</span><input id="n-kcal" inputmode="decimal" placeholder="—"></label>
+      <label class="pfield"><span>Protein (g)</span><input id="n-protein" inputmode="decimal" placeholder="0"></label>
+      <label class="pfield"><span>Carbs (g)</span><input id="n-carbs" inputmode="decimal" placeholder="0"></label>
+      <label class="pfield"><span>Fat (g)</span><input id="n-fat" inputmode="decimal" placeholder="0"></label>
+      <label class="pfield"><span>Fibre (g)</span><input id="n-fiber" inputmode="decimal" placeholder="—"></label>
+    </div>
+    <p class="card-title" style="margin-top:20px">Serving (optional)</p>
+    <div class="card prof">
+      <label class="pfield"><span>Grams</span><input id="n-serving" inputmode="decimal" placeholder="—"></label>
+      <label class="pfield"><span>Label</span><input id="n-serving-label" autocomplete="off" placeholder="1 plate"></label>
+    </div>
+    <p class="hint">Copy the numbers from the label, per 100 g. Only you see this food.</p>
+    <button class="cta ghost red" id="n-delete" hidden>Delete food</button>
+  </div>
+</div>
+
+<div class="sheet" id="sheet-recipes">
+  <div class="sheet-bar">
+    <button id="rc-close">Done</button>
+    <b>Recipes</b>
+    <button id="rc-sync" hidden>Sync</button>
+  </div>
+  <div class="sheet-body">
+    <p class="hint" id="rc-status" style="margin:0 0 14px"></p>
+    <div id="rc-pending"></div>
+    <p class="card-title">Your recipes</p>
+    <div class="card" id="rc-list"><p class="empty">Loading…</p></div>
+    <p class="hint">Values come from the ingredients: per portion, and per 100 g of the raw ingredients
+      (the cooked weight is not known).</p>
+    <p class="card-title" style="margin-top:24px">Import a recipe</p>
+    <textarea class="ta" id="rc-json" placeholder='{"title":"Kuře na česneku","servings":4,"ingredients":[{"amount":600,"unit":"g","item":"kuřecí prsa"}]}'></textarea>
+    <div class="btnrow"><button id="rc-import">Import</button></div>
+  </div>
+</div>
+
+<div class="sheet" id="sheet-assign">
+  <div class="sheet-bar">
+    <button id="as-cancel">Cancel</button>
+    <b>Ingredient</b>
+    <button id="as-save">Save</button>
+  </div>
+  <div class="sheet-body">
+    <h2 class="as-line" id="as-line">—</h2>
+    <p class="hint" id="as-reason" style="margin-top:4px"></p>
+    <div class="card fsearch" style="margin-top:14px">
+      <div class="fsearch-box">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input id="as-q" type="search" placeholder="Which food is it?" autocomplete="off" autocorrect="off" spellcheck="false">
+      </div>
+      <div id="as-results" class="fresults"></div>
+    </div>
+    <div class="card" id="as-chosen" style="margin-top:12px" hidden></div>
+    <div class="grams"><input id="as-grams" inputmode="decimal" autocomplete="off" aria-label="Grams"><span>g</span></div>
+    <p class="hint" id="as-grams-hint" style="text-align:center;margin-top:-4px"></p>
+    <button class="cta ghost" id="as-ignore">Ignore this ingredient</button>
+    <p class="hint">Your answer is remembered — the next recipe with this ingredient uses it automatically.</p>
+  </div>
+</div>
+
+<div class="sheet" id="sheet-multi">
+  <div class="sheet-bar">
+    <button id="mu-cancel">Cancel</button>
+    <b id="mu-title">Add items</b>
+    <button id="mu-save">Add all</button>
+  </div>
+  <div class="sheet-body">
+    <div class="mu-portions" id="mu-portions-row" hidden>
+      <span>Portions</span>
+      <button data-step="-0.5" aria-label="Fewer">−</button><b id="mu-portions">1</b><button data-step="0.5" aria-label="More">+</button>
+    </div>
+    <div class="card" id="mu-list"></div>
+    <div class="dstats" id="mu-total" style="margin-top:14px"></div>
+    <div class="seg mealseg" id="mu-meal"></div>
+    <p class="hint" id="mu-hint">Nothing is logged until you tap Add all. Switch off what you did not eat, fix any amount.</p>
+  </div>
+</div>
+
+<div class="sheet" id="sheet-fhistory">
+  <div class="sheet-bar">
+    <button id="fh-close">Done</button>
+    <b>Food history</b>
+    <span style="width:44px"></span>
+  </div>
+  <div class="sheet-body">
+    <div class="seg" id="fh-range"><button data-range="week" class="on">Week</button><button data-range="month">Month</button></div>
+    <div class="fdate">
+      <button class="icon-btn" id="fh-prev" aria-label="Earlier"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="m15 18-6-6 6-6"/></svg></button>
+      <span class="fdate-label" id="fh-label">—</span>
+      <button class="icon-btn" id="fh-next" aria-label="Later"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="m9 18 6-6-6-6"/></svg></button>
+    </div>
+    <div class="card chart-card">
+      <p class="card-title">Calories per day</p>
+      <div class="chart" id="fh-chart"></div>
+      <div class="legend" style="margin-top:8px"><span><i style="background:var(--blue)"></i>Eaten</span>
+        <span><i style="background:none;border-top:2px dashed var(--fg-2);border-radius:0;height:0;vertical-align:3px"></i>Goal</span></div>
+    </div>
+    <p class="card-title" style="margin-top:20px">Daily average <span id="fh-avg-note" style="text-transform:none;letter-spacing:0;font-weight:500"></span></p>
+    <div class="dstats" id="fh-avg"></div>
+    <div class="card chart-card" style="margin-top:20px">
+      <p class="card-title">Body weight</p>
+      <div class="chart" id="fh-weight"></div>
+      <div class="legend" style="margin-top:8px"><span><i style="background:var(--fg-3);border-radius:50%"></i>Weigh-in</span>
+        <span><i style="background:var(--green);height:2px;vertical-align:3px"></i>7-day average</span></div>
+      <form class="fean" id="fh-wform" style="margin-top:14px">
+        <input id="fh-wdate" type="date" style="flex:0 0 150px;font-size:15px">
+        <input id="fh-wkg" inputmode="decimal" placeholder="kg">
+        <button type="submit">Save</button>
+      </form>
+      <div id="fh-wlist" style="margin-top:6px"></div>
+    </div>
+    <p class="hint" style="margin-top:12px">Weights over the last 90 days. The average smooths out water and salt — watch it, not single days.</p>
+  </div>
+</div>
+
+<div class="ctip" id="ctip" hidden></div>
+
 <div class="pick" id="pick"><div class="pick-inner">
   <div class="pick-group" id="pick-body"></div>
   <div class="pick-group" style="margin-top:8px"><button id="pick-cancel" style="color:var(--blue);font-weight:600">Cancel</button></div>
@@ -427,8 +797,14 @@ function renderGrid(){
     }
     const cell = document.createElement('div');
     cell.className = 'cell'; cell.dataset.date = key; cell.title = key;
-    const day = state.days[key];
-    if (day) cell.classList.add(day.run && day.gym ? 'both' : day.gym ? 'gym' : 'run');
+    if (gridMode === 'food'){
+      const f = foodDays[key];
+      if (f) cell.classList.add(foodClass(f));
+      if (f) cell.title = `${key} · ${Math.round(f.kcal)} kcal${f.goal ? ' of ' + Math.round(f.goal.kcal) : ''}`;
+    } else {
+      const day = state.days[key];
+      if (day) cell.classList.add(day.run && day.gym ? 'both' : day.gym ? 'gym' : 'run');
+    }
     if (d > today) cell.classList.add('future');
     if (key === iso(today)) cell.classList.add('today');
     cells.appendChild(cell);
@@ -1079,6 +1455,7 @@ function renderPreview(error){
 /* ---------- events ---------- */
 $('#cells').addEventListener('click', e => {
   const cell = e.target.closest('.cell'); if (!cell) return;
+  if (gridMode === 'food'){ fDate = cell.dataset.date; setView('food'); window.scrollTo(0, 0); return; }
   const day = state.days[cell.dataset.date] || {run:false, gym:false};
   const next = !day.gym && !day.run ? {gym:true,  run:false}
              :  day.gym && !day.run ? {gym:false, run:true}
@@ -1190,8 +1567,8 @@ $('#r-list').addEventListener('click', e => {
 $('#i-close').onclick = () => $('#sheet-io').classList.remove('open');
 $('#i-text').addEventListener('input', debounce(reparse, 400));
 
-document.querySelectorAll('.seg button').forEach(btn => btn.onclick = () => {
-  document.querySelectorAll('.seg button').forEach(b => b.classList.toggle('on', b === btn));
+document.querySelectorAll('#sheet-io .seg button').forEach(btn => btn.onclick = () => {
+  document.querySelectorAll('#sheet-io .seg button').forEach(b => b.classList.toggle('on', b === btn));
   mode = btn.dataset.mode;
   $('#i-text').placeholder = mode === 'json'
     ? 'Paste plan JSON, or dump the current plans below.'
@@ -1293,6 +1670,885 @@ $('#d-delete').onclick = async () => {
   saveProfile();
 }));
 
+/* ---------- view switch ---------- */
+let view = 'training';
+function setView(v){
+  view = v === 'food' ? 'food' : 'training';
+  document.querySelectorAll('#viewseg button').forEach(b => b.classList.toggle('on', b.dataset.view === view));
+  $('#view-training').hidden = view !== 'training';
+  $('#view-food').hidden = view !== 'food';
+  try { localStorage.setItem('gymtrack-view', view); } catch(e){}
+  if (view === 'food') foodShow();
+}
+document.querySelectorAll('#viewseg button').forEach(b => b.onclick = () => setView(b.dataset.view));
+
+/* ---------- food: search ---------- */
+const fmt = (n, d=0) => (Math.round((+n || 0) * 10**d) / 10**d).toLocaleString('en-US', {maximumFractionDigits:d});
+let fResults = [], fSel = -1, fSeq = 0;
+
+function foodSub(f){
+  const bits = [];
+  if (f.brand) bits.push(f.brand);
+  bits.push(`P ${fmt(f.protein_100g,1)} · C ${fmt(f.carbs_100g,1)} · F ${fmt(f.fat_100g,1)}`);
+  if (f.serving_g) bits.push(`${f.serving_label || 'serving'} ${fmt(f.serving_g)} g`);
+  return bits.join(' · ');
+}
+
+function foodRow(f, i, selected = i === fSel){
+  const tag = f.favorite ? '<span class="tag">★</span>' : f.source === 'recipe' ? '<span class="tag">RECIPE</span>'
+            : f.source === 'custom' ? '<span class="tag">MINE</span>' : '';
+  return `<button class="fres${selected ? ' sel' : ''}" data-i="${i}">
+    <div class="main"><b>${tag}${esc(f.name)}</b><span>${esc(foodSub(f))}</span></div>
+    <div class="kc">${fmt(f.kcal_100g)}<small>kcal/100 g</small></div></button>`;
+}
+
+function renderResults(q){
+  const box = $('#f-results');
+  if (!fResults.length){
+    box.innerHTML = q ? '<p class="empty">Nothing found.</p>' : '';
+    return;
+  }
+  const head = q ? '' : '<div class="fhead">Recent</div>';
+  box.innerHTML = head + fResults.map(foodRow).join('');
+}
+
+async function runSearch(){
+  const q = $('#f-q').value.trim(), seq = ++fSeq;
+  try {
+    const res = await api('/api/food/search?limit=20&q=' + encodeURIComponent(q));
+    if (seq !== fSeq) return;                  // a newer keystroke already answered
+    fResults = res.results; fSel = q && fResults.length ? 0 : -1;
+    renderResults(q);
+  } catch(e){ if (seq === fSeq) $('#f-results').innerHTML = '<p class="empty">Search unavailable.</p>'; }
+}
+const searchSoon = debounce(runSearch, 150);
+
+$('#f-q').addEventListener('input', searchSoon);
+$('#f-q').addEventListener('focus', () => { if (!$('#f-q').value) runSearch(); });
+$('#f-q').addEventListener('keydown', e => {
+  if (e.key === 'ArrowDown' || e.key === 'ArrowUp'){
+    if (!fResults.length) return;
+    e.preventDefault();
+    fSel = (fSel + (e.key === 'ArrowDown' ? 1 : -1) + fResults.length) % fResults.length;
+    renderResults($('#f-q').value.trim());
+    $('#f-results .fres.sel')?.scrollIntoView({block:'nearest'});
+  } else if (e.key === 'Enter'){
+    e.preventDefault();
+    if (fResults[fSel]) pickFood(fResults[fSel], 'search');
+  } else if (e.key === 'Escape'){
+    $('#f-q').value = ''; fResults = []; renderResults('');
+  }
+});
+$('#f-results').addEventListener('click', e => {
+  const b = e.target.closest('.fres'); if (b) pickFood(fResults[+b.dataset.i], 'search');
+});
+
+/* ---------- food: day ---------- */
+const MEALS = ['breakfast','lunch','dinner','snack'];
+const MEAL_LABEL = {breakfast:'Breakfast', lunch:'Lunch', dinner:'Dinner', snack:'Snack'};
+const todayIso = () => iso(new Date());
+const addDays = (key, n) => { const d = new Date(key + 'T12:00:00'); d.setDate(d.getDate() + n); return iso(d); };
+const num = v => { const n = parseFloat(String(v ?? '').replace(',', '.')); return isFinite(n) ? n : null; };
+let fDate = todayIso(), fDay = null, fConfig = {};
+
+/* The meal a new entry goes to — by the clock on the phone. */
+function mealNow(){
+  const h = new Date().getHours() + new Date().getMinutes() / 60;
+  return h < 10.5 ? 'breakfast' : h < 15 ? 'lunch' : h < 17 ? 'snack' : h < 21.5 ? 'dinner' : 'snack';
+}
+
+function dateLabel(key){
+  if (key === todayIso()) return 'Today';
+  if (key === addDays(todayIso(), -1)) return 'Yesterday';
+  if (key === addDays(todayIso(), 1)) return 'Tomorrow';
+  const d = new Date(key + 'T12:00:00');
+  return `${DAYS[d.getDay()].slice(0,3)} ${d.getDate()} ${MONTHS[d.getMonth()]}`;
+}
+
+async function foodShow(){
+  loadDay();
+  try {
+    fConfig = await api('/api/config');
+    $('#f-recognize').hidden = !fConfig.food_ai_enabled;
+    $('#f-scan').hidden = $('#f-ean-toggle').hidden = !fConfig.barcode;
+    $('#f-history').hidden = !fConfig.history;
+  } catch(e){}
+  try {
+    const c = await api('/api/food/catalog');
+    const hint = $('#f-catalog-hint');
+    hint.hidden = c.usda + c.off > 0;
+    hint.textContent = 'The food catalogue is empty. Import it on the server — see “Food data” in the README.';
+  } catch(e){}
+}
+
+async function loadDay(){
+  $('#f-date-label').textContent = dateLabel(fDate);
+  $('#f-date-input').value = fDate;
+  try { fDay = await api('/api/food/day?date=' + fDate); }
+  catch(e){ fDay = null; toast('Server unreachable'); }
+  renderDay();
+}
+
+function setDate(key){ if (key){ fDate = key; loadDay(); } }
+$('#f-prev').onclick = () => setDate(addDays(fDate, -1));
+$('#f-next').onclick = () => setDate(addDays(fDate, 1));
+$('#f-date-input').addEventListener('change', e => setDate(e.target.value));
+
+function bar(value, goal, cls=''){
+  const pct = goal ? Math.min(100, value / goal * 100) : 0;
+  return `<div class="bar"><i class="${goal && value > goal * 1.05 ? 'over' : ''} ${cls}" style="width:${pct}%"></i></div>`;
+}
+
+function renderDay(){
+  const sum = $('#f-summary');
+  if (!fDay){ sum.innerHTML = '<p class="empty">No data.</p>'; $('#f-meals').innerHTML = ''; return; }
+  const t = fDay.totals, g = fDay.goal;
+  const left = g ? Math.round(g.kcal - t.kcal) : null;
+  const macro = (k, label, cls) => `<div class="m ${cls}"><b>${fmt(t[k])}${g && g[k] ? ` <span style="display:inline;font-weight:500">/ ${fmt(g[k])} g</span>` : ' g'}</b>
+      <span>${label}</span>${g && g[k] ? bar(t[k], g[k]) : ''}</div>`;
+  sum.innerHTML = `<div class="fsum-top">
+      <div><b>${fmt(t.kcal)}</b> <span>kcal eaten</span></div>
+      <div class="right">${g ? `<b style="font-size:22px;color:${left < 0 ? 'var(--orange)' : 'var(--fg)'}">${fmt(Math.abs(left))}</b><span style="display:block">${left < 0 ? 'kcal over' : 'kcal left'} of ${fmt(g.kcal)}</span>`
+        : '<button class="link" id="f-setgoal" style="float:none">Set a goal</button>'}</div>
+    </div>
+    ${g ? bar(t.kcal, g.kcal) : ''}
+    <div class="macros">${macro('protein','Protein','p')}${macro('carbs','Carbs','c')}${macro('fat','Fat','f')}</div>`;
+  $('#f-setgoal') && ($('#f-setgoal').onclick = openGoals);
+
+  $('#f-meals').innerHTML = MEALS.map(m => {
+    const items = fDay.entries.filter(e => e.meal === m);
+    return `<div class="card meal"><div class="meal-head">
+        <p class="card-title">${MEAL_LABEL[m]}</p><span class="kc">${items.length ? fmt(fDay.meals[m].kcal) + ' kcal' : ''}</span>
+        <button data-meal-menu="${m}" aria-label="${MEAL_LABEL[m]} options">⋯</button></div>
+      ${items.length ? items.map(e => `<button class="fentry" data-entry="${e.id}">
+          <div class="main"><b>${esc(e.name)}</b><span>${e.grams ? fmt(e.grams) + ' g · ' : ''}P ${fmt(e.protein)} · C ${fmt(e.carbs)} · F ${fmt(e.fat)}</span></div>
+          <span class="kc">${fmt(e.kcal)}</span></button>`).join('')
+        : `<p class="empty">Nothing yet.</p>`}</div>`;
+  }).join('');
+}
+
+$('#f-meals').addEventListener('click', async e => {
+  const entry = e.target.closest('[data-entry]');
+  if (entry) return openEntry(fDay.entries.find(x => x.id === +entry.dataset.entry));
+  const menu = e.target.closest('[data-meal-menu]');
+  if (!menu) return;
+  const meal = menu.dataset.mealMenu, label = MEAL_LABEL[meal].toLowerCase();
+  const choice = await picker(MEAL_LABEL[meal], [
+    {label: `Add to ${label}`, value: 'add'},
+    {label: `Same ${label} as the day before`, value: 'prev'},
+    {label: `Copy ${label} from another day…`, value: 'other'},
+    {label: 'Quick add calories', value: 'quick'},
+  ]);
+  if (choice === 'add'){ fMeal = meal; $('#f-q').focus(); }
+  else if (choice === 'quick') openQuick(null, meal);
+  else if (choice === 'prev') copyMeal(addDays(fDate, -1), meal);
+  else if (choice === 'other'){
+    const from = await pickDate(addDays(fDate, -1));
+    if (from) copyMeal(from, meal);
+  }
+});
+
+/* A throwaway date input — Safari shows its own wheel picker. */
+function pickDate(initial){
+  return new Promise(resolve => {
+    const input = document.createElement('input');
+    input.type = 'date'; input.value = initial;
+    input.style.cssText = 'position:fixed;left:50%;top:50%;opacity:0;width:1px;height:1px';
+    document.body.appendChild(input);
+    let done = false;
+    const finish = v => { if (done) return; done = true; input.remove(); resolve(v); };
+    input.addEventListener('change', () => finish(input.value || null));
+    input.addEventListener('blur', () => setTimeout(() => finish(null), 300));
+    input.focus();
+    try { input.showPicker(); } catch(e){ const v = prompt('Copy from which day? (YYYY-MM-DD)', initial); finish(v); }
+  });
+}
+
+async function copyMeal(from, meal){
+  try {
+    const r = await post('/api/food/log/copy', {from_date: from, to_date: fDate, meal});
+    toast(r.copied ? `Copied ${r.copied} item${r.copied > 1 ? 's' : ''} from ${dateLabel(from).toLowerCase()}` : `Nothing logged for ${MEAL_LABEL[meal].toLowerCase()} on ${dateLabel(from).toLowerCase()}`);
+    loadDay();
+  } catch(e){ toast('Not copied'); }
+}
+
+/* ---------- food: portion panel ---------- */
+let fMeal = null, po = null;   // po = {food, entry, method}
+
+function mealSeg(el, selected){
+  el.innerHTML = MEALS.map(m => `<button data-m="${m}" class="${m === selected ? 'on' : ''}">${MEAL_LABEL[m]}</button>`).join('');
+  el.onclick = e => { const b = e.target.closest('button'); if (!b) return;
+    el.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); };
+}
+const segValue = el => el.querySelector('button.on')?.dataset.m || mealNow();
+
+function pickFood(f, method){
+  openPortion(f, null, method || 'search');
+}
+
+function openPortion(food, entry, method){
+  po = {food, entry, method};
+  $('#po-title').textContent = entry ? 'Edit entry' : 'Add food';
+  $('#po-save').textContent = entry ? 'Save' : 'Add';
+  $('#po-delete').hidden = !entry;
+  $('#po-name').textContent = food.name;
+  $('#po-sub').textContent = [food.brand, `${fmt(food.kcal_100g)} kcal · P ${fmt(food.protein_100g,1)} · C ${fmt(food.carbs_100g,1)} · F ${fmt(food.fat_100g,1)} per 100 g`]
+    .filter(Boolean).join(' · ');
+  $('#po-star').hidden = !food.ref;
+  $('#po-edit').hidden = food.source !== 'custom' || !!entry;
+  $('#po-star').classList.toggle('on', !!food.favorite);
+  const grams = entry ? entry.grams : (food.serving_g || 100);
+  $('#po-grams').value = fmt(grams, 1).replace(/,/g, '');
+  const sv = food.serving_g;
+  const one = (food.serving_label || '').match(/^1\s+(.+)$/);   // "1 ks" → ½ ks, 1 ks, 2 ks
+  const lbl = k => one ? `${k === .5 ? '½' : k} ${one[1]}` : `${k === .5 ? '½' : k} × ${food.serving_label || 'serving'}`;
+  const opts = sv ? [.5, 1, 2].map(k => [k, lbl(k)])
+                    .map(([k, l]) => `<button data-g="${Math.round(sv * k * 10) / 10}">${esc(l)}<br><small style="color:var(--fg-3)">${fmt(sv * k)} g</small></button>`)
+                 : [50, 100, 150, 200].map(g => `<button data-g="${g}">${g} g</button>`);
+  $('#po-portions').innerHTML = opts.join('');
+  mealSeg($('#po-meal'), entry ? entry.meal : (fMeal || mealNow()));
+  poUpdate();
+  $('#sheet-portion').classList.add('open');
+  if (!matchMedia('(pointer:coarse)').matches) setTimeout(() => $('#po-grams').select(), 350);
+}
+
+function poUpdate(){
+  const g = num($('#po-grams').value) || 0, f = po.food, k = g / 100;
+  const cell = (v, label, d=0) => `<div class="dstat"><b>${fmt(v, d)}</b><span>${label}</span></div>`;
+  $('#po-stats').innerHTML = cell(f.kcal_100g * k, 'kcal') + cell(f.protein_100g * k, 'protein g', 1)
+    + cell(f.carbs_100g * k, 'carbs g', 1) + cell(f.fat_100g * k, 'fat g', 1);
+}
+$('#po-grams').addEventListener('input', poUpdate);
+$('#po-grams').addEventListener('keydown', e => { if (e.key === 'Enter'){ e.preventDefault(); savePortion(); } });
+$('#po-portions').onclick = e => { const b = e.target.closest('[data-g]'); if (!b) return;
+  $('#po-grams').value = b.dataset.g; poUpdate(); };
+$('#po-cancel').onclick = () => $('#sheet-portion').classList.remove('open');
+$('#po-save').onclick = savePortion;
+
+async function savePortion(){
+  const grams = num($('#po-grams').value);
+  if (!grams || grams <= 0) return toast('Enter the grams');
+  const meal = segValue($('#po-meal'));
+  try {
+    if (po.entry) await api('/api/food/log/' + po.entry.id, {method:'PATCH', headers:{'Content-Type':'application/json'},
+                                                                body: JSON.stringify({grams, meal})});
+    else await post('/api/food/log', {date: fDate, meal, food_ref: po.food.ref, grams, entry_method: po.method});
+  } catch(e){ return toast('Not saved'); }
+  $('#sheet-portion').classList.remove('open');
+  $('#f-q').value = ''; fResults = []; renderResults(''); fMeal = null;
+  toast(po.entry ? 'Saved' : `Added to ${MEAL_LABEL[meal].toLowerCase()}`);
+  loadDay();
+}
+
+$('#po-star').onclick = async () => {
+  const f = po.food, on = !f.favorite;
+  try { await api('/api/food/favorites/' + encodeURIComponent(f.ref), {method: on ? 'PUT' : 'DELETE'}); }
+  catch(e){ return toast('Not saved'); }
+  f.favorite = on; $('#po-star').classList.toggle('on', on);
+  toast(on ? 'Added to favourites' : 'Removed from favourites');
+};
+
+$('#po-edit').onclick = () => { $('#sheet-portion').classList.remove('open'); openNewFood(po.food, 'log'); };
+$('#po-delete').onclick = () => deleteEntry(po.entry, '#sheet-portion');
+
+async function deleteEntry(entry, sheet){
+  try { await api('/api/food/log/' + entry.id, {method:'DELETE'}); } catch(e){ return toast('Not deleted'); }
+  $(sheet).classList.remove('open'); toast('Deleted'); loadDay();
+}
+
+/* An entry keeps the values it was logged with; the panel edits the amount of that snapshot. */
+function openEntry(e){
+  if (!e.food_ref || !e.grams) return openQuick(e);
+  const per = v => v / e.grams * 100;
+  openPortion({ref: e.food_ref, name: e.name, brand: '', kcal_100g: per(e.kcal), protein_100g: per(e.protein),
+               carbs_100g: per(e.carbs), fat_100g: per(e.fat), serving_g: null, favorite: false}, e, e.entry_method);
+  api('/api/food/foods/' + encodeURIComponent(e.food_ref)).then(f => {
+    if (po && po.entry === e){ po.food.favorite = f.favorite; po.food.serving_g = f.serving_g; po.food.serving_label = f.serving_label;
+      $('#po-star').classList.toggle('on', !!f.favorite); }
+  }).catch(() => { $('#po-star').hidden = true; });
+}
+
+/* ---------- food: barcodes ---------- */
+/* No getUserMedia over plain http on iOS, so the system camera takes a photo instead.
+   It is shrunk to a JPEG here — which also turns an iPhone HEIC into something the server reads. */
+function shrinkImage(file, maxSide=1600){
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file), img = new Image();
+    img.onload = () => {
+      const k = Math.min(1, maxSide / Math.max(img.naturalWidth, img.naturalHeight));
+      const c = document.createElement('canvas');
+      c.width = Math.round(img.naturalWidth * k); c.height = Math.round(img.naturalHeight * k);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(url);
+      c.toBlob(b => b ? resolve(b) : reject(new Error('encode')), 'image/jpeg', .88);
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('decode')); };
+    img.src = url;
+  });
+}
+
+async function uploadImage(path, file){
+  const form = new FormData();
+  form.append('image', await shrinkImage(file), 'photo.jpg');
+  const r = await fetch(BASE + path, {method:'POST', body: form});
+  return {status: r.status, body: await r.json().catch(() => ({}))};
+}
+
+function barcodeResult(res){
+  if (res.food){ openPortion(res.food, null, 'barcode'); return; }
+  if (res.barcode){
+    toast('Not in the catalogue — add it once, it is remembered');
+    openNewFood({barcode: res.barcode}, 'log');
+    return;
+  }
+  toast('No barcode found — get closer, or type it');
+  $('#f-ean-form').hidden = false; $('#f-ean').focus();
+}
+
+$('#f-scan').onclick = () => $('#f-scan-file').click();
+$('#f-scan-file').addEventListener('change', async e => {
+  const file = e.target.files[0]; e.target.value = '';
+  if (!file) return;
+  toast('Reading barcode…');
+  try {
+    const r = await uploadImage('/api/food/barcode/scan', file);
+    if (r.status !== 200) throw new Error(r.status);
+    barcodeResult(r.body);
+  } catch(err){ toast('Could not read the photo'); }
+});
+$('#f-ean-toggle').onclick = () => { const f = $('#f-ean-form'); f.hidden = !f.hidden; if (!f.hidden) $('#f-ean').focus(); };
+$('#f-ean-form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const code = $('#f-ean').value.replace(/\D/g, '');
+  if (code.length < 8) return toast('A barcode has 8 to 14 digits');
+  toast('Looking up…');
+  try { barcodeResult(await api('/api/food/barcode/' + code)); $('#f-ean').value = ''; }
+  catch(err){ toast('Lookup failed'); }
+});
+
+/* ---------- food: multi-add ---------- */
+/* One confirmation list for everything that arrives as several foods at once: a recipe split into
+   its ingredients now, a recognised photo later. Nothing is written until "Add all". */
+let mu = null;   // {items:[{name,label,food,grams,on}], method, base, portions}
+
+function openMulti(opts){
+  mu = {method: opts.method, portions: opts.portions || null, portions0: opts.portions || 1,
+        items: opts.items.map(i => ({...i, on: i.on !== false, base: i.grams}))};
+  $('#mu-title').textContent = opts.title || 'Add items';
+  $('#mu-portions-row').hidden = !mu.portions;
+  $('#mu-hint').textContent = opts.hint || 'Nothing is logged until you tap Add all. Switch off what you did not eat, fix any amount.';
+  mealSeg($('#mu-meal'), opts.meal || fMeal || mealNow());
+  renderMulti();
+  $('#sheet-multi').classList.add('open');
+}
+
+function muKcal(i){ return i.food ? i.food.kcal_100g * (num(i.grams) || 0) / 100 : 0; }
+
+function renderMulti(){
+  if (mu.portions) $('#mu-portions').textContent = fmt(mu.portions, 1);
+  $('#mu-list').innerHTML = mu.items.length ? mu.items.map((i, n) => `<div class="mu-item${i.on ? '' : ' off'}" data-n="${n}">
+      <button class="tog" data-tog="${n}" aria-label="Include">${TICK}</button>
+      <div class="main"><b>${esc(i.food ? i.food.name : i.name)}</b><span>${esc(i.label || (i.food ? foodSub(i.food) : 'no matching food'))}</span></div>
+      <input data-g="${n}" inputmode="decimal" value="${i.grams ?? ''}" ${i.food ? '' : 'disabled'}>
+      <span class="kc" data-kc="${n}">${fmt(muKcal(i))}</span></div>`).join('')
+    : '<p class="empty">Nothing to add.</p>';
+  muTotals();
+}
+
+function muTotals(){
+  const on = mu.items.filter(i => i.on && i.food);
+  const sum = k => on.reduce((s, i) => s + i.food[k] * (num(i.grams) || 0) / 100, 0);
+  const cell = (v, label, d=0) => `<div class="dstat"><b>${fmt(v, d)}</b><span>${label}</span></div>`;
+  $('#mu-total').innerHTML = cell(sum('kcal_100g'), 'kcal') + cell(sum('protein_100g'), 'protein g', 1)
+    + cell(sum('carbs_100g'), 'carbs g', 1) + cell(sum('fat_100g'), 'fat g', 1);
+  $('#mu-save').textContent = on.length ? `Add ${on.length}` : 'Add all';
+}
+
+$('#mu-list').addEventListener('click', e => {
+  const t = e.target.closest('[data-tog]'); if (!t) return;
+  const i = mu.items[+t.dataset.tog];
+  if (!i.food) return toast('No food matched — search for it instead');
+  i.on = !i.on; t.closest('.mu-item').classList.toggle('off', !i.on); muTotals();
+});
+$('#mu-list').addEventListener('input', e => {
+  const g = e.target.closest('[data-g]'); if (!g) return;
+  const i = mu.items[+g.dataset.g]; i.grams = g.value;
+  $(`[data-kc="${g.dataset.g}"]`).textContent = fmt(muKcal(i)); muTotals();
+});
+$('#mu-portions-row').addEventListener('click', e => {
+  const b = e.target.closest('[data-step]'); if (!b) return;
+  const next = Math.max(.5, Math.min(20, mu.portions + parseFloat(b.dataset.step)));
+  mu.items.forEach(i => { if (i.base != null) i.grams = Math.round(i.base * next / mu.portions0 * 10) / 10; });
+  mu.portions = next; renderMulti();
+});
+$('#mu-cancel').onclick = () => $('#sheet-multi').classList.remove('open');
+$('#mu-save').onclick = async () => {
+  const meal = segValue($('#mu-meal'));
+  const items = mu.items.filter(i => i.on && i.food && num(i.grams) > 0)
+    .map(i => ({date: fDate, meal, food_ref: i.food.ref, grams: num(i.grams), entry_method: mu.method}));
+  if (!items.length) return toast('Nothing selected');
+  try { await post('/api/food/log/batch', {items}); } catch(e){ return toast('Not saved'); }
+  $('#sheet-multi').classList.remove('open');
+  toast(`Added ${items.length} item${items.length > 1 ? 's' : ''} to ${MEAL_LABEL[meal].toLowerCase()}`);
+  loadDay();
+};
+
+/* ---------- food: recipes ---------- */
+let rcPending = [];   // analyses waiting for the user: [{analysis, origin}]
+
+async function openRecipes(){
+  $('#sheet-recipes').classList.add('open');
+  $('#rc-sync').hidden = !fConfig.mordorcook_enabled;
+  renderPending();
+  loadRecipes();
+}
+
+async function loadRecipes(){
+  let res;
+  try { res = await api('/api/food/recipes'); } catch(e){ $('#rc-list').innerHTML = '<p class="empty">Server unreachable.</p>'; return; }
+  $('#rc-list').innerHTML = res.recipes.length ? res.recipes.map(r => {
+    const ps = r.serving_g ? r.kcal_100g * r.serving_g / 100 : null;
+    return `<div class="row" data-recipe="${esc(r.ref)}" style="cursor:pointer">
+      <div class="main"><b>${esc(r.name)}</b><span>${ps != null ? fmt(ps) + ' kcal / portion · ' : ''}${fmt(r.serving_g)} g · ${esc(r.brand)}</span></div>
+      <span class="chev">›</span></div>`;
+  }).join('') : `<p class="empty">${fConfig.mordorcook_enabled ? 'None yet — tap Sync.' : 'None yet — import one below.'}</p>`;
+  $('#rc-list')._recipes = res.recipes;
+}
+
+$('#rc-list').addEventListener('click', async e => {
+  const row = e.target.closest('[data-recipe]'); if (!row) return;
+  const r = $('#rc-list')._recipes.find(x => x.ref === row.dataset.recipe);
+  const choice = await picker(r.name, [
+    {label: 'Log a portion', value: 'portion'},
+    {label: 'Log the ingredients separately', value: 'items'},
+    {label: 'Delete recipe', value: 'delete'},
+  ]);
+  if (choice === 'portion'){ $('#sheet-recipes').classList.remove('open'); openPortion(r, null, 'recipe'); }
+  else if (choice === 'items') openRecipeItems(r);
+  else if (choice === 'delete'){
+    try { await api('/api/food/foods/' + encodeURIComponent(r.ref), {method:'DELETE'}); } catch(err){ return toast('Not deleted'); }
+    toast('Deleted — logged days keep their values'); loadRecipes();
+  }
+});
+
+async function openRecipeItems(r){
+  let res;
+  try { res = await api(`/api/food/recipes/${encodeURIComponent(r.ref)}/items?portions=1`); } catch(e){ return toast('Server unreachable'); }
+  $('#sheet-recipes').classList.remove('open');
+  openMulti({title: r.name, method: 'recipe', portions: 1,
+             items: res.items.map(i => ({name: i.name, label: i.label, food: i.food, grams: i.grams}))});
+}
+
+$('#rc-sync').onclick = async () => {
+  $('#rc-status').textContent = 'Syncing with MordorCook…';
+  let res;
+  try {
+    const r = await fetch(BASE + '/api/food/recipes/sync', {method:'POST'});
+    res = await r.json();
+    if (!r.ok) throw new Error(res.detail || r.status);
+  } catch(e){ $('#rc-status').textContent = 'Sync failed: ' + e.message; return; }
+  rcPending = res.pending.map(a => ({analysis: a, origin: 'mordorcook'}));
+  $('#rc-status').textContent = `${res.total} recipes read · ${res.saved.length} saved · ${res.unchanged} unchanged`
+    + (res.pending.length ? ` · ${res.pending.length} need your help` : '');
+  renderPending(); loadRecipes();
+};
+
+$('#rc-import').onclick = async () => {
+  let recipe;
+  try { recipe = JSON.parse($('#rc-json').value); } catch(e){ return toast('That is not valid JSON'); }
+  const r = await fetch(BASE + '/api/food/recipes/import', {method:'POST', headers:{'Content-Type':'application/json'},
+                                                           body: JSON.stringify({recipe, origin:'import'})});
+  const res = await r.json().catch(() => ({}));
+  if (r.status === 422){
+    rcPending = rcPending.filter(p => p.analysis.recipe.title !== res.analysis.recipe.title);
+    rcPending.unshift({analysis: res.analysis, origin: 'import'});
+    renderPending(); toast('Some ingredients need your help'); return;
+  }
+  if (!r.ok) return toast(res.detail || 'Import failed');
+  $('#rc-json').value = ''; toast(`Saved “${res.food.name}”`); loadRecipes();
+};
+
+function renderPending(){
+  $('#rc-pending').innerHTML = rcPending.map((p, n) => {
+    const a = p.analysis, bad = a.ingredients.filter(x => x.status === 'unmatched' || x.status === 'uncertain');
+    return `<div class="card pend">
+      <h3>${esc(a.recipe.title)}</h3>
+      <p class="hint" style="margin:0 0 6px">${bad.length ? `${bad.length} ingredient${bad.length > 1 ? 's' : ''} to sort out — the recipe is not saved until every one is.`
+                                                   : `Ready: ${fmt(a.food.per_serving.kcal)} kcal per portion.`}</p>
+      ${a.ingredients.map((x, i) => `<div class="row">
+        <div class="main"><b>${esc(x.text)}</b><span class="${x.status === 'matched' || x.status === 'ignored' ? '' : 'bad'}">${
+          x.status === 'ignored' ? 'ignored — ' + esc(x.reason)
+          : x.food ? `${esc(x.food.name)}${x.grams ? ' · ' + fmt(x.grams) + ' g' : ''}${x.status !== 'matched' ? ' — ' + esc(x.reason) : ''}`
+          : esc(x.reason)}</span></div>
+        <button class="fix" data-fix="${n}:${i}">${x.status === 'matched' || x.status === 'ignored' ? 'Change' : x.status === 'uncertain' ? 'Check' : 'Fix'}</button></div>`).join('')}
+      ${bad.length ? '' : `<button class="cta" data-save-pending="${n}" style="margin-top:12px">Save recipe</button>`}
+    </div>`;
+  }).join('');
+}
+
+$('#rc-pending').addEventListener('click', async e => {
+  const fix = e.target.closest('[data-fix]');
+  if (fix){ const [n, i] = fix.dataset.fix.split(':').map(Number); return openAssign(n, i); }
+  const save = e.target.closest('[data-save-pending]'); if (!save) return;
+  const p = rcPending[+save.dataset.savePending];
+  try { await post('/api/food/recipes/import', {recipe: p.analysis.recipe, origin: p.origin}); }
+  catch(err){ return toast('Not saved'); }
+  rcPending.splice(+save.dataset.savePending, 1);
+  toast(`Saved “${p.analysis.recipe.title}”`); renderPending(); loadRecipes();
+});
+
+/* ---------- food: assign an ingredient ---------- */
+let as = null;   // {n, i, line, food}
+
+function openAssign(n, i){
+  const line = rcPending[n].analysis.ingredients[i];
+  as = {n, i, line, food: line.food};
+  $('#as-line').textContent = line.text;
+  $('#as-reason').textContent = line.status === 'uncertain' ? 'Loose match — is this the right food?' : line.reason || '';
+  $('#as-q').value = line.item; $('#as-results').innerHTML = '';
+  $('#as-grams').value = line.grams ?? '';
+  $('#as-grams-hint').textContent = `Weight of “${line.text}” in grams`;
+  asChosen();
+  $('#sheet-assign').classList.add('open');
+  asSearch();
+}
+
+function asChosen(){
+  const el = $('#as-chosen');
+  el.hidden = !as.food;
+  if (as.food) el.innerHTML = `<div class="row"><div class="main"><b>${esc(as.food.name)}</b><span>${esc(foodSub(as.food))}</span></div>
+    <span class="kc" style="font-family:var(--round);font-weight:600">${fmt(as.food.kcal_100g)} kcal</span></div>`;
+}
+
+let asResults = [];
+const asSearch = debounce(async () => {
+  try { asResults = (await api('/api/food/search?limit=8&q=' + encodeURIComponent($('#as-q').value.trim()))).results; }
+  catch(e){ asResults = []; }
+  $('#as-results').innerHTML = asResults.map((f, i) => foodRow(f, i, false)).join('');
+}, 150);
+$('#as-q').addEventListener('input', asSearch);
+$('#as-results').addEventListener('click', e => {
+  const b = e.target.closest('.fres'); if (!b) return;
+  as.food = asResults[+b.dataset.i]; asChosen(); $('#as-results').innerHTML = '';
+  if (!$('#as-grams').value && as.line.unit && /^(g|gr|gram|grams)$/i.test(as.line.unit)) $('#as-grams').value = as.line.amount;
+  $('#as-grams').focus();
+});
+$('#as-cancel').onclick = () => $('#sheet-assign').classList.remove('open');
+
+async function asApply(body){
+  try { await post('/api/food/mappings', body); } catch(e){ return toast('Not saved'); }
+  const p = rcPending[as.n];
+  try { p.analysis = await post('/api/food/recipes/preview', {recipe: p.analysis.recipe}); } catch(e){}
+  $('#sheet-assign').classList.remove('open'); renderPending();
+}
+$('#as-save').onclick = () => {
+  if (!as.food) return toast('Pick a food first');
+  const grams = num($('#as-grams').value);
+  if (!grams || grams <= 0) return toast('How many grams is it?');
+  asApply({item: as.line.item, food_ref: as.food.ref, grams, amount: as.line.amount, unit: as.line.unit});
+};
+$('#as-ignore').onclick = () => asApply({item: as.line.item, ignore: true});
+
+$('#f-recipes').onclick = openRecipes;
+$('#rc-close').onclick = () => { $('#sheet-recipes').classList.remove('open'); loadDay(); };
+
+/* ---------- food: recognise a meal (only shown when the server has it switched on) ---------- */
+$('#f-recognize').onclick = () => $('#f-photo-file').click();
+$('#f-photo-file').addEventListener('change', async e => {
+  const file = e.target.files[0]; e.target.value = '';
+  if (!file) return;
+  toast('Looking at your plate…');
+  let job;
+  try {
+    const r = await uploadImage('/api/food/recognize', file);
+    if (r.status === 501) return toast('Meal recognition is switched off');
+    if (r.status !== 202) throw new Error(r.status);
+    job = r.body;
+  } catch(err){ return toast('Upload failed'); }
+  const until = Date.now() + 90000;
+  while (Date.now() < until){
+    await new Promise(res => setTimeout(res, 1500));
+    try { job = await api('/api/food/recognize/' + job.id); } catch(err){ continue; }
+    if (job.status === 'done' || job.status === 'error') break;
+  }
+  if (job.status !== 'done') return toast(job.status === 'error' ? 'Recognition failed' : 'Recognition timed out');
+  if (!job.items.length) return toast('No food recognised');
+  openMulti({title: 'Recognised meal', method: 'photo', hint: 'Estimates from the photo — check every amount. Nothing is logged until you tap Add.',
+    items: job.items.map(i => ({name: i.name, food: i.food, grams: Math.round(i.grams_estimate),
+      label: `${i.name} · ${Math.round(i.confidence * 100)} % sure${i.match_status === 'uncertain' ? ' · loose match' : ''}`,
+      on: !!i.food && i.confidence >= .5 && i.match_status === 'matched'}))});
+});
+
+/* ---------- year grid: training or food ---------- */
+let gridMode = 'training', foodDays = {};
+
+/* How close the day ended to its calorie goal, either way. */
+function foodClass(f){
+  if (!f.goal || !f.goal.kcal) return 'fn';
+  const off = Math.abs(f.kcal - f.goal.kcal) / f.goal.kcal;
+  return off <= .05 ? 'f4' : off <= .10 ? 'f3' : off <= .20 ? 'f2' : 'f1';
+}
+
+async function setGridMode(mode){
+  gridMode = mode;
+  document.querySelectorAll('#gridseg button').forEach(b => b.classList.toggle('on', b.dataset.grid === mode));
+  $('#legend-training').hidden = mode !== 'training';
+  $('#legend-food').hidden = mode !== 'food';
+  $('#grid-hint').textContent = mode === 'food' ? 'Tap a day to open it in Food.' : 'Tap a day to cycle it manually.';
+  try { localStorage.setItem('gymtrack-grid', mode); } catch(e){}
+  if (mode === 'food'){
+    try {
+      const res = await api(`/api/food/summary?start=${addDays(todayIso(), -371)}&end=${todayIso()}`);
+      foodDays = Object.fromEntries(res.days.map(d => [d.date, d]));
+    } catch(e){ toast('Server unreachable'); }
+  }
+  renderGrid();
+}
+document.querySelectorAll('#gridseg button').forEach(b => b.onclick = () => setGridMode(b.dataset.grid));
+
+/* ---------- charts (plain SVG) ---------- */
+const svgNs = 'http://www.w3.org/2000/svg';
+function tipAt(x, y, html){ const t = $('#ctip'); t.innerHTML = html; t.style.left = x + 'px'; t.style.top = (y - 8) + 'px'; t.hidden = false; }
+function tipHide(){ $('#ctip').hidden = true; }
+document.addEventListener('scroll', tipHide, true);
+
+function niceMax(v){
+  if (v <= 0) return 1;
+  const p = Math.pow(10, Math.floor(Math.log10(v))), n = v / p;
+  return (n <= 1 ? 1 : n <= 2 ? 2 : n <= 2.5 ? 2.5 : n <= 5 ? 5 : 10) * p;
+}
+
+/* Tooltip wiring shared by both charts: hover on desktop, tap on a phone. */
+function bindTips(svg, tips){
+  svg.addEventListener('pointermove', e => { const h = e.target.closest('[data-tip]'); h ? tipAt(e.clientX, e.clientY, tips[+h.dataset.tip]) : tipHide(); });
+  svg.addEventListener('pointerleave', tipHide);
+  svg.addEventListener('click', e => { const h = e.target.closest('[data-tip]'); if (h){ const r = h.getBoundingClientRect(); tipAt(r.left + r.width / 2, r.top, tips[+h.dataset.tip]); } });
+}
+
+/* Bars of calories per day, with the goal as a dashed step line. One series, one axis. */
+function kcalChart(el, days, start, n){
+  const W = el.clientWidth || 320, H = 190, L = 34, R = 4, T = 10, B = 22;
+  const byDate = Object.fromEntries(days.map(d => [d.date, d]));
+  const keys = Array.from({length: n}, (_, i) => addDays(start, i));
+  const max = niceMax(Math.max(1, ...keys.map(k => Math.max(byDate[k]?.kcal || 0, byDate[k]?.goal?.kcal || 0))) * 1.05);
+  const pw = W - L - R, ph = H - T - B, slot = pw / n, bw = Math.max(3, Math.min(28, slot - 2));
+  const y = v => T + ph - v / max * ph;
+  let s = '';
+  for (let i = 0; i <= 4; i++){
+    const v = max / 4 * i;
+    s += `<line class="gl" x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}"/><text class="ax" x="${L - 6}" y="${y(v) + 3}" text-anchor="end">${fmt(v)}</text>`;
+  }
+  const tips = [];
+  let goalPath = '';
+  keys.forEach((k, i) => {
+    const d = byDate[k], x = L + slot * i + (slot - bw) / 2;
+    if (d && d.kcal > 0){
+      const r = Math.min(4, bw / 2), top = Math.min(y(d.kcal), T + ph - 2);
+      s += `<path d="M${x},${T + ph} V${top + r} Q${x},${top} ${x + r},${top} H${x + bw - r} Q${x + bw},${top} ${x + bw},${top + r} V${T + ph} Z" fill="var(--blue)"/>`;
+    }
+    if (d && d.goal) goalPath += `${goalPath ? 'L' : 'M'}${L + slot * i},${y(d.goal.kcal)} H${L + slot * (i + 1)} `;
+    const dt = new Date(k + 'T12:00:00');
+    if (n <= 7 || dt.getDate() === 1 || dt.getDate() % 7 === 1)
+      s += `<text class="ax" x="${L + slot * i + slot / 2}" y="${H - 6}" text-anchor="middle">${n <= 7 ? DAYS[dt.getDay()].slice(0,3) : dt.getDate()}</text>`;
+    tips.push(`<b>${dateLabel(k)}</b><br>` + (d ? `${fmt(d.kcal)} kcal${d.goal ? ` <span>of ${fmt(d.goal.kcal)}</span>` : ''}<br><span>P ${fmt(d.protein)} · C ${fmt(d.carbs)} · F ${fmt(d.fat)} g</span>` : '<span>nothing logged</span>'));
+    s += `<rect class="hit" data-tip="${i}" x="${L + slot * i}" y="${T}" width="${slot}" height="${ph}"/>`;
+  });
+  if (goalPath) s += `<path d="${goalPath}" fill="none" stroke="var(--fg-2)" stroke-width="2" stroke-dasharray="4 3" pointer-events="none"/>`;
+  el.innerHTML = `<svg xmlns="${svgNs}" viewBox="0 0 ${W} ${H}" height="${H}" role="img" aria-label="Calories per day">${s}</svg>`;
+  bindTips(el.firstChild, tips);
+}
+
+/* Weigh-ins as dots, the 7-day average as the line to read. */
+function weightChart(el, weights, start, end){
+  if (!weights.length){ el.innerHTML = '<p class="empty">No weigh-ins yet.</p>'; return; }
+  const W = el.clientWidth || 320, H = 170, L = 34, R = 8, T = 10, B = 22;
+  const t0 = new Date(start + 'T12:00:00').getTime(), t1 = new Date(end + 'T12:00:00').getTime();
+  const vals = weights.flatMap(w => [w.kg, w.avg7]);
+  let lo = Math.floor(Math.min(...vals) - .5), hi = Math.ceil(Math.max(...vals) + .5);
+  if (hi - lo < 2){ lo -= 1; hi += 1; }
+  const x = d => L + (new Date(d + 'T12:00:00').getTime() - t0) / Math.max(1, t1 - t0) * (W - L - R);
+  const y = v => T + (hi - v) / (hi - lo) * (H - T - B);
+  let s = '';
+  const step = (hi - lo) <= 4 ? 1 : Math.ceil((hi - lo) / 4);
+  for (let v = lo; v <= hi; v += step) s += `<line class="gl" x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}"/><text class="ax" x="${L - 6}" y="${y(v) + 3}" text-anchor="end">${v}</text>`;
+  for (let i = 0; i <= 3; i++){
+    const d = new Date(t0 + (t1 - t0) * i / 3);
+    s += `<text class="ax" x="${L + (W - L - R) * i / 3}" y="${H - 6}" text-anchor="${i === 0 ? 'start' : i === 3 ? 'end' : 'middle'}">${d.getDate()} ${MONTHS[d.getMonth()]}</text>`;
+  }
+  s += `<path d="${weights.map((w, i) => `${i ? 'L' : 'M'}${x(w.date)},${y(w.avg7)}`).join(' ')}" fill="none" stroke="var(--green)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
+  const tips = [];
+  weights.forEach((w, i) => {
+    s += `<circle cx="${x(w.date)}" cy="${y(w.kg)}" r="4" fill="var(--fg-3)" stroke="var(--card)" stroke-width="2"/>`
+       + `<circle class="hit" data-tip="${i}" cx="${x(w.date)}" cy="${y(w.kg)}" r="12"/>`;
+    tips.push(`<b>${dateLabel(w.date)}</b><br>${fmt(w.kg, 1)} kg <span>· avg ${fmt(w.avg7, 1)}</span>`);
+  });
+  el.innerHTML = `<svg xmlns="${svgNs}" viewBox="0 0 ${W} ${H}" height="${H}" role="img" aria-label="Body weight">${s}</svg>`;
+  bindTips(el.firstChild, tips);
+}
+
+/* ---------- food: history ---------- */
+let fh = {range: 'week', anchor: todayIso()};
+
+function fhPeriod(){
+  const d = new Date(fh.anchor + 'T12:00:00');
+  if (fh.range === 'week'){
+    const start = addDays(fh.anchor, -((d.getDay() + 6) % 7));
+    return {start, n: 7, label: `${dateLabel(start)} – ${dateLabel(addDays(start, 6))}`};
+  }
+  const start = iso(new Date(d.getFullYear(), d.getMonth(), 1));
+  const n = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+  return {start, n, label: `${MONTHS[d.getMonth()]} ${d.getFullYear()}`};
+}
+
+async function openFoodHistory(){
+  $('#sheet-fhistory').classList.add('open');
+  $('#fh-wdate').value = todayIso();
+  renderFoodHistory(); loadWeights();
+}
+
+async function renderFoodHistory(){
+  const p = fhPeriod(), end = addDays(p.start, p.n - 1);
+  $('#fh-label').textContent = p.label;
+  let res;
+  try { res = await api(`/api/food/summary?start=${p.start}&end=${end}`); } catch(e){ return toast('Server unreachable'); }
+  kcalChart($('#fh-chart'), res.days, p.start, p.n);
+  const days = res.days, n = days.length;
+  const avg = k => n ? days.reduce((s, d) => s + d[k], 0) / n : 0;
+  const withGoal = days.filter(d => d.goal);
+  const onTarget = withGoal.filter(d => Math.abs(d.kcal - d.goal.kcal) / d.goal.kcal <= .1).length;
+  const cell = (v, label, d=0) => `<div class="dstat"><b>${v}</b><span>${label}</span></div>`;
+  $('#fh-avg').innerHTML = cell(fmt(avg('kcal')), 'kcal') + cell(fmt(avg('protein')), 'protein g')
+    + cell(fmt(avg('carbs')), 'carbs g') + cell(fmt(avg('fat')), 'fat g');
+  $('#fh-avg-note').textContent = n ? `· ${n} logged day${n > 1 ? 's' : ''}${withGoal.length ? ` · ${onTarget} within 10 % of goal` : ''}` : '· nothing logged';
+}
+
+async function loadWeights(){
+  const end = todayIso(), start = addDays(end, -90);
+  let res;
+  try { res = await api(`/api/food/weight?start=${start}&end=${end}`); } catch(e){ return; }
+  weightChart($('#fh-weight'), res.weights, start, end);
+  $('#fh-wlist').innerHTML = res.weights.slice(-5).reverse().map(w => `<div class="row">
+      <div class="main"><b>${fmt(w.kg, 1)} kg</b><span>${dateLabel(w.date)} · 7-day average ${fmt(w.avg7, 1)} kg</span></div>
+      <button class="del" data-wdel="${w.date}" aria-label="Delete">×</button></div>`).join('');
+}
+
+$('#fh-range').onclick = e => { const b = e.target.closest('[data-range]'); if (!b) return;
+  fh.range = b.dataset.range; $('#fh-range').querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); renderFoodHistory(); };
+$('#fh-prev').onclick = () => { fh.anchor = fh.range === 'week' ? addDays(fh.anchor, -7) : iso(new Date(new Date(fh.anchor + 'T12:00:00').getFullYear(), new Date(fh.anchor + 'T12:00:00').getMonth() - 1, 1)); renderFoodHistory(); };
+$('#fh-next').onclick = () => { fh.anchor = fh.range === 'week' ? addDays(fh.anchor, 7) : iso(new Date(new Date(fh.anchor + 'T12:00:00').getFullYear(), new Date(fh.anchor + 'T12:00:00').getMonth() + 1, 1)); renderFoodHistory(); };
+$('#fh-close').onclick = () => { $('#sheet-fhistory').classList.remove('open'); tipHide(); };
+$('#f-history').onclick = openFoodHistory;
+$('#fh-wform').addEventListener('submit', async e => {
+  e.preventDefault();
+  const kg = num($('#fh-wkg').value);
+  if (!kg) return toast('Enter your weight in kg');
+  try { await post('/api/food/weight', {date: $('#fh-wdate').value || todayIso(), kg}); } catch(err){ return toast('Not saved — 20 to 400 kg'); }
+  $('#fh-wkg').value = ''; toast('Weight saved'); loadWeights();
+});
+$('#fh-wlist').onclick = async e => {
+  const b = e.target.closest('[data-wdel]'); if (!b) return;
+  try { await api('/api/food/weight/' + b.dataset.wdel, {method:'DELETE'}); } catch(err){ return toast('Not deleted'); }
+  loadWeights();
+};
+
+/* ---------- food: quick add ---------- */
+let qEntry = null;
+function openQuick(entry, meal){
+  qEntry = entry || null;
+  $('#q-title').textContent = entry ? 'Edit entry' : 'Quick add';
+  $('#q-save').textContent = entry ? 'Save' : 'Add';
+  $('#q-delete').hidden = !entry;
+  $('#q-name').value = entry && entry.name !== 'Quick add' ? entry.name : '';
+  for (const k of ['kcal','protein','carbs','fat']) $('#q-' + k).value = entry && entry[k] ? entry[k] : '';
+  mealSeg($('#q-meal'), entry ? entry.meal : (meal || fMeal || mealNow()));
+  $('#sheet-quick').classList.add('open');
+  setTimeout(() => $('#q-kcal').focus(), 350);
+}
+$('#f-quick').onclick = () => openQuick(null);
+$('#q-cancel').onclick = () => $('#sheet-quick').classList.remove('open');
+$('#q-delete').onclick = () => deleteEntry(qEntry, '#sheet-quick');
+$('#q-save').onclick = async () => {
+  const body = {name: $('#q-name').value.trim(), meal: segValue($('#q-meal'))};
+  for (const k of ['kcal','protein','carbs','fat']) body[k] = num($('#q-' + k).value) || 0;
+  if (!body.kcal) return toast('Enter the calories');
+  try {
+    if (qEntry) await api('/api/food/log/' + qEntry.id, {method:'PATCH', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)});
+    else await post('/api/food/log', {...body, date: fDate, entry_method: 'quick'});
+  } catch(e){ return toast('Not saved'); }
+  $('#sheet-quick').classList.remove('open'); toast('Saved'); loadDay();
+};
+
+/* ---------- food: goals ---------- */
+async function openGoals(){
+  $('#sheet-goals').classList.add('open');
+  let res;
+  try { res = await api('/api/food/goals'); } catch(e){ return toast('Server unreachable'); }
+  const c = res.current;
+  for (const k of ['kcal','protein','carbs','fat']) $('#g-' + k).value = c ? c[k] || '' : '';
+  $('#g-from').value = todayIso();
+  goalHint();
+  $('#g-list').innerHTML = res.goals.length ? res.goals.map(g => `<div class="row">
+      <div class="main"><b>${fmt(g.kcal)} kcal</b><span>P ${fmt(g.protein)} · C ${fmt(g.carbs)} · F ${fmt(g.fat)} g — from ${esc(g.effective_from)}</span></div>
+      <button class="del" data-goal="${g.id}" aria-label="Delete goal">×</button></div>`).join('')
+    : '<p class="empty">No goals yet.</p>';
+}
+function goalHint(){
+  const p = num($('#g-protein').value) || 0, c = num($('#g-carbs').value) || 0, f = num($('#g-fat').value) || 0;
+  const k = num($('#g-kcal').value) || 0, macroKcal = p * 4 + c * 4 + f * 9;
+  $('#g-macro-hint').textContent = macroKcal ? `Macros add up to ${fmt(macroKcal)} kcal${k ? ` — ${fmt(macroKcal - k)} against the calorie goal` : ''}.` : '';
+}
+['kcal','protein','carbs','fat'].forEach(k => $('#g-' + k).addEventListener('input', goalHint));
+$('#f-goals').onclick = openGoals;
+$('#g-close').onclick = () => { $('#sheet-goals').classList.remove('open'); loadDay(); };
+$('#g-save').onclick = async () => {
+  const body = {effective_from: $('#g-from').value || todayIso()};
+  for (const k of ['kcal','protein','carbs','fat']) body[k] = num($('#g-' + k).value) || 0;
+  if (!body.kcal) return toast('Enter a calorie goal');
+  try { await post('/api/food/goals', body); } catch(e){ return toast('Not saved — kcal between 500 and 10 000'); }
+  toast('Goal saved'); openGoals();
+};
+$('#g-list').onclick = async e => {
+  const b = e.target.closest('[data-goal]'); if (!b) return;
+  try { await api('/api/food/goals/' + b.dataset.goal, {method:'DELETE'}); } catch(err){ return toast('Not deleted'); }
+  openGoals();
+};
+
+/* ---------- food: custom food ---------- */
+let nFood = null, nAfter = null;
+const N_FIELDS = {name:'name', brand:'brand', barcode:'barcode', kcal:'kcal_100g', protein:'protein_100g', carbs:'carbs_100g',
+                  fat:'fat_100g', fiber:'fiber_100g', serving:'serving_g', 'serving-label':'serving_label'};
+function openNewFood(prefill, after){
+  nFood = prefill && prefill.ref ? prefill : null; nAfter = after || null;
+  $('#n-title').textContent = nFood ? 'Edit food' : 'New food';
+  $('#n-delete').hidden = !nFood;
+  for (const [id, key] of Object.entries(N_FIELDS)) $('#n-' + id).value = prefill && prefill[key] != null ? prefill[key] : '';
+  $('#sheet-newfood').classList.add('open');
+  setTimeout(() => $('#n-name').focus(), 350);
+}
+$('#f-newfood').onclick = () => openNewFood(null, 'log');
+$('#n-cancel').onclick = () => $('#sheet-newfood').classList.remove('open');
+$('#n-save').onclick = async () => {
+  const body = {};
+  for (const [id, key] of Object.entries(N_FIELDS)){
+    const v = $('#n-' + id).value.trim();
+    body[key] = ['name','brand','barcode','serving_label'].includes(key) ? v : num(v);
+  }
+  if (!body.name || body.kcal_100g == null) return toast('Name and calories are required');
+  for (const k of ['protein_100g','carbs_100g','fat_100g']) body[k] = body[k] || 0;
+  let food;
+  try {
+    food = nFood ? await api('/api/food/foods/' + encodeURIComponent(nFood.ref), {method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)})
+                 : await post('/api/food/foods', body);
+  } catch(e){ return toast('Not saved — check the values per 100 g'); }
+  $('#sheet-newfood').classList.remove('open');
+  toast('Food saved');
+  if (nAfter === 'log') openPortion(food, null, body.barcode ? 'barcode' : 'search');
+};
+$('#n-delete').onclick = async () => {
+  try { await api('/api/food/foods/' + encodeURIComponent(nFood.ref), {method:'DELETE'}); } catch(e){ return toast('Not deleted'); }
+  $('#sheet-newfood').classList.remove('open'); toast('Deleted');
+};
+
 /* ---------- boot ---------- */
 async function load(){
   try { state = await api('/api/state'); }
@@ -1309,6 +2565,8 @@ function renderFooter(){
 (function boot(){
   const now = new Date();
   $('#today-label').textContent = `${DAYS[now.getDay()]} ${now.getDate()} ${MONTHS[now.getMonth()]}`;
+  try { if (localStorage.getItem('gymtrack-view') === 'food') setView('food'); } catch(e){}
+  try { if (localStorage.getItem('gymtrack-grid') === 'food') setGridMode('food'); } catch(e){}
   load().then(() => {
     try {
       const saved = JSON.parse(localStorage.getItem('gymtrack-active') || 'null');

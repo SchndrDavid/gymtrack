@@ -19,7 +19,9 @@ from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
-VERSION = "1.2.1"
+import food.api
+
+VERSION = "1.3.0"
 DB_PATH = os.environ.get("GYMTRACK_DB", "/data/gymtrack.db")
 STATIC = Path(__file__).parent / "static"
 TYPES = ("weight", "reps", "time")
@@ -247,6 +249,8 @@ def parse_workout(text: str) -> dict:
 
 app = FastAPI(title="GymTrack", version=VERSION, docs_url=None, redoc_url=None)
 init_db()
+food.api.init()
+app.include_router(food.api.router)
 
 
 class Day(BaseModel):
@@ -354,7 +358,7 @@ def parse(body: RawText):
 
 @app.get("/api/export")
 def export_all():
-    """Full backup — plans, days and workout history."""
+    """Full backup — plans, days, workout history and everything logged under Food."""
     with db() as conn:
         return {
             "gymtrack": 1,
@@ -366,6 +370,7 @@ def export_all():
                  "exercises": json.loads(r["payload"])}
                 for r in conn.execute("SELECT * FROM workouts ORDER BY date")
             ],
+            "food": food.api.export(),
         }
 
 
@@ -751,6 +756,11 @@ def exercise_history(name: str):
             if ex.get("name", "").lower() == name.lower() and ex.get("sets"):
                 return {"date": r["date"], "sets": ex["sets"]}
     return {"date": None, "sets": []}
+
+
+@app.get("/api/config")
+def get_config():
+    return {"version": VERSION, **food.api.config()}
 
 
 @app.get("/")
