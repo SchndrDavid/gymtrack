@@ -533,7 +533,7 @@ def config() -> dict[str, Any]:
         "mordorcook_enabled": bool(mordorcook_url()),
         "recipes": recipes,
         "barcode": True,
-        "history": False,
+        "history": True,
     }
 
 

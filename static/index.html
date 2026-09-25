@@ -55,6 +55,15 @@ h1{font-size:34px;line-height:1.05;font-weight:700;letter-spacing:-.5px;margin:0
 .cell.gym{background:var(--blue)}
 .cell.run{background:var(--green)}
 .cell.both{background:linear-gradient(135deg,var(--green) 0 50%,var(--blue) 50% 100%)}
+.cell.f4,.legend i.f4{background:#39d353}
+.cell.f3,.legend i.f3{background:#26a641}
+.cell.f2,.legend i.f2{background:#006d32}
+.cell.f1,.legend i.f1{background:#0e4429}
+.cell.fn,.legend i.fn{background:#48484a}
+.gridhead{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+.gridhead .card-title{margin:0}
+.miniseg{margin:0;width:170px}
+.miniseg button{padding:5px 6px;font-size:12px}
 .cell.future{opacity:.25;pointer-events:none}
 .cell.today{box-shadow:0 0 0 1.5px var(--fg),0 0 0 3px var(--bg)}
 .legend{display:flex;align-items:center;gap:14px;margin-top:14px;font-size:12px;color:var(--fg-2);flex-wrap:wrap}
@@ -282,6 +291,19 @@ h1{font-size:34px;line-height:1.05;font-weight:700;letter-spacing:-.5px;margin:0
 .mu-portions button{width:40px;height:40px;border-radius:50%;background:var(--card);font-size:22px;color:var(--fg)}
 .mu-portions b{font-family:var(--round);font-size:22px;min-width:40px;text-align:center;color:var(--fg)}
 
+.chart-card{padding:16px 14px 14px}
+.chart{position:relative;width:100%}
+.chart svg{display:block;width:100%;overflow:visible}
+.chart .ax{fill:var(--fg-3);font-size:10px;font-family:var(--sans)}
+.chart .gl{stroke:var(--line);stroke-width:1}
+.chart .hit{fill:transparent;cursor:pointer}
+.chart .empty{padding:40px 0}
+.ctip{position:fixed;z-index:90;pointer-events:none;background:rgba(44,44,46,.96);border:1px solid var(--line);
+  border-radius:10px;padding:8px 10px;font-size:12px;line-height:1.45;color:var(--fg);box-shadow:0 6px 20px rgba(0,0,0,.4);
+  transform:translate(-50%,-100%);white-space:nowrap}
+.ctip b{font-family:var(--round)}
+.ctip span{color:var(--fg-2)}
+
 .attrib{font-size:11px;color:var(--fg-3);text-align:center;margin:26px 0 0;line-height:1.5}
 
 /* Desktop only — on a phone, and in the home-screen app, the screen is for training. */
@@ -314,19 +336,25 @@ h1{font-size:34px;line-height:1.05;font-weight:700;letter-spacing:-.5px;margin:0
   </div>
 
   <div class="card">
-    <p class="card-title">Year</p>
+    <div class="gridhead"><p class="card-title">Year</p>
+      <div class="seg miniseg" id="gridseg"><button data-grid="training" class="on">Training</button><button data-grid="food">Food</button></div></div>
     <div class="gridbox" id="gridbox">
       <div class="gridrow">
         <div class="dow"><span>Mon</span><span></span><span>Wed</span><span></span><span>Fri</span><span></span><span>Sun</span></div>
         <div class="cols"><div class="months" id="months"></div><div class="cells" id="cells"></div></div>
       </div>
     </div>
-    <div class="legend">
+    <div class="legend" id="legend-training">
       <span><i style="background:var(--blue)"></i>Workout</span>
       <span><i style="background:var(--green)"></i>Run</span>
       <span><i style="background:linear-gradient(135deg,var(--green) 0 50%,var(--blue) 50% 100%)"></i>Both</span>
     </div>
-    <p class="hint">Tap a day to cycle it manually.</p>
+    <div class="legend" id="legend-food" hidden>
+      <span>Calories vs goal:</span>
+      <span><i class="f4"></i>within 5 %</span><span><i class="f3"></i>10 %</span><span><i class="f2"></i>20 %</span>
+      <span><i class="f1"></i>further</span><span><i class="fn"></i>no goal</span>
+    </div>
+    <p class="hint" id="grid-hint">Tap a day to cycle it manually.</p>
   </div>
 
   <button class="cta" id="btn-start">Start workout</button>
@@ -656,6 +684,45 @@ h1{font-size:34px;line-height:1.05;font-weight:700;letter-spacing:-.5px;margin:0
   </div>
 </div>
 
+<div class="sheet" id="sheet-fhistory">
+  <div class="sheet-bar">
+    <button id="fh-close">Done</button>
+    <b>Food history</b>
+    <span style="width:44px"></span>
+  </div>
+  <div class="sheet-body">
+    <div class="seg" id="fh-range"><button data-range="week" class="on">Week</button><button data-range="month">Month</button></div>
+    <div class="fdate">
+      <button class="icon-btn" id="fh-prev" aria-label="Earlier"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="m15 18-6-6 6-6"/></svg></button>
+      <span class="fdate-label" id="fh-label">—</span>
+      <button class="icon-btn" id="fh-next" aria-label="Later"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="m9 18 6-6-6-6"/></svg></button>
+    </div>
+    <div class="card chart-card">
+      <p class="card-title">Calories per day</p>
+      <div class="chart" id="fh-chart"></div>
+      <div class="legend" style="margin-top:8px"><span><i style="background:var(--blue)"></i>Eaten</span>
+        <span><i style="background:none;border-top:2px dashed var(--fg-2);border-radius:0;height:0;vertical-align:3px"></i>Goal</span></div>
+    </div>
+    <p class="card-title" style="margin-top:20px">Daily average <span id="fh-avg-note" style="text-transform:none;letter-spacing:0;font-weight:500"></span></p>
+    <div class="dstats" id="fh-avg"></div>
+    <div class="card chart-card" style="margin-top:20px">
+      <p class="card-title">Body weight</p>
+      <div class="chart" id="fh-weight"></div>
+      <div class="legend" style="margin-top:8px"><span><i style="background:var(--fg-3);border-radius:50%"></i>Weigh-in</span>
+        <span><i style="background:var(--green);height:2px;vertical-align:3px"></i>7-day average</span></div>
+      <form class="fean" id="fh-wform" style="margin-top:14px">
+        <input id="fh-wdate" type="date" style="flex:0 0 150px;font-size:15px">
+        <input id="fh-wkg" inputmode="decimal" placeholder="kg">
+        <button type="submit">Save</button>
+      </form>
+      <div id="fh-wlist" style="margin-top:6px"></div>
+    </div>
+    <p class="hint" style="margin-top:12px">Weights over the last 90 days. The average smooths out water and salt — watch it, not single days.</p>
+  </div>
+</div>
+
+<div class="ctip" id="ctip" hidden></div>
+
 <div class="pick" id="pick"><div class="pick-inner">
   <div class="pick-group" id="pick-body"></div>
   <div class="pick-group" style="margin-top:8px"><button id="pick-cancel" style="color:var(--blue);font-weight:600">Cancel</button></div>
@@ -730,8 +797,14 @@ function renderGrid(){
     }
     const cell = document.createElement('div');
     cell.className = 'cell'; cell.dataset.date = key; cell.title = key;
-    const day = state.days[key];
-    if (day) cell.classList.add(day.run && day.gym ? 'both' : day.gym ? 'gym' : 'run');
+    if (gridMode === 'food'){
+      const f = foodDays[key];
+      if (f) cell.classList.add(foodClass(f));
+      if (f) cell.title = `${key} · ${Math.round(f.kcal)} kcal${f.goal ? ' of ' + Math.round(f.goal.kcal) : ''}`;
+    } else {
+      const day = state.days[key];
+      if (day) cell.classList.add(day.run && day.gym ? 'both' : day.gym ? 'gym' : 'run');
+    }
     if (d > today) cell.classList.add('future');
     if (key === iso(today)) cell.classList.add('today');
     cells.appendChild(cell);
@@ -1382,6 +1455,7 @@ function renderPreview(error){
 /* ---------- events ---------- */
 $('#cells').addEventListener('click', e => {
   const cell = e.target.closest('.cell'); if (!cell) return;
+  if (gridMode === 'food'){ fDate = cell.dataset.date; setView('food'); window.scrollTo(0, 0); return; }
   const day = state.days[cell.dataset.date] || {run:false, gym:false};
   const next = !day.gym && !day.run ? {gym:true,  run:false}
              :  day.gym && !day.run ? {gym:false, run:true}
@@ -2205,6 +2279,178 @@ $('#f-photo-file').addEventListener('change', async e => {
       on: !!i.food && i.confidence >= .5 && i.match_status === 'matched'}))});
 });
 
+/* ---------- year grid: training or food ---------- */
+let gridMode = 'training', foodDays = {};
+
+/* How close the day ended to its calorie goal, either way. */
+function foodClass(f){
+  if (!f.goal || !f.goal.kcal) return 'fn';
+  const off = Math.abs(f.kcal - f.goal.kcal) / f.goal.kcal;
+  return off <= .05 ? 'f4' : off <= .10 ? 'f3' : off <= .20 ? 'f2' : 'f1';
+}
+
+async function setGridMode(mode){
+  gridMode = mode;
+  document.querySelectorAll('#gridseg button').forEach(b => b.classList.toggle('on', b.dataset.grid === mode));
+  $('#legend-training').hidden = mode !== 'training';
+  $('#legend-food').hidden = mode !== 'food';
+  $('#grid-hint').textContent = mode === 'food' ? 'Tap a day to open it in Food.' : 'Tap a day to cycle it manually.';
+  try { localStorage.setItem('gymtrack-grid', mode); } catch(e){}
+  if (mode === 'food'){
+    try {
+      const res = await api(`/api/food/summary?start=${addDays(todayIso(), -371)}&end=${todayIso()}`);
+      foodDays = Object.fromEntries(res.days.map(d => [d.date, d]));
+    } catch(e){ toast('Server unreachable'); }
+  }
+  renderGrid();
+}
+document.querySelectorAll('#gridseg button').forEach(b => b.onclick = () => setGridMode(b.dataset.grid));
+
+/* ---------- charts (plain SVG) ---------- */
+const svgNs = 'http://www.w3.org/2000/svg';
+function tipAt(x, y, html){ const t = $('#ctip'); t.innerHTML = html; t.style.left = x + 'px'; t.style.top = (y - 8) + 'px'; t.hidden = false; }
+function tipHide(){ $('#ctip').hidden = true; }
+document.addEventListener('scroll', tipHide, true);
+
+function niceMax(v){
+  if (v <= 0) return 1;
+  const p = Math.pow(10, Math.floor(Math.log10(v))), n = v / p;
+  return (n <= 1 ? 1 : n <= 2 ? 2 : n <= 2.5 ? 2.5 : n <= 5 ? 5 : 10) * p;
+}
+
+/* Tooltip wiring shared by both charts: hover on desktop, tap on a phone. */
+function bindTips(svg, tips){
+  svg.addEventListener('pointermove', e => { const h = e.target.closest('[data-tip]'); h ? tipAt(e.clientX, e.clientY, tips[+h.dataset.tip]) : tipHide(); });
+  svg.addEventListener('pointerleave', tipHide);
+  svg.addEventListener('click', e => { const h = e.target.closest('[data-tip]'); if (h){ const r = h.getBoundingClientRect(); tipAt(r.left + r.width / 2, r.top, tips[+h.dataset.tip]); } });
+}
+
+/* Bars of calories per day, with the goal as a dashed step line. One series, one axis. */
+function kcalChart(el, days, start, n){
+  const W = el.clientWidth || 320, H = 190, L = 34, R = 4, T = 10, B = 22;
+  const byDate = Object.fromEntries(days.map(d => [d.date, d]));
+  const keys = Array.from({length: n}, (_, i) => addDays(start, i));
+  const max = niceMax(Math.max(1, ...keys.map(k => Math.max(byDate[k]?.kcal || 0, byDate[k]?.goal?.kcal || 0))) * 1.05);
+  const pw = W - L - R, ph = H - T - B, slot = pw / n, bw = Math.max(3, Math.min(28, slot - 2));
+  const y = v => T + ph - v / max * ph;
+  let s = '';
+  for (let i = 0; i <= 4; i++){
+    const v = max / 4 * i;
+    s += `<line class="gl" x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}"/><text class="ax" x="${L - 6}" y="${y(v) + 3}" text-anchor="end">${fmt(v)}</text>`;
+  }
+  const tips = [];
+  let goalPath = '';
+  keys.forEach((k, i) => {
+    const d = byDate[k], x = L + slot * i + (slot - bw) / 2;
+    if (d && d.kcal > 0){
+      const r = Math.min(4, bw / 2), top = Math.min(y(d.kcal), T + ph - 2);
+      s += `<path d="M${x},${T + ph} V${top + r} Q${x},${top} ${x + r},${top} H${x + bw - r} Q${x + bw},${top} ${x + bw},${top + r} V${T + ph} Z" fill="var(--blue)"/>`;
+    }
+    if (d && d.goal) goalPath += `${goalPath ? 'L' : 'M'}${L + slot * i},${y(d.goal.kcal)} H${L + slot * (i + 1)} `;
+    const dt = new Date(k + 'T12:00:00');
+    if (n <= 7 || dt.getDate() === 1 || dt.getDate() % 7 === 1)
+      s += `<text class="ax" x="${L + slot * i + slot / 2}" y="${H - 6}" text-anchor="middle">${n <= 7 ? DAYS[dt.getDay()].slice(0,3) : dt.getDate()}</text>`;
+    tips.push(`<b>${dateLabel(k)}</b><br>` + (d ? `${fmt(d.kcal)} kcal${d.goal ? ` <span>of ${fmt(d.goal.kcal)}</span>` : ''}<br><span>P ${fmt(d.protein)} · C ${fmt(d.carbs)} · F ${fmt(d.fat)} g</span>` : '<span>nothing logged</span>'));
+    s += `<rect class="hit" data-tip="${i}" x="${L + slot * i}" y="${T}" width="${slot}" height="${ph}"/>`;
+  });
+  if (goalPath) s += `<path d="${goalPath}" fill="none" stroke="var(--fg-2)" stroke-width="2" stroke-dasharray="4 3" pointer-events="none"/>`;
+  el.innerHTML = `<svg xmlns="${svgNs}" viewBox="0 0 ${W} ${H}" height="${H}" role="img" aria-label="Calories per day">${s}</svg>`;
+  bindTips(el.firstChild, tips);
+}
+
+/* Weigh-ins as dots, the 7-day average as the line to read. */
+function weightChart(el, weights, start, end){
+  if (!weights.length){ el.innerHTML = '<p class="empty">No weigh-ins yet.</p>'; return; }
+  const W = el.clientWidth || 320, H = 170, L = 34, R = 8, T = 10, B = 22;
+  const t0 = new Date(start + 'T12:00:00').getTime(), t1 = new Date(end + 'T12:00:00').getTime();
+  const vals = weights.flatMap(w => [w.kg, w.avg7]);
+  let lo = Math.floor(Math.min(...vals) - .5), hi = Math.ceil(Math.max(...vals) + .5);
+  if (hi - lo < 2){ lo -= 1; hi += 1; }
+  const x = d => L + (new Date(d + 'T12:00:00').getTime() - t0) / Math.max(1, t1 - t0) * (W - L - R);
+  const y = v => T + (hi - v) / (hi - lo) * (H - T - B);
+  let s = '';
+  const step = (hi - lo) <= 4 ? 1 : Math.ceil((hi - lo) / 4);
+  for (let v = lo; v <= hi; v += step) s += `<line class="gl" x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}"/><text class="ax" x="${L - 6}" y="${y(v) + 3}" text-anchor="end">${v}</text>`;
+  for (let i = 0; i <= 3; i++){
+    const d = new Date(t0 + (t1 - t0) * i / 3);
+    s += `<text class="ax" x="${L + (W - L - R) * i / 3}" y="${H - 6}" text-anchor="${i === 0 ? 'start' : i === 3 ? 'end' : 'middle'}">${d.getDate()} ${MONTHS[d.getMonth()]}</text>`;
+  }
+  s += `<path d="${weights.map((w, i) => `${i ? 'L' : 'M'}${x(w.date)},${y(w.avg7)}`).join(' ')}" fill="none" stroke="var(--green)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
+  const tips = [];
+  weights.forEach((w, i) => {
+    s += `<circle cx="${x(w.date)}" cy="${y(w.kg)}" r="4" fill="var(--fg-3)" stroke="var(--card)" stroke-width="2"/>`
+       + `<circle class="hit" data-tip="${i}" cx="${x(w.date)}" cy="${y(w.kg)}" r="12"/>`;
+    tips.push(`<b>${dateLabel(w.date)}</b><br>${fmt(w.kg, 1)} kg <span>· avg ${fmt(w.avg7, 1)}</span>`);
+  });
+  el.innerHTML = `<svg xmlns="${svgNs}" viewBox="0 0 ${W} ${H}" height="${H}" role="img" aria-label="Body weight">${s}</svg>`;
+  bindTips(el.firstChild, tips);
+}
+
+/* ---------- food: history ---------- */
+let fh = {range: 'week', anchor: todayIso()};
+
+function fhPeriod(){
+  const d = new Date(fh.anchor + 'T12:00:00');
+  if (fh.range === 'week'){
+    const start = addDays(fh.anchor, -((d.getDay() + 6) % 7));
+    return {start, n: 7, label: `${dateLabel(start)} – ${dateLabel(addDays(start, 6))}`};
+  }
+  const start = iso(new Date(d.getFullYear(), d.getMonth(), 1));
+  const n = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+  return {start, n, label: `${MONTHS[d.getMonth()]} ${d.getFullYear()}`};
+}
+
+async function openFoodHistory(){
+  $('#sheet-fhistory').classList.add('open');
+  $('#fh-wdate').value = todayIso();
+  renderFoodHistory(); loadWeights();
+}
+
+async function renderFoodHistory(){
+  const p = fhPeriod(), end = addDays(p.start, p.n - 1);
+  $('#fh-label').textContent = p.label;
+  let res;
+  try { res = await api(`/api/food/summary?start=${p.start}&end=${end}`); } catch(e){ return toast('Server unreachable'); }
+  kcalChart($('#fh-chart'), res.days, p.start, p.n);
+  const days = res.days, n = days.length;
+  const avg = k => n ? days.reduce((s, d) => s + d[k], 0) / n : 0;
+  const withGoal = days.filter(d => d.goal);
+  const onTarget = withGoal.filter(d => Math.abs(d.kcal - d.goal.kcal) / d.goal.kcal <= .1).length;
+  const cell = (v, label, d=0) => `<div class="dstat"><b>${v}</b><span>${label}</span></div>`;
+  $('#fh-avg').innerHTML = cell(fmt(avg('kcal')), 'kcal') + cell(fmt(avg('protein')), 'protein g')
+    + cell(fmt(avg('carbs')), 'carbs g') + cell(fmt(avg('fat')), 'fat g');
+  $('#fh-avg-note').textContent = n ? `· ${n} logged day${n > 1 ? 's' : ''}${withGoal.length ? ` · ${onTarget} within 10 % of goal` : ''}` : '· nothing logged';
+}
+
+async function loadWeights(){
+  const end = todayIso(), start = addDays(end, -90);
+  let res;
+  try { res = await api(`/api/food/weight?start=${start}&end=${end}`); } catch(e){ return; }
+  weightChart($('#fh-weight'), res.weights, start, end);
+  $('#fh-wlist').innerHTML = res.weights.slice(-5).reverse().map(w => `<div class="row">
+      <div class="main"><b>${fmt(w.kg, 1)} kg</b><span>${dateLabel(w.date)} · 7-day average ${fmt(w.avg7, 1)} kg</span></div>
+      <button class="del" data-wdel="${w.date}" aria-label="Delete">×</button></div>`).join('');
+}
+
+$('#fh-range').onclick = e => { const b = e.target.closest('[data-range]'); if (!b) return;
+  fh.range = b.dataset.range; $('#fh-range').querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); renderFoodHistory(); };
+$('#fh-prev').onclick = () => { fh.anchor = fh.range === 'week' ? addDays(fh.anchor, -7) : iso(new Date(new Date(fh.anchor + 'T12:00:00').getFullYear(), new Date(fh.anchor + 'T12:00:00').getMonth() - 1, 1)); renderFoodHistory(); };
+$('#fh-next').onclick = () => { fh.anchor = fh.range === 'week' ? addDays(fh.anchor, 7) : iso(new Date(new Date(fh.anchor + 'T12:00:00').getFullYear(), new Date(fh.anchor + 'T12:00:00').getMonth() + 1, 1)); renderFoodHistory(); };
+$('#fh-close').onclick = () => { $('#sheet-fhistory').classList.remove('open'); tipHide(); };
+$('#f-history').onclick = openFoodHistory;
+$('#fh-wform').addEventListener('submit', async e => {
+  e.preventDefault();
+  const kg = num($('#fh-wkg').value);
+  if (!kg) return toast('Enter your weight in kg');
+  try { await post('/api/food/weight', {date: $('#fh-wdate').value || todayIso(), kg}); } catch(err){ return toast('Not saved — 20 to 400 kg'); }
+  $('#fh-wkg').value = ''; toast('Weight saved'); loadWeights();
+});
+$('#fh-wlist').onclick = async e => {
+  const b = e.target.closest('[data-wdel]'); if (!b) return;
+  try { await api('/api/food/weight/' + b.dataset.wdel, {method:'DELETE'}); } catch(err){ return toast('Not deleted'); }
+  loadWeights();
+};
+
 /* ---------- food: quick add ---------- */
 let qEntry = null;
 function openQuick(entry, meal){
@@ -2320,6 +2566,7 @@ function renderFooter(){
   const now = new Date();
   $('#today-label').textContent = `${DAYS[now.getDay()]} ${now.getDate()} ${MONTHS[now.getMonth()]}`;
   try { if (localStorage.getItem('gymtrack-view') === 'food') setView('food'); } catch(e){}
+  try { if (localStorage.getItem('gymtrack-grid') === 'food') setGridMode('food'); } catch(e){}
   load().then(() => {
     try {
       const saved = JSON.parse(localStorage.getItem('gymtrack-active') || 'null');
