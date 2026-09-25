@@ -37,7 +37,15 @@ jobs:
           docker run -d --name gymtrack-ci -p 8101:8000 -v "$PWD/data:/data" gymtrack:ci
           for i in $(seq 1 20); do
             code=$(curl -so /dev/null -w '%{http_code}' http://localhost:8101/health || true)
-            [ "$code" = "200" ] && echo "healthy" && exit 0
+            if [ "$code" = "200" ]; then
+              echo "healthy"
+              curl -sf http://localhost:8101/api/config
+              curl -sf "http://localhost:8101/api/food/search?q=test"
+              code=$(curl -so /dev/null -w '%{http_code}' -F image=@static/index.html http://localhost:8101/api/food/recognize)
+              [ "$code" = "501" ] || { echo "recognize should be 501, got $code"; exit 1; }
+              docker exec gymtrack-ci python -c "import zxingcpp, PIL; print('zxing ok')"
+              exit 0
+            fi
             sleep 1
           done
           docker logs gymtrack-ci

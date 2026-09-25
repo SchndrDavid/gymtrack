@@ -40,9 +40,47 @@ git -C /srv/gymtrack/app pull
 docker compose -f /srv/gymtrack/app/docker-compose.yml up -d --build
 ```
 
+## Food: first deployment
+
+The Food tab needs a catalogue, which is imported once inside the running container. It needs
+outbound internet (fdc.nal.usda.gov, static.openfoodfacts.org); the running app only reaches out
+for live barcode lookups and to MordorCook.
+
+If your compose file lives outside the checkout (as in the example above), give it the Food
+variables too — compose only passes what the file names. The values come from a `.env` next to that
+compose file (or `--env-file`); every one has a working default:
+
+```yaml
+    environment:
+      MORDORCOOK_URL: "${MORDORCOOK_URL:-}"
+      FOOD_OFF_LIVE: "${FOOD_OFF_LIVE:-true}"
+      FOOD_AI_ENABLED: "${FOOD_AI_ENABLED:-false}"
+      ANTHROPIC_API_KEY: "${ANTHROPIC_API_KEY:-}"
+      FOOD_AI_MODEL: "${FOOD_AI_MODEL:-claude-haiku-4-5}"
+```
+
+Then:
+
+```bash
+git -C /srv/gymtrack/app pull --ff-only
+docker compose -f /srv/compose/gymtrack.yml up -d --build
+
+# basic foods from USDA (a few seconds after the download)
+docker compose -f /srv/compose/gymtrack.yml exec gymtrack python scripts/import_basic.py --build
+# Czech and Slovak products from Open Food Facts (10–30 min, one core, flat memory)
+docker compose -f /srv/compose/gymtrack.yml exec gymtrack python scripts/import_off.py
+```
+
+Both write to `data/foods.db`, which you can delete and re-import at any time. Existing training data
+is not touched: the Food tables are added to `gymtrack.db` next to the old ones on first start.
+
+To run the OFF import with lower priority next to other services, prefix it with `nice`:
+`… exec gymtrack nice -n 19 python scripts/import_off.py`.
+
 ## Backups
 
-The database is a single file, and there is an endpoint that dumps everything as JSON:
+Your data is `data/gymtrack.db`; `data/foods.db` is the re-importable catalogue and needs no backup.
+There is also an endpoint that dumps everything you entered, Food included, as JSON:
 
 ```bash
 curl -s localhost:8101/api/export > "gymtrack-$(date +%F).json"
