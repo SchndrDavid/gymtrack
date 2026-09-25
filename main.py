@@ -19,6 +19,8 @@ from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
+import food.api
+
 VERSION = "1.2.1"
 DB_PATH = os.environ.get("GYMTRACK_DB", "/data/gymtrack.db")
 STATIC = Path(__file__).parent / "static"
@@ -247,6 +249,8 @@ def parse_workout(text: str) -> dict:
 
 app = FastAPI(title="GymTrack", version=VERSION, docs_url=None, redoc_url=None)
 init_db()
+food.api.init()
+app.include_router(food.api.router)
 
 
 class Day(BaseModel):

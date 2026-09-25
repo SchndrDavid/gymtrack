@@ -23,6 +23,9 @@ jobs:
       - name: Smoke test the API
         run: python tests/smoke.py
 
+      - name: Smoke test the Food module
+        run: python tests/food_smoke.py
+
   docker:
     runs-on: ubuntu-latest
     steps:

@@ -185,6 +185,27 @@ h1{font-size:34px;line-height:1.05;font-weight:700;letter-spacing:-.5px;margin:0
 .pfield.wide{grid-column:1 / -1}
 .foot{margin:34px 0 0;text-align:center;font-size:11px;line-height:1.5;color:var(--fg-3);letter-spacing:.2px}
 .foot b{font-weight:600;color:var(--fg-2)}
+/* ---------- food ---------- */
+.viewseg{margin:-8px 0 16px}
+.fsearch{padding:10px 12px}
+.fsearch-box{display:flex;align-items:center;gap:8px;background:var(--card-2);border-radius:11px;padding:0 12px}
+.fsearch-box svg{width:17px;height:17px;color:var(--fg-3);flex:none}
+.fsearch-box input{flex:1;min-width:0;background:none;border:0;outline:none;font-size:17px;padding:12px 0;-webkit-appearance:none}
+.fsearch-box input::-webkit-search-cancel-button{-webkit-appearance:none}
+.fresults:empty{display:none}
+.fresults{margin-top:6px}
+.fres{display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:11px 4px;border-top:1px solid var(--line);min-height:54px}
+.fres:first-child{border-top:0}
+.fres.sel,.fres:active{background:var(--card-2);border-radius:10px}
+.fres .main{flex:1;min-width:0}
+.fres .main b{display:block;font-size:15px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fres .main span{display:block;font-size:12px;color:var(--fg-2);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fres .kc{font-family:var(--round);font-size:14px;font-weight:600;color:var(--fg-2);flex:none;text-align:right}
+.fres .kc small{display:block;font-size:10px;font-weight:500;color:var(--fg-3)}
+.fres .tag{font-size:10px;font-weight:700;letter-spacing:.3px;color:var(--orange);margin-right:4px}
+.fhead{font-size:12px;font-weight:600;color:var(--fg-3);text-transform:uppercase;letter-spacing:.6px;padding:10px 4px 2px}
+.attrib{font-size:11px;color:var(--fg-3);text-align:center;margin:26px 0 0;line-height:1.5}
+
 /* Desktop only — on a phone, and in the home-screen app, the screen is for training. */
 @media (max-width:640px){.foot{display:none}}
 @media (display-mode:standalone){.foot{display:none}}
@@ -202,6 +223,12 @@ h1{font-size:34px;line-height:1.05;font-weight:700;letter-spacing:-.5px;margin:0
     </button>
   </header>
 
+  <div class="seg viewseg" id="viewseg">
+    <button data-view="training" class="on">Training</button>
+    <button data-view="food">Food</button>
+  </div>
+
+  <div id="view-training">
   <div class="stats">
     <div class="stat b"><b id="s-gym">0</b><span>workouts / 30 days</span></div>
     <div class="stat g"><b id="s-run">0</b><span>runs / 30 days</span></div>
@@ -230,6 +257,19 @@ h1{font-size:34px;line-height:1.05;font-weight:700;letter-spacing:-.5px;margin:0
   <div class="card" style="margin-top:22px">
     <p class="card-title">Recent workouts <button class="link" id="btn-history">See all</button></p>
     <div id="history"><p class="empty">Nothing yet.</p></div>
+  </div>
+  </div>
+
+  <div id="view-food" hidden>
+    <div class="card fsearch">
+      <div class="fsearch-box">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input id="f-q" type="search" placeholder="Search food" autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="search">
+      </div>
+      <div id="f-results" class="fresults"></div>
+    </div>
+    <p class="hint" id="f-catalog-hint" hidden></p>
+    <p class="attrib">Food data © Open Food Facts contributors, ODbL · Basic foods: USDA FoodData Central (public domain)</p>
   </div>
 
   <footer class="foot" id="foot" hidden>
@@ -1190,8 +1230,8 @@ $('#r-list').addEventListener('click', e => {
 $('#i-close').onclick = () => $('#sheet-io').classList.remove('open');
 $('#i-text').addEventListener('input', debounce(reparse, 400));
 
-document.querySelectorAll('.seg button').forEach(btn => btn.onclick = () => {
-  document.querySelectorAll('.seg button').forEach(b => b.classList.toggle('on', b === btn));
+document.querySelectorAll('#sheet-io .seg button').forEach(btn => btn.onclick = () => {
+  document.querySelectorAll('#sheet-io .seg button').forEach(b => b.classList.toggle('on', b === btn));
   mode = btn.dataset.mode;
   $('#i-text').placeholder = mode === 'json'
     ? 'Paste plan JSON, or dump the current plans below.'
@@ -1293,6 +1333,92 @@ $('#d-delete').onclick = async () => {
   saveProfile();
 }));
 
+/* ---------- view switch ---------- */
+let view = 'training';
+function setView(v){
+  view = v === 'food' ? 'food' : 'training';
+  document.querySelectorAll('#viewseg button').forEach(b => b.classList.toggle('on', b.dataset.view === view));
+  $('#view-training').hidden = view !== 'training';
+  $('#view-food').hidden = view !== 'food';
+  try { localStorage.setItem('gymtrack-view', view); } catch(e){}
+  if (view === 'food') foodShow();
+}
+document.querySelectorAll('#viewseg button').forEach(b => b.onclick = () => setView(b.dataset.view));
+
+/* ---------- food: search ---------- */
+const fmt = (n, d=0) => (Math.round((+n || 0) * 10**d) / 10**d).toLocaleString('en-US', {maximumFractionDigits:d});
+let fResults = [], fSel = -1, fSeq = 0;
+
+function foodSub(f){
+  const bits = [];
+  if (f.brand) bits.push(f.brand);
+  bits.push(`P ${fmt(f.protein_100g,1)} · C ${fmt(f.carbs_100g,1)} · F ${fmt(f.fat_100g,1)}`);
+  if (f.serving_g) bits.push(`${f.serving_label || 'serving'} ${fmt(f.serving_g)} g`);
+  return bits.join(' · ');
+}
+
+function foodRow(f, i){
+  const tag = f.favorite ? '<span class="tag">★</span>' : f.source === 'recipe' ? '<span class="tag">RECIPE</span>'
+            : f.source === 'custom' ? '<span class="tag">MINE</span>' : '';
+  return `<button class="fres${i === fSel ? ' sel' : ''}" data-i="${i}">
+    <div class="main"><b>${tag}${esc(f.name)}</b><span>${esc(foodSub(f))}</span></div>
+    <div class="kc">${fmt(f.kcal_100g)}<small>kcal/100 g</small></div></button>`;
+}
+
+function renderResults(q){
+  const box = $('#f-results');
+  if (!fResults.length){
+    box.innerHTML = q ? '<p class="empty">Nothing found.</p>' : '';
+    return;
+  }
+  const head = q ? '' : '<div class="fhead">Recent</div>';
+  box.innerHTML = head + fResults.map(foodRow).join('');
+}
+
+async function runSearch(){
+  const q = $('#f-q').value.trim(), seq = ++fSeq;
+  try {
+    const res = await api('/api/food/search?limit=20&q=' + encodeURIComponent(q));
+    if (seq !== fSeq) return;                  // a newer keystroke already answered
+    fResults = res.results; fSel = q && fResults.length ? 0 : -1;
+    renderResults(q);
+  } catch(e){ if (seq === fSeq) $('#f-results').innerHTML = '<p class="empty">Search unavailable.</p>'; }
+}
+const searchSoon = debounce(runSearch, 150);
+
+$('#f-q').addEventListener('input', searchSoon);
+$('#f-q').addEventListener('focus', () => { if (!$('#f-q').value) runSearch(); });
+$('#f-q').addEventListener('keydown', e => {
+  if (e.key === 'ArrowDown' || e.key === 'ArrowUp'){
+    if (!fResults.length) return;
+    e.preventDefault();
+    fSel = (fSel + (e.key === 'ArrowDown' ? 1 : -1) + fResults.length) % fResults.length;
+    renderResults($('#f-q').value.trim());
+    $('#f-results .fres.sel')?.scrollIntoView({block:'nearest'});
+  } else if (e.key === 'Enter'){
+    e.preventDefault();
+    if (fResults[fSel]) pickFood(fResults[fSel], 'search');
+  } else if (e.key === 'Escape'){
+    $('#f-q').value = ''; fResults = []; renderResults('');
+  }
+});
+$('#f-results').addEventListener('click', e => {
+  const b = e.target.closest('.fres'); if (b) pickFood(fResults[+b.dataset.i], 'search');
+});
+
+function pickFood(f){
+  toast(`${f.name}: ${fmt(f.kcal_100g)} kcal / 100 g`);
+}
+
+async function foodShow(){
+  try {
+    const c = await api('/api/food/catalog');
+    const hint = $('#f-catalog-hint');
+    hint.hidden = c.usda + c.off > 0;
+    hint.textContent = 'The food catalogue is empty. Import it on the server — see the README, “Food data”.';
+  } catch(e){}
+}
+
 /* ---------- boot ---------- */
 async function load(){
   try { state = await api('/api/state'); }
@@ -1309,6 +1435,7 @@ function renderFooter(){
 (function boot(){
   const now = new Date();
   $('#today-label').textContent = `${DAYS[now.getDay()]} ${now.getDate()} ${MONTHS[now.getMonth()]}`;
+  try { if (localStorage.getItem('gymtrack-view') === 'food') setView('food'); } catch(e){}
   load().then(() => {
     try {
       const saved = JSON.parse(localStorage.getItem('gymtrack-active') || 'null');
