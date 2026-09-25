@@ -418,7 +418,18 @@ def fetch_mordorcook(base_url: str, timeout: float = 10) -> list[dict]:
 
 
 def sync(conn: sqlite3.Connection, recipes: list[dict]) -> dict:
+    """Mirror MordorCook: new and changed recipes are (re)computed, deleted ones disappear.
+
+    Days already logged keep their values — the log stores its own snapshot."""
     saved, same, pending, errors = [], 0, [], []
+    present = {str(r.get("id")) for r in recipes if isinstance(r, dict) and r.get("id")}
+    removed = []
+    for row in conn.execute("SELECT id, source_id, name, details FROM user_foods WHERE source='recipe'").fetchall():
+        origin = json.loads(row["details"] or "{}").get("origin")
+        if origin == "mordorcook" and row["source_id"] not in present:
+            conn.execute("DELETE FROM user_foods WHERE id=?", (row["id"],))
+            conn.execute("DELETE FROM food_favorites WHERE food_ref=?", (f"user:{row['id']}",))
+            removed.append(row["name"])
     for raw in recipes:
         try:
             r = normalise_recipe(raw)
@@ -433,4 +444,5 @@ def sync(conn: sqlite3.Connection, recipes: list[dict]) -> dict:
             saved.append(save(conn, a, "mordorcook")["name"])
         else:
             pending.append(a)
-    return {"total": len(recipes), "saved": saved, "unchanged": same, "pending": pending, "errors": errors}
+    return {"total": len(recipes), "saved": saved, "unchanged": same, "pending": pending, "errors": errors,
+            "removed": removed}

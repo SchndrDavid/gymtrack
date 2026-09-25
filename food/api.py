@@ -1,6 +1,9 @@
 """HTTP API of the Food module. Mounted by main.py under /api/food."""
 
+import json
 import os
+import subprocess
+import sys
 from datetime import date as Date, timedelta
 from typing import Any
 
@@ -35,12 +38,48 @@ def search(q: str = "", limit: int = 20):
 
 @router.get("/catalog")
 def catalog_stats():
-    """How much of the catalogue is imported — the Food tab says so when it is empty."""
+    """How much of the catalogue is imported, and how a running import is getting on."""
     with connect() as conn:
         counts = {r["source"]: r["n"] for r in conn.execute(
             "SELECT source, COUNT(*) AS n FROM cat.foods GROUP BY source")}
         custom = conn.execute("SELECT COUNT(*) AS n FROM user_foods").fetchone()["n"]
-    return {"usda": counts.get("usda", 0), "off": counts.get("off", 0), "user": custom}
+    return {"usda": counts.get("usda", 0), "off": counts.get("off", 0), "user": custom,
+            "import": import_status()}
+
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+IMPORT_STATUS = os.path.join(os.path.dirname(os.path.abspath(catalog.FOODS_DB)), "catalog_import.json")
+IMPORT_ARGS: list[str] = []   # tests point the importer at local files
+_import_proc = None
+
+
+def import_status() -> dict | None:
+    try:
+        with open(IMPORT_STATUS, encoding="utf-8") as fh:
+            status = json.load(fh)
+    except (OSError, ValueError):
+        return None
+    running = _import_proc is not None and _import_proc.poll() is None
+    if status.get("state") == "running" and not running:
+        status["state"] = "interrupted"      # the process is gone — a restart, a crash
+    return status
+
+
+@router.post("/catalog/import")
+def start_catalog_import():
+    """Download and import the food catalogue in a separate, low-priority process.
+
+    Started by a button, never on its own. Takes minutes; the Food tab polls GET /catalog."""
+    global _import_proc
+    if _import_proc is not None and _import_proc.poll() is None:
+        raise HTTPException(409, "an import is already running")
+    log_path = os.path.join(os.path.dirname(IMPORT_STATUS), "catalog_import.log")
+    with open(log_path, "w", encoding="utf-8") as log_file:
+        _import_proc = subprocess.Popen(
+            [sys.executable, os.path.join(ROOT, "scripts", "import_all.py"), *IMPORT_ARGS],
+            cwd=ROOT, stdout=log_file, stderr=subprocess.STDOUT,
+            preexec_fn=lambda: os.nice(19), start_new_session=True)
+    return {"ok": True, "pid": _import_proc.pid}
 
 
 @router.get("/foods/{ref}")

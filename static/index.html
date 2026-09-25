@@ -395,15 +395,18 @@ h1{font-size:34px;line-height:1.05;font-weight:700;letter-spacing:-.5px;margin:0
       <input type="file" id="f-scan-file" accept="image/*" capture="environment" hidden>
       <input type="file" id="f-photo-file" accept="image/*" capture="environment" hidden>
     </div>
-    <p class="hint" id="f-catalog-hint" hidden></p>
+    <div class="card" id="f-catalog" hidden style="margin-top:12px">
+      <p class="card-title">Food database</p>
+      <p class="hint" id="f-catalog-text" style="margin:0 0 12px"></p>
+      <button class="cta" id="f-catalog-btn" style="margin:0">Download food database</button>
+    </div>
 
     <div id="f-meals"></div>
 
     <div class="btnrow fmore">
       <button id="f-goals">Goals</button>
       <button id="f-history" hidden>History</button>
-      <button id="f-recipes">Recipes</button>
-      <button id="f-newfood">New food</button>
+      <button id="f-recipes" hidden>Recipes</button>
     </div>
     <p class="attrib">Food data © Open Food Facts contributors, ODbL · Basic foods: USDA FoodData Central (public domain)</p>
   </div>
@@ -627,18 +630,15 @@ h1{font-size:34px;line-height:1.05;font-weight:700;letter-spacing:-.5px;margin:0
   <div class="sheet-bar">
     <button id="rc-close">Done</button>
     <b>Recipes</b>
-    <button id="rc-sync" hidden>Sync</button>
+    <button id="rc-sync">Refresh</button>
   </div>
   <div class="sheet-body">
     <p class="hint" id="rc-status" style="margin:0 0 14px"></p>
     <div id="rc-pending"></div>
-    <p class="card-title">Your recipes</p>
+    <p class="card-title">Recipes from MordorCook</p>
     <div class="card" id="rc-list"><p class="empty">Loading…</p></div>
     <p class="hint">Values come from the ingredients: per portion, and per 100 g of the raw ingredients
       (the cooked weight is not known).</p>
-    <p class="card-title" style="margin-top:24px">Import a recipe</p>
-    <textarea class="ta" id="rc-json" placeholder='{"title":"Kuře na česneku","servings":4,"ingredients":[{"amount":600,"unit":"g","item":"kuřecí prsa"}]}'></textarea>
-    <div class="btnrow"><button id="rc-import">Import</button></div>
   </div>
 </div>
 
@@ -1770,16 +1770,50 @@ async function foodShow(){
   try {
     fConfig = await api('/api/config');
     $('#f-recognize').hidden = !fConfig.food_ai_enabled;
+    $('#f-recipes').hidden = !fConfig.mordorcook_enabled;
     $('#f-scan').hidden = $('#f-ean-toggle').hidden = !fConfig.barcode;
     $('#f-history').hidden = !fConfig.history;
   } catch(e){}
-  try {
-    const c = await api('/api/food/catalog');
-    const hint = $('#f-catalog-hint');
-    hint.hidden = c.usda + c.off > 0;
-    hint.textContent = 'The food catalogue is empty. Import it on the server — see “Food data” in the README.';
-  } catch(e){}
+  catalogStatus();
 }
+
+/* An empty catalogue offers to download itself; a running import shows how far it got. */
+let catalogPoll = null;
+async function catalogStatus(){
+  let c;
+  try { c = await api('/api/food/catalog'); } catch(e){ return; }
+  const imp = c.import, running = imp && imp.state === 'running';
+  const box = $('#f-catalog'), btn = $('#f-catalog-btn'), text = $('#f-catalog-text');
+  btn.hidden = running;
+  if (running){
+    box.hidden = false;
+    text.textContent = imp.stage === 'basic' ? 'Downloading basic foods from USDA…'
+      : imp.stage === 'index' ? 'Building the search index…'
+      : `Reading Open Food Facts: ${fmt(imp.off_lines)} products checked, ${fmt(imp.off_kept)} Czech and Slovak ones kept. `
+        + 'This takes 10–30 minutes; you can close the app meanwhile.';
+    clearTimeout(catalogPoll); catalogPoll = setTimeout(catalogStatus, 4000);
+    return;
+  }
+  if (imp && (imp.state === 'error' || imp.state === 'interrupted')){
+    box.hidden = false; btn.textContent = 'Try again';
+    text.textContent = imp.state === 'interrupted' ? 'The download was interrupted (the server restarted).'
+      : 'The download failed: ' + imp.errors.join(' · ');
+    return;
+  }
+  if (c.usda + c.off === 0){
+    box.hidden = false; btn.textContent = 'Download food database';
+    text.textContent = 'Search needs the food database — about 400 basic foods (USDA) and Czech and Slovak '
+      + 'products from Open Food Facts. It is downloaded once to your server, 10–30 minutes in the background.';
+    return;
+  }
+  box.hidden = true;
+  if (catalogPoll){ catalogPoll = null; toast(`Food database ready: ${fmt(c.usda + c.off)} foods`); }
+}
+$('#f-catalog-btn').onclick = async () => {
+  try { await post('/api/food/catalog/import', {}); } catch(e){ if (e !== 409) return toast('Could not start the download'); }
+  $('#f-catalog-btn').hidden = true; $('#f-catalog-text').textContent = 'Starting the download…';
+  clearTimeout(catalogPoll); catalogPoll = setTimeout(catalogStatus, 1500);
+};
 
 async function loadDay(){
   $('#f-date-label').textContent = dateLabel(fDate);
@@ -2096,11 +2130,12 @@ $('#mu-save').onclick = async () => {
 /* ---------- food: recipes ---------- */
 let rcPending = [];   // analyses waiting for the user: [{analysis, origin}]
 
+/* The list mirrors MordorCook: opening it fetches the recipes from the server. */
 async function openRecipes(){
   $('#sheet-recipes').classList.add('open');
-  $('#rc-sync').hidden = !fConfig.mordorcook_enabled;
   renderPending();
   loadRecipes();
+  syncRecipes();
 }
 
 async function loadRecipes(){
@@ -2111,7 +2146,7 @@ async function loadRecipes(){
     return `<div class="row" data-recipe="${esc(r.ref)}" style="cursor:pointer">
       <div class="main"><b>${esc(r.name)}</b><span>${ps != null ? fmt(ps) + ' kcal / portion · ' : ''}${fmt(r.serving_g)} g · ${esc(r.brand)}</span></div>
       <span class="chev">›</span></div>`;
-  }).join('') : `<p class="empty">${fConfig.mordorcook_enabled ? 'None yet — tap Sync.' : 'None yet — import one below.'}</p>`;
+  }).join('') : '<p class="empty">No recipes yet.</p>';
   $('#rc-list')._recipes = res.recipes;
 }
 
@@ -2139,8 +2174,9 @@ async function openRecipeItems(r){
              items: res.items.map(i => ({name: i.name, label: i.label, food: i.food, grams: i.grams}))});
 }
 
-$('#rc-sync').onclick = async () => {
-  $('#rc-status').textContent = 'Syncing with MordorCook…';
+$('#rc-sync').onclick = () => syncRecipes();
+async function syncRecipes(){
+  $('#rc-status').textContent = 'Loading recipes from MordorCook…';
   let res;
   try {
     const r = await fetch(BASE + '/api/food/recipes/sync', {method:'POST'});
@@ -2148,25 +2184,16 @@ $('#rc-sync').onclick = async () => {
     if (!r.ok) throw new Error(res.detail || r.status);
   } catch(e){ $('#rc-status').textContent = 'Sync failed: ' + e.message; return; }
   rcPending = res.pending.map(a => ({analysis: a, origin: 'mordorcook'}));
-  $('#rc-status').textContent = `${res.total} recipes read · ${res.saved.length} saved · ${res.unchanged} unchanged`
-    + (res.pending.length ? ` · ${res.pending.length} need your help` : '');
+  $('#rc-status').textContent = `${res.total} recipe${res.total === 1 ? '' : 's'} in MordorCook`
+    + (res.pending.length ? ` · ${res.pending.length} need${res.pending.length === 1 ? 's' : ''} an ingredient sorted out before it can be logged` : '');
   renderPending(); loadRecipes();
-};
-
-$('#rc-import').onclick = async () => {
-  let recipe;
-  try { recipe = JSON.parse($('#rc-json').value); } catch(e){ return toast('That is not valid JSON'); }
-  const r = await fetch(BASE + '/api/food/recipes/import', {method:'POST', headers:{'Content-Type':'application/json'},
-                                                           body: JSON.stringify({recipe, origin:'import'})});
-  const res = await r.json().catch(() => ({}));
-  if (r.status === 422){
-    rcPending = rcPending.filter(p => p.analysis.recipe.title !== res.analysis.recipe.title);
-    rcPending.unshift({analysis: res.analysis, origin: 'import'});
-    renderPending(); toast('Some ingredients need your help'); return;
-  }
-  if (!r.ok) return toast(res.detail || 'Import failed');
-  $('#rc-json').value = ''; toast(`Saved “${res.food.name}”`); loadRecipes();
-};
+  try {
+    const c = await api('/api/food/catalog');
+    if (c.usda + c.off === 0 && res.pending.length)
+      $('#rc-status').textContent = `${res.total} recipes in MordorCook. Their calories are computed from the food database, `
+        + 'which is not downloaded yet — tap “Download food database” in the Food tab first.';
+  } catch(e){}
+}
 
 function renderPending(){
   $('#rc-pending').innerHTML = rcPending.map((p, n) => {
@@ -2525,7 +2552,6 @@ function openNewFood(prefill, after){
   $('#sheet-newfood').classList.add('open');
   setTimeout(() => $('#n-name').focus(), 350);
 }
-$('#f-newfood').onclick = () => openNewFood(null, 'log');
 $('#n-cancel').onclick = () => $('#sheet-newfood').classList.remove('open');
 $('#n-save').onclick = async () => {
   const body = {};

@@ -52,14 +52,15 @@ compose file (or `--env-file`); every one has a working default:
 
 ```yaml
     environment:
-      MORDORCOOK_URL: "${MORDORCOOK_URL:-}"
+      MORDORCOOK_URL: "${MORDORCOOK_URL:-http://100.108.145.60:8105}"
       FOOD_OFF_LIVE: "${FOOD_OFF_LIVE:-true}"
       FOOD_AI_ENABLED: "${FOOD_AI_ENABLED:-false}"
       ANTHROPIC_API_KEY: "${ANTHROPIC_API_KEY:-}"
       FOOD_AI_MODEL: "${FOOD_AI_MODEL:-claude-haiku-4-5}"
 ```
 
-Then:
+Then pull and rebuild as usual, open the Food tab and tap **Download food database**. That is all —
+the import runs on the server in the background and the tab shows its progress. By hand instead:
 
 ```bash
 git -C /srv/gymtrack/app pull --ff-only

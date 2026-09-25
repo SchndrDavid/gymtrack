@@ -57,9 +57,11 @@ without it the prompt tells the AI to assume 75 kg and say so.
 - **Barcodes from a photo.** Over plain `http://` the iPhone refuses a live camera, so *Scan* takes an
   ordinary photo and the server reads the code. Unknown codes are looked up live on Open Food Facts
   and remembered; still unknown, you get a *New food* form with the code filled in. Or type the EAN.
-- **Recipes from [MordorCook](https://github.com/SchndrDavid/mordorcook).** *Sync* pulls the recipes,
-  matches every ingredient to a food and turns amounts into grams. Anything ambiguous is shown to you
-  instead of guessed, and your answer is remembered. Log a portion, or the ingredients one by one.
+- **Recipes from [MordorCook](https://github.com/SchndrDavid/mordorcook).** *Recipes* lists the recipes
+  of your MordorCook, fetched from it each time you open the list. Every ingredient is matched to a
+  food and its amount turned into grams; anything ambiguous is shown to you instead of guessed, and
+  your answer is remembered. Log a portion, or the ingredients one by one. Recipes are written in
+  MordorCook, not here — delete one there and it leaves the list.
 - **Days, goals, history.** Edit or delete entries, copy yesterday's breakfast, set goals that apply
   from a date on, see week and month charts, macro averages and a 7-day weight trend. The year grid
   switches between *Training* and *Food*, where each day is coloured by how close it ended to the goal.
@@ -118,7 +120,7 @@ interacted with the document.
 | `GYMTRACK_UID/GID`  | `1000`                   | User the container runs as — must own `./data` (compose)  |
 | `GYMTRACK_DB`       | `/data/gymtrack.db`      | Your data: training and everything you log under Food     |
 | `GYMTRACK_FOODS_DB` | next to `GYMTRACK_DB`, `foods.db` | Food catalogue — disposable, re-importable       |
-| `MORDORCOOK_URL`    | empty                    | MordorCook base URL, e.g. `http://100.108.145.60:8105`. Empty hides *Sync* |
+| `MORDORCOOK_URL`    | `http://100.108.145.60:8105` in compose | MordorCook base URL. Empty hides *Recipes* |
 | `FOOD_OFF_LIVE`     | `true`                   | Look unknown barcodes up on world.openfoodfacts.org (5 s timeout) |
 | `FOOD_AI_ENABLED`   | `false`                  | Meal recognition from a photo — plumbing only, see below  |
 | `ANTHROPIC_API_KEY` | empty                    | For the future recognizer; unused today                   |
@@ -134,7 +136,9 @@ The container must be able to write to the mounted data directory. Set `user:` i
 ## Food data
 
 The catalogue (`data/foods.db`) holds no personal data and can be deleted and rebuilt at any time.
-It is filled by two scripts that run inside the container:
+While it is empty, the Food tab shows **Download food database**: one tap starts
+`scripts/import_all.py` in a separate low-priority process on the server and the tab shows its
+progress. The same can be done by hand, inside the container:
 
 ```bash
 # 1. Basic foods: ~400 Czech names mapped to USDA FoodData Central. --build downloads the official
@@ -164,9 +168,10 @@ FoodData Central, public domain. The Food tab says so in its footer.
 
 ## Recipes
 
-With `MORDORCOOK_URL` set, *Food → Recipes → Sync* reads `GET /api/recipes` from MordorCook over
-HTTP. GymTrack never touches its database. Nothing polls in the background. A recipe becomes a
-food with values per 100 g of raw ingredients and a serving of one portion.
+Opening *Food → Recipes* reads `GET /api/recipes` from MordorCook (`MORDORCOOK_URL`) over HTTP.
+GymTrack never touches its database and nothing polls in the background. New and changed recipes
+are recomputed, deleted ones leave the list (days already logged keep their values). A recipe
+becomes a food with values per 100 g of raw ingredients and a serving of one portion.
 
 Every ingredient is matched to a food and converted to grams:
 
@@ -179,8 +184,8 @@ Anything else — no food found, a loose match, "a handful" — is listed under 
 the recipe is not saved until you have answered. Answers are stored in `ingredient_mappings` and
 reused by every later recipe.
 
-Recipes from anywhere else can be posted to `POST /api/food/recipes/import` (or pasted into the
-Recipes sheet):
+For scripts, a recipe can also be posted to `POST /api/food/recipes/import` (there is no form for
+it in the app — recipes belong in MordorCook):
 
 ```json
 {
@@ -235,7 +240,8 @@ Food, all under `/api/food`:
 | Method   | Path                          | Purpose                                                   |
 |----------|-------------------------------|-----------------------------------------------------------|
 | `GET`    | `/search?q=&limit=20`         | Search; empty `q` returns favourites and recent foods     |
-| `GET`    | `/catalog`                    | How many foods are imported                               |
+| `GET`    | `/catalog`                    | How many foods are imported, progress of a running import |
+| `POST`   | `/catalog/import`             | Download and import the catalogue in the background       |
 | `GET`    | `/foods/{ref}`                | One food (`usda:<fdc_id>`, `off:<barcode>`, `user:<id>`)  |
 | `POST` `PUT` `DELETE` | `/foods`, `/foods/{ref}` | Your own foods                                    |
 | `PUT` `DELETE` | `/favorites/{ref}`      | Star or unstar a food                                     |
@@ -250,7 +256,7 @@ Food, all under `/api/food`:
 | `GET`    | `/barcode/{code}`             | Catalogue, then live Open Food Facts                      |
 | `POST`   | `/barcode/scan`               | Read a barcode from an uploaded photo (not stored)        |
 | `GET`    | `/recipes`                    | Recipes stored as foods                                   |
-| `POST`   | `/recipes/sync`               | Pull recipes from MordorCook                              |
+| `POST`   | `/recipes/sync`               | Mirror the recipes from MordorCook                        |
 | `POST`   | `/recipes/import`, `/recipes/preview` | Store or just analyse one recipe JSON             |
 | `GET`    | `/recipes/{ref}/items?portions=` | A recipe split into its ingredients                    |
 | `GET` `POST` | `/mappings`               | Remembered ingredient answers; `DELETE /mappings/{key}`   |
@@ -304,7 +310,7 @@ exported from an older version still import cleanly.
 main.py                    FastAPI app, SQLite schema, plan normaliser, text parser
 food/                      Food module: catalogue + schema, search, log, barcodes, recipes, jobs
 recognition/               Meal-recognition interface (disabled implementation only)
-scripts/                   Catalogue importers: import_off.py, import_basic.py, build_basic_seed.py
+scripts/                   Catalogue importers: import_all.py, import_off.py, import_basic.py, build_basic_seed.py
 seed/basic_foods.src.json  Czech basic foods → USDA descriptions
 static/index.html          The entire frontend — markup, styles, logic, no dependencies
 tests/smoke.py             End-to-end API test, runs against a throwaway database

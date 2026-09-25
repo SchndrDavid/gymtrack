@@ -71,7 +71,7 @@ def product_row(fields: list[str], col: dict[str, int], stamp: str) -> dict | No
             "aliases": "", "updated_at": stamp}
 
 
-def import_stream(conn, stream, progress=True) -> tuple[int, int]:
+def import_stream(conn, stream, progress=True, on_progress=None) -> tuple[int, int]:
     """Returns (products imported, lines read)."""
     header = stream.readline().rstrip("\r\n").split("\t")
     col = {name: i for i, name in enumerate(header)}
@@ -83,6 +83,8 @@ def import_stream(conn, stream, progress=True) -> tuple[int, int]:
     started = time.monotonic()
     for line in stream:
         lines += 1
+        if on_progress and lines % 100_000 == 0:
+            on_progress(lines, kept)
         if progress and lines % 500_000 == 0:
             print(f"  {lines:>10,} lines read, {kept:,} kept, {time.monotonic() - started:.0f} s",
                   flush=True)

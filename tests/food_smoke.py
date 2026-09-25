@@ -158,7 +158,8 @@ def names(q, **kw):
     return [r["name"] for r in client.get("/api/food/search", params=params).json()["results"]]
 
 
-check("catalogue stats", client.get("/api/food/catalog").json() == {"usda": 10, "off": 4, "user": 0})
+stats = client.get("/api/food/catalog").json()
+check("catalogue stats", (stats["usda"], stats["off"], stats["user"], stats["import"]) == (10, 4, 0, None))
 check("search finds without diacritics: jogurt", "Jogurt bílý" in names("jogurt"))
 check("search folds diacritics: rizek → řízek", any("řízek" in n for n in names("rizek")))
 check("prefix per word: kuř pr → kuřecí prsa", names("kuř pr")[0] == "Kuřecí prsa syrová")
@@ -459,6 +460,14 @@ check("stored recipe keeps its previous values until resolved", garlic["details"
 items = client.get(f"/api/food/recipes/{garlic['ref']}/items", params={"portions": 2}).json()["items"]
 check("recipe breaks down into ingredients per portion", len(items) == 6 and items[0]["grams"] == 300)
 check("breakdown carries the food", items[0]["food"]["name"] == "Kuřecí prsa syrová")
+FakeMordorCook.recipes = [MYSTERY]
+gone = client.post("/api/food/recipes/sync").json()
+check("a recipe deleted in MordorCook disappears", gone["removed"] == ["Kuře na česneku"]
+      and "Kuře na česneku" not in {r["name"] for r in client.get("/api/food/recipes").json()["recipes"]})
+check("recipes imported by hand are not removed by sync", "Protein shake" in {r["name"] for r in client.get("/api/food/recipes").json()["recipes"]})
+FakeMordorCook.recipes = [GARLIC_CHICKEN, MYSTERY]
+client.post("/api/food/recipes/sync")
+garlic = [r for r in client.get("/api/food/recipes").json()["recipes"] if r["name"] == "Kuře na česneku"][0]
 srv.shutdown()
 os.environ["MORDORCOOK_URL"] = "http://127.0.0.1:9"
 check("unreachable MordorCook is a clear error", client.post("/api/food/recipes/sync").status_code == 502)
@@ -525,5 +534,22 @@ Path(os.environ["GYMTRACK_FOODS_DB"]).unlink()
 check("deleting the catalogue while running is harmless", client.get("/api/food/search", params={"q": "vejce"}).status_code == 200
       and client.get("/api/food/catalog").json()["usda"] == 0)
 check("the log survives a deleted catalogue", len(client.get("/api/food/day", params={"date": D1}).json()["entries"]) == 3)
+
+# ─── catalogue import started from the app ──────────────────────────────────
+import time  # noqa: E402
+
+food.api.IMPORT_ARGS = ["--fdc-zip", str(release), "--off-file", str(dump)]
+Path(os.environ["GYMTRACK_FOODS_DB"]).unlink(missing_ok=True)
+check("catalogue import starts", client.post("/api/food/catalog/import").status_code == 200)
+check("a second import is refused while one runs", client.post("/api/food/catalog/import").status_code == 409
+      or client.get("/api/food/catalog").json()["import"]["state"] == "done")
+for _ in range(120):
+    st = client.get("/api/food/catalog").json()
+    if st["import"] and st["import"]["state"] != "running":
+        break
+    time.sleep(0.25)
+check("catalogue import finishes", st["import"]["state"] == "done" and not st["import"]["errors"])
+check("catalogue import fills both sources", st["usda"] > 0 and st["off"] == 4)
+check("imported catalogue is searchable", names("tatranka")[0] == "Tatranka lísková")
 
 print(f"\n{checks} checks passed")
