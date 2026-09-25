@@ -468,6 +468,55 @@ logged = client.post("/api/food/log", json={"date": D2, "meal": "dinner", "food_
 check("a portion of a recipe is logged", logged["kcal"] == round(garlic["kcal_100g"] * garlic["serving_g"] / 100, 1))
 client.delete(f"/api/food/log/{logged['id']}")
 
+# ─── photo recognition: infrastructure only ─────────────────────────────────
+import food.recognize  # noqa: E402
+import recognition  # noqa: E402
+
+jpeg = barcode_photo(ean13("859400111111"))
+off = client.post("/api/food/recognize", files={"image": ("meal.jpg", jpeg, "image/jpeg")})
+check("recognize is 501 while the flag is off", off.status_code == 501 and off.json() == {"error": "food_ai_disabled"})
+check("config reports food AI off", client.get("/api/config").json()["food_ai_enabled"] is False)
+os.environ["FOOD_AI_ENABLED"] = "true"
+food.recognize.set_recognizer(recognition.get_recognizer())
+check("the flag alone does not switch it on", client.post("/api/food/recognize", files={"image": ("m.jpg", jpeg, "image/jpeg")}).status_code == 501)
+check("disabled recognizer satisfies the interface", isinstance(recognition.DisabledRecognizer(), recognition.FoodRecognizer))
+
+
+class FakeRecognizer:
+    available = True
+    seen = []
+
+    def recognize(self, image_bytes):
+        self.seen.append(len(image_bytes))
+        return [recognition.RecognizedItem("kuřecí prsa", 150, 0.9),
+                recognition.RecognizedItem("vejce", 50, 0.7),
+                recognition.RecognizedItem("dračí maso", 80, 0.3)]
+
+
+class BrokenRecognizer:
+    available = True
+
+    def recognize(self, image_bytes):
+        raise RuntimeError("model unavailable")
+
+
+food.recognize.set_recognizer(FakeRecognizer())
+check("config reports food AI on with a recognizer", client.get("/api/config").json()["food_ai_enabled"] is True)
+started = client.post("/api/food/recognize", files={"image": ("m.jpg", jpeg, "image/jpeg")})
+check("recognize creates a job", started.status_code == 202 and started.json()["status"] == "pending")
+job = client.get(f"/api/food/recognize/{started.json()['id']}").json()
+check("job finishes with items", job["status"] == "done" and len(job["items"]) == 3 and FakeRecognizer.seen == [len(jpeg)])
+check("recognised items are matched to foods", job["items"][0]["matched_food_ref"] == "usda:1001" and job["items"][0]["food"]["name"] == "Kuřecí prsa syrová")
+check("unknown items stay unmatched", job["items"][2]["matched_food_ref"] is None and job["items"][2]["food"] is None)
+check("recognition logs nothing by itself", len(client.get("/api/food/day", params={"date": D2}).json()["entries"]) == 4)
+food.recognize.set_recognizer(BrokenRecognizer())
+failed = client.get(f"/api/food/recognize/{client.post('/api/food/recognize', files={'image': ('m.jpg', jpeg, 'image/jpeg')}).json()['id']}").json()
+check("a failing recognizer marks the job as error", failed["status"] == "error" and "model unavailable" in failed["error"])
+check("unknown job is 404", client.get("/api/food/recognize/nope").status_code == 404)
+os.environ["FOOD_AI_ENABLED"] = "false"
+food.recognize.set_recognizer(None)
+check("switched off again", client.post("/api/food/recognize", files={"image": ("m.jpg", jpeg, "image/jpeg")}).status_code == 501)
+
 backup = client.get("/api/export").json()
 check("backup includes the food log", len(backup["food"]["log"]) == 7 and len(backup["food"]["goals"]) == 2)
 check("backup keeps the training sections", {"profile", "routines", "days", "workouts"} <= backup.keys())

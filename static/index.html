@@ -365,6 +365,7 @@ h1{font-size:34px;line-height:1.05;font-weight:700;letter-spacing:-.5px;margin:0
         <button type="submit">Look up</button>
       </form>
       <input type="file" id="f-scan-file" accept="image/*" capture="environment" hidden>
+      <input type="file" id="f-photo-file" accept="image/*" capture="environment" hidden>
     </div>
     <p class="hint" id="f-catalog-hint" hidden></p>
 
@@ -2176,6 +2177,33 @@ $('#as-ignore').onclick = () => asApply({item: as.line.item, ignore: true});
 
 $('#f-recipes').onclick = openRecipes;
 $('#rc-close').onclick = () => { $('#sheet-recipes').classList.remove('open'); loadDay(); };
+
+/* ---------- food: recognise a meal (only shown when the server has it switched on) ---------- */
+$('#f-recognize').onclick = () => $('#f-photo-file').click();
+$('#f-photo-file').addEventListener('change', async e => {
+  const file = e.target.files[0]; e.target.value = '';
+  if (!file) return;
+  toast('Looking at your plate…');
+  let job;
+  try {
+    const r = await uploadImage('/api/food/recognize', file);
+    if (r.status === 501) return toast('Meal recognition is switched off');
+    if (r.status !== 202) throw new Error(r.status);
+    job = r.body;
+  } catch(err){ return toast('Upload failed'); }
+  const until = Date.now() + 90000;
+  while (Date.now() < until){
+    await new Promise(res => setTimeout(res, 1500));
+    try { job = await api('/api/food/recognize/' + job.id); } catch(err){ continue; }
+    if (job.status === 'done' || job.status === 'error') break;
+  }
+  if (job.status !== 'done') return toast(job.status === 'error' ? 'Recognition failed' : 'Recognition timed out');
+  if (!job.items.length) return toast('No food recognised');
+  openMulti({title: 'Recognised meal', method: 'photo', hint: 'Estimates from the photo — check every amount. Nothing is logged until you tap Add.',
+    items: job.items.map(i => ({name: i.name, food: i.food, grams: Math.round(i.grams_estimate),
+      label: `${i.name} · ${Math.round(i.confidence * 100)} % sure${i.match_status === 'uncertain' ? ' · loose match' : ''}`,
+      on: !!i.food && i.confidence >= .5 && i.match_status === 'matched'}))});
+});
 
 /* ---------- food: quick add ---------- */
 let qEntry = null;

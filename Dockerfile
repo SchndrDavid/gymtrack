@@ -6,6 +6,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY main.py .
 COPY food ./food
+COPY recognition ./recognition
 COPY scripts ./scripts
 COPY seed ./seed
 COPY static ./static

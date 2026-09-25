@@ -4,11 +4,11 @@ import os
 from datetime import date as Date, timedelta
 from typing import Any
 
-from fastapi import APIRouter, File, HTTPException, UploadFile
+from fastapi import APIRouter, BackgroundTasks, File, HTTPException, UploadFile
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
-from . import barcode, catalog, log, recipes
+from . import barcode, catalog, log, recipes, recognize
 from .catalog import clean_food, connect, food_dict, get_food, now_iso
 from .search import search as run_search
 
@@ -17,6 +17,8 @@ router = APIRouter(prefix="/api/food")
 
 def init() -> None:
     catalog.init()
+    with connect() as conn:
+        recognize.cleanup(conn)
 
 
 def bad(e: Exception):
@@ -492,6 +494,34 @@ def delete_mapping(key: str):
     return {"ok": True}
 
 
+# ─── photo recognition (infrastructure; see recognition/) ───────────────────
+
+@router.post("/recognize")
+async def start_recognition(background: BackgroundTasks, image: UploadFile = File(...)):
+    if not recognize.enabled():
+        await image.close()
+        return JSONResponse({"error": "food_ai_disabled"}, status_code=501)
+    try:
+        data = await image.read(barcode.MAX_IMAGE_BYTES + 1)
+    finally:
+        await image.close()
+    if len(data) > barcode.MAX_IMAGE_BYTES:
+        raise HTTPException(413, "image too large")
+    with connect() as conn:
+        job_id = recognize.create_job(conn)
+    background.add_task(recognize.run_job, job_id, data)
+    return JSONResponse({"id": job_id, "status": "pending"}, status_code=202)
+
+
+@router.get("/recognize/{job_id}")
+def recognition_status(job_id: str):
+    with connect() as conn:
+        job = recognize.get_job(conn, job_id)
+    if job is None:
+        raise HTTPException(404, "job not found")
+    return job
+
+
 # ─── config ─────────────────────────────────────────────────────────────────
 
 def config() -> dict[str, Any]:
@@ -499,7 +529,7 @@ def config() -> dict[str, Any]:
     with connect() as conn:
         recipes = conn.execute("SELECT COUNT(*) AS n FROM user_foods WHERE source='recipe'").fetchone()["n"]
     return {
-        "food_ai_enabled": False,
+        "food_ai_enabled": recognize.enabled(),
         "mordorcook_enabled": bool(mordorcook_url()),
         "recipes": recipes,
         "barcode": True,
