@@ -131,6 +131,20 @@ CREATE TABLE IF NOT EXISTS body_weight (
     kg   REAL NOT NULL
 );
 
+-- Things eaten often — a protein shake, the usual breakfast — saved per portion, either typed in or
+-- put together from foods (`items`, kept so the meal can be edited later). Logged as portions.
+CREATE TABLE IF NOT EXISTS my_meals (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    name       TEXT NOT NULL,
+    grams      REAL,                      -- the portion's weight when it is known
+    kcal       REAL NOT NULL,
+    protein    REAL NOT NULL DEFAULT 0,
+    carbs      REAL NOT NULL DEFAULT 0,
+    fat        REAL NOT NULL DEFAULT 0,
+    items      TEXT NOT NULL DEFAULT '[]',   -- [{food_ref, name, grams}]
+    updated_at TEXT NOT NULL
+);
+
 -- The weight being aimed for; one row.
 CREATE TABLE IF NOT EXISTS weight_target (
     id     INTEGER PRIMARY KEY CHECK (id = 1),

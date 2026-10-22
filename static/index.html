@@ -247,6 +247,14 @@ h1{font-size:34px;line-height:1.05;font-weight:700;letter-spacing:-.5px;margin:0
 .meal-head button{color:var(--fg-3);font-size:20px;line-height:1;padding:2px 4px 6px;min-width:34px}
 .frow{display:flex;align-items:center;border-top:1px solid var(--line)}
 .meal-head + .frow{border-top:0}
+.mmitem{display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--line)}
+.mmitem .main{flex:1;min-width:0}
+.mmitem .main b{display:block;font-size:15px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mmitem .main span{display:block;font-size:12px;color:var(--fg-2);margin-top:2px}
+.mmitem label{display:flex;align-items:center;gap:4px;font-size:14px;color:var(--fg-2)}
+.mmitem input{width:64px;background:var(--card-2);border-radius:9px;padding:8px;text-align:right;font-size:15px;
+  color:var(--fg);border:0;outline:none}
+.prof input[readonly]{color:var(--fg-2)}
 .aiexp{display:flex;gap:8px;margin:0 0 12px}
 .aiexp .cta{margin:0}
 .aiexp .ghost{flex:0 0 96px}
@@ -418,7 +426,7 @@ h1{font-size:34px;line-height:1.05;font-weight:700;letter-spacing:-.5px;margin:0
       <div class="factions">
         <button id="f-scan" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2M7 8v8M10 8v8M13 8v8M17 8v8"/></svg>Scan</button>
         <button id="f-ean-toggle" hidden>EAN</button>
-        <button id="f-quick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg>Quick add</button>
+        <button id="f-mine"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 2.7 5.5 6 .9-4.3 4.2 1 6L12 16.8 6.6 19.6l1-6-4.3-4.2 6-.9z"/></svg>My foods</button>
         <button id="f-recognize" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>Recognize meal</button>
       </div>
       <form class="fean" id="f-ean-form" hidden>
@@ -638,6 +646,55 @@ h1{font-size:34px;line-height:1.05;font-weight:700;letter-spacing:-.5px;margin:0
     <div class="seg mealseg" id="q-meal" style="margin-top:14px"></div>
     <p class="hint">For when there is no food to pick — a guess at a restaurant, a snack you did not weigh.</p>
     <button class="cta ghost red" id="q-delete" hidden>Delete entry</button>
+  </div>
+</div>
+
+<div class="sheet" id="sheet-mine">
+  <div class="sheet-bar">
+    <button id="mi-close">Done</button>
+    <b>My foods</b>
+    <button id="mi-new">New</button>
+  </div>
+  <div class="sheet-body">
+    <div class="seg miniseg" id="mi-meal" style="margin-bottom:12px"></div>
+    <div class="fsearch-box" style="margin-bottom:6px">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input id="mi-q" type="search" placeholder="Search my foods" autocomplete="off" autocorrect="off" spellcheck="false">
+    </div>
+    <div class="card" id="mi-list"><p class="empty">Loading…</p></div>
+    <p class="hint">What you eat often — a protein shake, your usual breakfast. Tap one to log it, or
+      <b>New</b> to make one: put it together from foods, or just type its calories.</p>
+  </div>
+</div>
+
+<div class="sheet" id="sheet-mymeal">
+  <div class="sheet-bar">
+    <button id="mm-cancel">Cancel</button>
+    <b id="mm-title">New food</b>
+    <button id="mm-save">Save</button>
+  </div>
+  <div class="sheet-body">
+    <div class="card prof">
+      <label class="pfield wide"><span>Name</span><input id="mm-name" autocomplete="off" placeholder="Protein shake"></label>
+    </div>
+    <p class="card-title" style="margin-top:20px">Made of</p>
+    <div class="card">
+      <div class="fsearch-box">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input id="mm-q" type="search" placeholder="Add a food — whey, milk, banana…" autocomplete="off" autocorrect="off" spellcheck="false">
+      </div>
+      <div id="mm-results" class="fresults"></div>
+      <div id="mm-items"></div>
+    </div>
+    <p class="card-title" style="margin-top:20px">One portion</p>
+    <div class="card prof">
+      <label class="pfield wide"><span>Calories (kcal)</span><input id="mm-kcal" inputmode="decimal" placeholder="—"></label>
+      <label class="pfield"><span>Protein (g)</span><input id="mm-protein" inputmode="decimal" placeholder="0"></label>
+      <label class="pfield"><span>Carbs (g)</span><input id="mm-carbs" inputmode="decimal" placeholder="0"></label>
+      <label class="pfield"><span>Fat (g)</span><input id="mm-fat" inputmode="decimal" placeholder="0"></label>
+    </div>
+    <p class="hint" id="mm-hint">Add the foods it is made of and these add up by themselves — or leave it empty and type them.</p>
+    <button class="cta ghost red" id="mm-delete" hidden>Delete</button>
   </div>
 </div>
 
@@ -1781,6 +1838,9 @@ function foodSub(f){
 }
 
 function foodRow(f, i, selected = i === fSel){
+  if (f.mine) return `<button class="fres${selected ? ' sel' : ''}" data-i="${i}">
+    <div class="main"><b><span class="tag">MY FOOD</span>${esc(f.mine.name)}</b><span>${esc(mineSub(f.mine))}</span></div>
+    <div class="kc">${fmt(f.mine.kcal)}<small>kcal/portion</small></div></button>`;
   const tag = f.favorite ? '<span class="tag">★</span>' : f.source === 'recipe' ? '<span class="tag">RECIPE</span>'
             : f.source === 'custom' ? '<span class="tag">MINE</span>' : '';
   return `<button class="fres${selected ? ' sel' : ''}" data-i="${i}">
@@ -1794,23 +1854,25 @@ function renderResults(q){
     box.innerHTML = q ? '<p class="empty">Nothing found.</p>' : '';
     return;
   }
-  const head = q ? '' : '<div class="fhead">Recent</div>';
-  box.innerHTML = head + fResults.map(foodRow).join('');
+  box.innerHTML = fResults.map(foodRow).join('');
 }
 
 async function runSearch(){
   const q = $('#f-q').value.trim(), seq = ++fSeq;
+  if (!q){ fResults = []; fSel = -1; renderResults(''); return; }
   try {
     const res = await api('/api/food/search?limit=20&q=' + encodeURIComponent(q));
     if (seq !== fSeq) return;                  // a newer keystroke already answered
-    fResults = res.results; fSel = q && fResults.length ? 0 : -1;
+    // My foods first: they are what is eaten most, and the search box is where one looks first.
+    fResults = mineMatching(q).map(m => ({mine: m, name: m.name})).concat(res.results);
+    fSel = fResults.length ? 0 : -1;
     renderResults(q);
   } catch(e){ if (seq === fSeq) $('#f-results').innerHTML = '<p class="empty">Search unavailable.</p>'; }
 }
 const searchSoon = debounce(runSearch, 150);
 
 $('#f-q').addEventListener('input', searchSoon);
-$('#f-q').addEventListener('focus', () => { if (!$('#f-q').value) runSearch(); });
+$('#f-q').addEventListener('focus', () => { if (!myMeals) loadMyMeals(); });
 $('#f-q').addEventListener('keydown', e => {
   if (e.key === 'ArrowDown' || e.key === 'ArrowUp'){
     if (!fResults.length) return;
@@ -2099,6 +2161,7 @@ function mealSeg(el, selected){
 const segValue = el => el.querySelector('button.on')?.dataset.m || mealNow();
 
 function pickFood(f, method){
+  if (f.mine) return logMine(f.mine, fMeal || mealNow()).then(ok => { if (ok){ $('#f-q').value = ''; runSearch(); } });
   openPortion(f, null, method || 'search');
 }
 
@@ -2868,7 +2931,148 @@ function openQuick(entry, meal){
   $('#sheet-quick').classList.add('open');
   setTimeout(() => $('#q-kcal').focus(), 350);
 }
-$('#f-quick').onclick = () => openQuick(null);
+/* ---------- food: my foods ---------- */
+/* What is eaten often, saved per portion (food/mymeals.py): typed in, or added up from foods. */
+let myMeals = null;
+const fold = t => String(t || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+async function loadMyMeals(){
+  try { myMeals = (await api('/api/food/mymeals')).meals; } catch(e){ myMeals = myMeals || []; }
+  return myMeals;
+}
+const mineMatching = q => (myMeals || []).filter(m => fold(m.name).includes(fold(q)));
+const mineSub = m => `P ${fmt(m.protein)} · C ${fmt(m.carbs)} · F ${fmt(m.fat)}` + (m.grams ? ` · ${fmt(m.grams)} g` : '')
+  + (m.items.length ? ` · ${m.items.map(x => x.name).join(', ')}` : '');
+
+async function logMine(m, meal){
+  const k = await picker(`${m.name} → ${MEAL_LABEL[meal].toLowerCase()}`, [1, .5, 2].map(k => ({
+    label: `${k === .5 ? '½' : k} portion${k > 1 ? 's' : ''} — ${fmt(m.kcal * k)} kcal`, value: k})));
+  if (!k) return false;
+  try { await post('/api/food/mymeals/log', {meal_id: m.id, portions: k, date: fDate, meal}); }
+  catch(e){ toast('Not added'); return false; }
+  toast(`Added to ${MEAL_LABEL[meal].toLowerCase()}`);
+  loadDay();
+  return true;
+}
+
+async function openMine(){
+  $('#sheet-mine').classList.add('open');
+  mealSeg($('#mi-meal'), fMeal || mealNow());
+  $('#mi-q').value = '';
+  await loadMyMeals();
+  renderMine();
+}
+function renderMine(){
+  const list = mineMatching($('#mi-q').value.trim());
+  $('#mi-list').innerHTML = list.length ? list.map(m => `<div class="row" data-mine="${m.id}" style="cursor:pointer">
+      <div class="main"><b>${esc(m.name)}</b><span>${fmt(m.kcal)} kcal · ${esc(mineSub(m))}</span></div>
+      <span class="chev">›</span></div>`).join('')
+    : `<p class="empty">${myMeals.length ? 'Nothing matches.' : 'Nothing saved yet — tap New.'}</p>`;
+}
+$('#mi-q').addEventListener('input', renderMine);
+$('#mi-list').addEventListener('click', async e => {
+  const row = e.target.closest('[data-mine]'); if (!row) return;
+  const m = myMeals.find(x => x.id === +row.dataset.mine);
+  const meal = segValue($('#mi-meal'));
+  const choice = await picker(m.name, [
+    ...[1, .5, 2].map(k => ({label: `Log ${k === .5 ? '½' : k} portion${k > 1 ? 's' : ''} — ${fmt(m.kcal * k)} kcal`, value: k})),
+    {label: 'Edit', value: 'edit'}]);
+  if (choice === 'edit') return openMyMeal(m);
+  if (!choice) return;
+  try { await post('/api/food/mymeals/log', {meal_id: m.id, portions: choice, date: fDate, meal}); }
+  catch(err){ return toast('Not added'); }
+  toast(`Added to ${MEAL_LABEL[meal].toLowerCase()}`);
+  loadDay();
+});
+$('#f-mine').onclick = openMine;
+$('#mi-close').onclick = () => $('#sheet-mine').classList.remove('open');
+$('#mi-new').onclick = () => openMyMeal(null);
+
+/* The creator. Items carry their values per 100 g, so a changed amount recalculates at once. */
+let mm = null;   // {meal, items: [{food_ref, name, grams, per: {kcal, protein, carbs, fat} per 100 g}]}
+const MM_KEYS = ['kcal', 'protein', 'carbs', 'fat'];
+function openMyMeal(meal){
+  mm = {meal, items: (meal ? meal.items : []).map(x => ({food_ref: x.food_ref, name: x.name, grams: x.grams,
+    per: Object.fromEntries(MM_KEYS.map(k => [k, x.grams ? x[k] / x.grams * 100 : 0]))}))};
+  $('#mm-title').textContent = meal ? 'Edit food' : 'New food';
+  $('#mm-delete').hidden = !meal;
+  $('#mm-name').value = meal ? meal.name : '';
+  $('#mm-q').value = ''; $('#mm-results').innerHTML = '';
+  for (const k of MM_KEYS) $('#mm-' + k).value = meal && !meal.items.length ? fmt(meal[k], 1).replace(/,/g, '') : '';
+  renderMyMeal();
+  $('#sheet-mymeal').classList.add('open');
+  if (!meal) setTimeout(() => $('#mm-name').focus(), 350);
+}
+function renderMyMeal(){
+  $('#mm-items').innerHTML = mm.items.map((x, i) => `<div class="mmitem">
+      <div class="main"><b>${esc(x.name)}</b><span>${fmt(x.per.kcal * x.grams / 100)} kcal · P ${fmt(x.per.protein * x.grams / 100, 1)}</span></div>
+      <label><input data-g="${i}" inputmode="decimal" value="${x.grams}"> g</label>
+      <button class="fdel" data-rm="${i}" aria-label="Remove ${esc(x.name)}">×</button></div>`).join('');
+  const has = mm.items.length > 0;
+  for (const k of MM_KEYS){
+    const el = $('#mm-' + k);
+    el.readOnly = has;
+    if (has) el.value = fmt(mm.items.reduce((a, x) => a + x.per[k] * x.grams / 100, 0), k === 'kcal' ? 0 : 1).replace(/,/g, '');
+  }
+  $('#mm-hint').textContent = has ? `Added up from the ${mm.items.length} food${mm.items.length > 1 ? 's' : ''} above — `
+    + `${fmt(mm.items.reduce((a, x) => a + x.grams, 0))} g in one portion.`
+    : 'Add the foods it is made of and these add up by themselves — or leave it empty and type them.';
+}
+const mmSearch = debounce(async () => {
+  const q = $('#mm-q').value.trim();
+  if (!q){ $('#mm-results').innerHTML = ''; return; }
+  let res; try { res = await api('/api/food/search?limit=8&q=' + encodeURIComponent(q)); } catch(e){ return; }
+  $('#mm-results')._found = res.results;
+  $('#mm-results').innerHTML = res.results.length ? res.results.map((f, i) => foodRow(f, i, false)).join('')
+    : '<p class="empty">Nothing found.</p>';
+}, 150);
+$('#mm-q').addEventListener('input', mmSearch);
+$('#mm-results').addEventListener('click', e => {
+  const b = e.target.closest('.fres'); if (!b) return;
+  const f = $('#mm-results')._found[+b.dataset.i];
+  mm.items.push({food_ref: f.ref, name: f.name, grams: f.serving_g || 100,
+                 per: {kcal: f.kcal_100g, protein: f.protein_100g, carbs: f.carbs_100g, fat: f.fat_100g}});
+  $('#mm-q').value = ''; $('#mm-results').innerHTML = '';
+  renderMyMeal();
+  $(`#mm-items [data-g="${mm.items.length - 1}"]`).select();
+});
+$('#mm-items').addEventListener('input', e => {
+  const i = e.target.dataset.g; if (i == null) return;
+  mm.items[+i].grams = num(e.target.value) || 0;
+  const keep = e.target.selectionStart;
+  renderMyMeal();
+  const el = $(`#mm-items [data-g="${i}"]`); el.focus(); el.setSelectionRange(keep, keep);
+});
+$('#mm-items').addEventListener('click', e => {
+  const b = e.target.closest('[data-rm]'); if (!b) return;
+  mm.items.splice(+b.dataset.rm, 1);
+  if (!mm.items.length) for (const k of MM_KEYS) $('#mm-' + k).value = '';
+  renderMyMeal();
+});
+$('#mm-cancel').onclick = () => $('#sheet-mymeal').classList.remove('open');
+$('#mm-save').onclick = async () => {
+  const body = {name: $('#mm-name').value.trim(), items: mm.items.map(x => ({food_ref: x.food_ref, grams: x.grams}))};
+  if (!body.name) return toast('Give it a name');
+  if (!body.items.length){
+    for (const k of MM_KEYS) body[k] = num($('#mm-' + k).value);
+    if (body.kcal == null) return toast('Add a food, or type the calories');
+  }
+  try {
+    await (mm.meal ? api('/api/food/mymeals/' + mm.meal.id, {method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body)})
+                   : post('/api/food/mymeals', body));
+  } catch(e){ return toast('Not saved — check the amounts'); }
+  $('#sheet-mymeal').classList.remove('open');
+  toast(`Saved “${body.name}”`);
+  await loadMyMeals();
+  if ($('#sheet-mine').classList.contains('open')) renderMine();
+};
+$('#mm-delete').onclick = async () => {
+  if (await picker(`Delete “${mm.meal.name}”?`, [{label: 'Delete — logged days keep their values', value: 'del'}]) !== 'del') return;
+  try { await api('/api/food/mymeals/' + mm.meal.id, {method: 'DELETE'}); } catch(e){ return toast('Not deleted'); }
+  $('#sheet-mymeal').classList.remove('open');
+  toast('Deleted');
+  await loadMyMeals();
+  if ($('#sheet-mine').classList.contains('open')) renderMine();
+};
 $('#q-cancel').onclick = () => $('#sheet-quick').classList.remove('open');
 $('#q-delete').onclick = () => deleteEntry(qEntry, '#sheet-quick');
 $('#q-save').onclick = async () => {

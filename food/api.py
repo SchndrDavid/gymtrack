@@ -11,7 +11,7 @@ from fastapi import APIRouter, BackgroundTasks, File, HTTPException, Request, Up
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
-from . import ai_export, barcode, catalog, log, opengym, progress, recipes, recognize, restaurants
+from . import ai_export, barcode, catalog, log, mymeals, opengym, progress, recipes, recognize, restaurants
 from .catalog import clean_food, connect, food_dict, get_food, now_iso
 from .search import search as run_search
 
@@ -419,6 +419,75 @@ def put_target(body: TargetIn):
         return {"ok": True, "target": progress.get_target(conn)}
 
 
+# ─── my foods ───────────────────────────────────────────────────────────────
+
+class MealIn(BaseModel):
+    name: str
+    kcal: float | None = None
+    protein: float | None = None
+    carbs: float | None = None
+    fat: float | None = None
+    grams: float | None = None
+    items: list[dict[str, Any]] = []
+
+
+class MealLog(BaseModel):
+    meal_id: int
+    portions: float = 1
+    date: str
+    meal: str
+
+
+@router.get("/mymeals")
+def list_my_meals():
+    with connect() as conn:
+        return {"meals": mymeals.all_meals(conn)}
+
+
+@router.post("/mymeals")
+def create_my_meal(body: MealIn):
+    with connect() as conn:
+        try:
+            return mymeals.save(conn, body.model_dump())
+        except ValueError as err:
+            bad(err)
+
+
+@router.put("/mymeals/{meal_id}")
+def update_my_meal(meal_id: int, body: MealIn):
+    with connect() as conn:
+        try:
+            return mymeals.save(conn, body.model_dump(), meal_id)
+        except ValueError as err:
+            bad(err)
+        except LookupError:
+            raise HTTPException(404, "no such meal") from None
+
+
+@router.delete("/mymeals/{meal_id}")
+def delete_my_meal(meal_id: int):
+    """Logged days keep their snapshots."""
+    with connect() as conn:
+        if not conn.execute("DELETE FROM my_meals WHERE id=?", (meal_id,)).rowcount:
+            raise HTTPException(404, "no such meal")
+    return {"ok": True}
+
+
+@router.post("/mymeals/log")
+def log_my_meal(body: MealLog):
+    with connect() as conn:
+        try:
+            day = log.valid_date(body.date)
+            if body.meal not in log.MEALS:
+                raise ValueError(f"meal must be one of {', '.join(log.MEALS)}")
+            e = {"date": day, "meal": body.meal, "food_ref": None, "entry_method": "mine",
+                 **mymeals.log_item(conn, body.meal_id, body.portions)}
+        except ValueError as err:
+            bad(err)
+        e["id"] = log.insert_entry(conn, e)
+        return {"ok": True, "entry": e}
+
+
 # ─── restaurants ────────────────────────────────────────────────────────────
 
 class RestaurantImport(BaseModel):
@@ -718,6 +787,7 @@ def export() -> dict[str, Any]:
             "goals": rows("SELECT * FROM nutrition_goals ORDER BY effective_from"),
             "body_weight": rows("SELECT * FROM body_weight ORDER BY date"),
             "weight_target": rows("SELECT * FROM weight_target"),
+            "my_meals": rows("SELECT * FROM my_meals ORDER BY id"),
             "user_foods": rows("SELECT * FROM user_foods ORDER BY id"),
             "ingredient_mappings": rows("SELECT * FROM ingredient_mappings"),
             "restaurant_items": rows("SELECT * FROM restaurant_items ORDER BY restaurant, position"),

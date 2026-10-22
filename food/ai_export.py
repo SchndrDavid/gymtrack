@@ -13,7 +13,8 @@ from .log import MEALS, day_view, summary
 
 MEAL_LABEL = {"breakfast": "Breakfast", "lunch": "Lunch", "dinner": "Dinner", "snack": "Snacks"}
 METHOD_NOTE = {"quick": "quick add, estimated", "recipe": "recipe", "photo": "from a photo, estimated",
-               "barcode": "scanned", "restaurant": "restaurant menu, estimated"}
+               "barcode": "scanned", "restaurant": "restaurant menu, estimated",
+               "mine": "one of my saved meals"}
 
 
 def f0(x) -> str:

@@ -54,7 +54,11 @@ without it the prompt tells the AI to assume 75 kg and say so.
   Kaufland, Albert, Billa, Penny, Tesco and Globus, whatever country they were entered under.
 - **Portions, not arithmetic.** Picking a food opens a panel with the serving prefilled (1 egg,
   1 pot of yoghurt) and ½ / 1 / 2 × buttons, totals update as you type, and the meal is preselected
-  by the time of day. **Quick add** takes just a number for the restaurant guess.
+  by the time of day.
+- **My foods.** What you eat often — a protein shake, the usual breakfast — saved once and logged
+  with a tap (½, 1 or 2 portions). Make one from foods (30 g whey + 300 ml milk, the values add up by
+  themselves) or just type its calories and macros. They come first in the food search too, and can
+  be opened and changed later; days already logged keep their values.
 - **Barcodes, live or from a photo.** On an `https://` address *Scan* opens a live camera view and
   reads the code as soon as it is in the frame (the browser's own detector where it has one, else
   the server reads a small frame a few times a second). Over plain `http://` browsers refuse a live
@@ -292,7 +296,8 @@ Food, all under `/api/food`:
 
 | Method   | Path                          | Purpose                                                   |
 |----------|-------------------------------|-----------------------------------------------------------|
-| `GET`    | `/search?q=&limit=20`         | Search; empty `q` returns favourites and recent foods     |
+| `GET`    | `/search?q=&limit=20`         | Search; empty `q` returns favourites and recent foods (the app no longer shows them) |
+| `GET` `POST` | `/mymeals`                | My foods; `PUT` / `DELETE /mymeals/{id}`, `POST /mymeals/log` |
 | `GET`    | `/catalog`                    | How many foods are imported, progress of a running import |
 | `POST`   | `/catalog/import`             | Download and import the catalogue in the background       |
 | `GET`    | `/foods/{ref}`                | One food (`usda:<fdc_id>`, `off:<barcode>`, `user:<id>`)  |

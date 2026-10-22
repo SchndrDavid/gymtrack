@@ -669,6 +669,30 @@ check("the day export carries the trend", "Trend weight:" in client.get("/api/fo
       "date": P_END.isoformat()}).json()["markdown"])
 check("a target can be cleared", client.put("/api/food/target", json={"kg": None}).json()["target"] is None)
 
+# ─── my foods ───────────────────────────────────────────────────────────────
+milk = next(f for f in client.get("/api/food/search", params={"q": "mléko"}).json()["results"])
+egg = client.get("/api/food/search", params={"q": "vejce"}).json()["results"][0]
+shake = client.post("/api/food/mymeals", json={"name": "Protein shake", "items": [
+    {"food_ref": milk["ref"], "grams": 300}, {"food_ref": egg["ref"], "grams": 50}]}).json()
+check("a food made of foods adds them up", shake["grams"] == 350
+      and abs(shake["kcal"] - (milk["kcal_100g"] * 3 + egg["kcal_100g"] / 2)) < 0.2 and len(shake["items"]) == 2)
+typed = client.post("/api/food/mymeals", json={"name": "Tyčinka", "kcal": 210, "protein": 20}).json()
+check("a typed-in food keeps its values", typed["kcal"] == 210 and typed["protein"] == 20 and typed["items"] == [])
+check("a food needs calories or foods", client.post("/api/food/mymeals", json={"name": "X"}).status_code == 400)
+check("an unknown food is refused", client.post("/api/food/mymeals", json={"name": "X", "items": [
+      {"food_ref": "user:999999", "grams": 10}]}).status_code == 400)
+check("my foods list by name", [m["name"] for m in client.get("/api/food/mymeals").json()["meals"]] == ["Protein shake", "Tyčinka"])
+D4 = "2026-04-02"
+lg = client.post("/api/food/mymeals/log", json={"meal_id": shake["id"], "portions": 0.5, "date": D4, "meal": "snack"}).json()["entry"]
+check("half a portion logs half", lg["name"] == "Protein shake (½ portion)" and lg["grams"] == 175
+      and abs(lg["kcal"] - shake["kcal"] / 2) < 0.2 and lg["entry_method"] == "mine")
+edited = client.put(f"/api/food/mymeals/{typed['id']}", json={"name": "Tyčinka velká", "kcal": 300}).json()
+check("a food can be changed", edited["kcal"] == 300 and edited["name"] == "Tyčinka velká")
+check("changing a food leaves logged days alone",
+      client.get("/api/food/day", params={"date": D4}).json()["entries"][0]["kcal"] == lg["kcal"])
+check("a food can be deleted", client.delete(f"/api/food/mymeals/{typed['id']}").status_code == 200
+      and client.delete(f"/api/food/mymeals/{typed['id']}").status_code == 404)
+
 Path(os.environ["GYMTRACK_FOODS_DB"]).unlink()
 check("deleting the catalogue while running is harmless", client.get("/api/food/search", params={"q": "vejce"}).status_code == 200
       and client.get("/api/food/catalog").json()["usda"] == 0)
