@@ -11,7 +11,7 @@ from fastapi import APIRouter, BackgroundTasks, File, HTTPException, Request, Up
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
-from . import ai_export, barcode, catalog, log, opengym, recipes, recognize
+from . import ai_export, barcode, catalog, log, opengym, recipes, recognize, restaurants
 from .catalog import clean_food, connect, food_dict, get_food, now_iso
 from .search import search as run_search
 
@@ -369,6 +369,60 @@ def export_day(request: Request, date: str = ""):
                 "opengym": {"ok": og["ok"], "workouts": og["workouts"], "error": og["error"]}}
 
 
+# ─── restaurants ────────────────────────────────────────────────────────────
+
+class RestaurantImport(BaseModel):
+    restaurant: str
+    items: list[dict[str, Any]]
+
+
+class RestaurantLog(BaseModel):
+    item_id: int
+    portions: float = 1
+    date: str
+    meal: str
+
+
+@router.get("/restaurants")
+def list_restaurants():
+    with connect() as conn:
+        return {"restaurants": restaurants.menus(conn)}
+
+
+@router.post("/restaurants/import")
+def import_restaurant(body: RestaurantImport):
+    """A whole menu at once; items missing from it are removed. Logged days keep their values."""
+    with connect() as conn:
+        try:
+            return {"ok": True, **restaurants.import_menu(conn, body.restaurant, body.items)}
+        except ValueError as err:
+            bad(err)
+
+
+@router.delete("/restaurants/{name}")
+def delete_restaurant(name: str):
+    with connect() as conn:
+        if not restaurants.delete_menu(conn, name):
+            raise HTTPException(404, "no such restaurant")
+    return {"ok": True}
+
+
+@router.post("/restaurants/log")
+def log_restaurant_item(body: RestaurantLog):
+    """Portions of a menu item into the log, as a snapshot (no food behind it, like a quick add)."""
+    with connect() as conn:
+        try:
+            day = log.valid_date(body.date)
+            if body.meal not in log.MEALS:
+                raise ValueError(f"meal must be one of {', '.join(log.MEALS)}")
+            e = {"date": day, "meal": body.meal, "food_ref": None, "entry_method": "restaurant",
+                 **restaurants.log_item(conn, body.item_id, body.portions)}
+        except ValueError as err:
+            bad(err)
+        e["id"] = log.insert_entry(conn, e)
+        return {"ok": True, "entry": e}
+
+
 # ─── goals ──────────────────────────────────────────────────────────────────
 
 class GoalIn(BaseModel):
@@ -615,4 +669,5 @@ def export() -> dict[str, Any]:
             "body_weight": rows("SELECT * FROM body_weight ORDER BY date"),
             "user_foods": rows("SELECT * FROM user_foods ORDER BY id"),
             "ingredient_mappings": rows("SELECT * FROM ingredient_mappings"),
+            "restaurant_items": rows("SELECT * FROM restaurant_items ORDER BY restaurant, position"),
         }

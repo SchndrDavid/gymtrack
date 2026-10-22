@@ -66,6 +66,10 @@ without it the prompt tells the AI to assume 75 kg and say so.
   food and its amount turned into grams; anything ambiguous is shown to you instead of guessed, and
   your answer is remembered. Log a portion, or the ingredients one by one. Recipes are written in
   MordorCook, not here — delete one there and it leaves the list.
+- **Restaurants.** *Restaurants* shows a place's whole menu by category — code, portion, price and
+  the estimated calories, macros and alcohol per portion — with a search box. Tap a dish, pick ½, 1
+  or 2 portions, and it goes into the meal chosen at the top. Menus come from a spreadsheet, see
+  [Restaurants](#restaurants).
 - **Days, goals, history.** Edit or delete entries, copy yesterday's breakfast, set goals that apply
   from a date on, see week and month charts, macro averages and a 7-day weight trend. The year grid
   switches between *Training* and *Food*, where each day is coloured by how close it ended to the goal.
@@ -221,6 +225,22 @@ it in the app — recipes belong in MordorCook):
 `422` with the full analysis when ingredients still need an answer. `id` makes a re-import update
 the same food. `POST /api/food/recipes/preview` returns the same analysis without storing anything.
 
+## Restaurants
+
+A menu is imported from a spreadsheet, values per portion:
+
+```bash
+pip install openpyxl
+python scripts/import_restaurant.py menu.xlsx --name "Čínské Zátiší" --url http://mordor:8101
+```
+
+The first sheet is read, columns found by their header in Czech or English (Kód, Název, Kategorie,
+Porce, Cena, Kalorie, Bílkoviny, Sacharidy, Tuky, Alkohol). Running it again replaces the menu:
+items are matched by code (by name when there is none), changed ones are updated and missing ones
+removed. A logged dish is a snapshot, so a new menu never changes a past day. Grams are taken from
+the portion when it states a weight or a volume (`350 g`, `0,3 l`); `6 ks` or `porce` log without.
+The menu itself stays out of the repository — only the app's database holds it.
+
 ## openGym
 
 *Export AI* also lists that day's workouts from openGym, set by set. It reads
@@ -284,6 +304,10 @@ Food, all under `/api/food`:
 | `POST`   | `/recipes/sync`               | Mirror the recipes from MordorCook                        |
 | `POST`   | `/recipes/import`, `/recipes/preview` | Store or just analyse one recipe JSON             |
 | `GET`    | `/recipes/{ref}/items?portions=` | A recipe split into its ingredients                    |
+| `GET`    | `/restaurants`                | Every menu, by category                                   |
+| `POST`   | `/restaurants/import`         | Replace one menu: `{"restaurant", "items": [...]}`        |
+| `POST`   | `/restaurants/log`            | Log portions: `{"item_id", "portions", "date", "meal"}`   |
+| `DELETE` | `/restaurants/{name}`         | Remove a menu (logged days keep their values)             |
 | `GET` `POST` | `/mappings`               | Remembered ingredient answers; `DELETE /mappings/{key}`   |
 | `POST`   | `/recognize`                  | Meal photo → job (501 while disabled)                     |
 | `GET`    | `/recognize/{id}`             | Job status and recognised items                           |
@@ -294,8 +318,8 @@ Back the whole thing up with a single request:
 curl -s localhost:8101/api/export > gymtrack-$(date +%F).json
 ```
 
-The backup includes a `food` section with the log, goals, weights, your foods, recipes and
-ingredient answers. The catalogue is left out on purpose — it can be re-imported.
+The backup includes a `food` section with the log, goals, weights, your foods, recipes,
+ingredient answers and restaurant menus. The catalogue is left out on purpose — it can be re-imported.
 
 ---
 
@@ -333,9 +357,10 @@ exported from an older version still import cleanly.
 
 ```
 main.py                    FastAPI app, SQLite schema, plan normaliser, text parser
-food/                      Food module: catalogue + schema, search, log, barcodes, recipes, jobs
+food/                      Food module: catalogue + schema, search, log, barcodes, recipes, restaurants, jobs
 recognition/               Meal-recognition interface (disabled implementation only)
-scripts/                   Catalogue importers: import_all.py, import_off.py, import_basic.py, build_basic_seed.py
+scripts/                   Catalogue importers: import_all.py, import_off.py, import_basic.py, build_basic_seed.py;
+                           import_restaurant.py for a menu
 seed/basic_foods.src.json  Czech basic foods → USDA descriptions
 static/index.html          The entire frontend — markup, styles, logic, no dependencies
 tests/smoke.py             End-to-end API test, runs against a throwaway database

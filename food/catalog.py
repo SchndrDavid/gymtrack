@@ -4,7 +4,8 @@ Two databases:
 
   foods.db     the catalogue — Open Food Facts products and the USDA-sourced basic foods.
                Disposable: delete it and re-run the importers, nothing personal lives here.
-  gymtrack.db  everything the user wrote — the log, favourites, goals, custom foods, recipes.
+  gymtrack.db  everything the user wrote — the log, favourites, goals, custom foods, recipes,
+               restaurant menus.
 
 The catalogue is attached to every connection as schema ``cat``, so one query can join both.
 
@@ -147,6 +148,28 @@ CREATE TABLE IF NOT EXISTS recognition_jobs (
     result_json TEXT,
     error       TEXT,
     created_at  TEXT NOT NULL
+);
+
+-- A restaurant's menu, one row per item, with the restaurant's own estimates per portion.
+-- Logged as portions: an entry is a snapshot, so a re-imported menu never rewrites a past day.
+CREATE TABLE IF NOT EXISTS restaurant_items (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    restaurant TEXT NOT NULL,
+    item_key   TEXT NOT NULL,             -- menu code, or the name when there is none
+    code       TEXT,
+    name       TEXT NOT NULL,
+    category   TEXT NOT NULL DEFAULT '',
+    position   INTEGER NOT NULL DEFAULT 0,
+    portion    TEXT NOT NULL DEFAULT '',  -- as the menu says: "200 g", "0,3 l", "6 ks"
+    grams      REAL,                      -- from the portion when it states g or l, else NULL
+    price      REAL,
+    kcal       REAL NOT NULL,
+    protein    REAL NOT NULL DEFAULT 0,
+    carbs      REAL NOT NULL DEFAULT 0,
+    fat        REAL NOT NULL DEFAULT 0,
+    alcohol    REAL NOT NULL DEFAULT 0,
+    updated_at TEXT NOT NULL,
+    UNIQUE (restaurant, item_key)
 );
 """ + _fts_block("main", "user_foods")
 

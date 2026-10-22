@@ -212,7 +212,7 @@ h1{font-size:34px;line-height:1.05;font-weight:700;letter-spacing:-.5px;margin:0
 .fres .main span{display:block;font-size:12px;color:var(--fg-2);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .fres .kc{font-family:var(--round);font-size:14px;font-weight:600;color:var(--fg-2);flex:none;text-align:right}
 .fres .kc small{display:block;font-size:10px;font-weight:500;color:var(--fg-3)}
-.fres .tag{font-size:10px;font-weight:700;letter-spacing:.3px;color:var(--orange);margin-right:4px}
+.fres .tag,#rs-list .tag{font-size:10px;font-weight:700;letter-spacing:.3px;color:var(--orange);margin-right:4px}
 .fhead{font-size:12px;font-weight:600;color:var(--fg-3);text-transform:uppercase;letter-spacing:.6px;padding:10px 4px 2px}
 .fdate{display:flex;align-items:center;gap:10px;margin:0 0 12px}
 .fdate-label{flex:1;position:relative;text-align:center;font-size:17px;font-weight:600;padding:8px 0;cursor:pointer}
@@ -420,6 +420,7 @@ h1{font-size:34px;line-height:1.05;font-weight:700;letter-spacing:-.5px;margin:0
       <button id="f-goals">Goals</button>
       <button id="f-history" hidden>History</button>
       <button id="f-recipes" hidden>Recipes</button>
+      <button id="f-restaurants">Restaurants</button>
     </div>
     <button class="cta ghost" id="f-aiexport">Preview AI export</button>
     <p class="attrib">Food data © Open Food Facts contributors, ODbL · Basic foods: USDA FoodData Central (public domain)</p>
@@ -685,6 +686,25 @@ h1{font-size:34px;line-height:1.05;font-weight:700;letter-spacing:-.5px;margin:0
     <div class="card" id="rc-list"><p class="empty">Loading…</p></div>
     <p class="hint">Values come from the ingredients: per portion, and per 100 g of the raw ingredients
       (the cooked weight is not known).</p>
+  </div>
+</div>
+
+<div class="sheet" id="sheet-restaurants">
+  <div class="sheet-bar">
+    <button id="rs-close">Done</button>
+    <b id="rs-title">Restaurants</b>
+    <span style="width:44px"></span>
+  </div>
+  <div class="sheet-body">
+    <div class="seg miniseg" id="rs-meal" style="margin-bottom:12px"></div>
+    <div class="fsearch-box" style="margin-bottom:6px">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input id="rs-q" type="search" placeholder="Search the menu" autocomplete="off" autocorrect="off" spellcheck="false">
+    </div>
+    <div id="rs-list"><p class="empty">Loading…</p></div>
+    <p class="hint">Values are the restaurant's estimates per portion — they can be off by a quarter or more,
+      depending on oil, sugar and the size of the plate. Main dishes come without a side: add rice or noodles
+      from <i>Přílohy</i>.</p>
   </div>
 </div>
 
@@ -2415,6 +2435,55 @@ $('#as-save').onclick = () => {
 $('#as-ignore').onclick = () => asApply({item: as.line.item, ignore: true});
 
 $('#f-recipes').onclick = openRecipes;
+
+/* ---------- food: restaurants ---------- */
+/* A menu imported whole (scripts/import_restaurant.py). Items are logged as portions, with the
+   restaurant's own estimates — there is no food behind them, so nothing here needs grams. */
+let rsMenus = [];
+async function openRestaurants(){
+  $('#sheet-restaurants').classList.add('open');
+  mealSeg($('#rs-meal'), fMeal || mealNow());
+  $('#rs-q').value = '';
+  let res;
+  try { res = await api('/api/food/restaurants'); }
+  catch(e){ $('#rs-list').innerHTML = '<p class="empty">Server unreachable.</p>'; return; }
+  rsMenus = res.restaurants;
+  $('#rs-title').textContent = rsMenus.length === 1 ? rsMenus[0].name : 'Restaurants';
+  renderRestaurants();
+}
+
+function renderRestaurants(){
+  const q = $('#rs-q').value.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  const hit = i => !q || `${i.code || ''} ${i.name} ${i.category}`.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').includes(q);
+  const row = i => `<div class="row" data-rs="${i.id}" style="cursor:pointer">
+      <div class="main"><b>${i.code ? `<span class="tag">${esc(i.code)}</span>` : ''}${esc(i.name)}</b>
+        <span>${fmt(i.kcal)} kcal · P ${fmt(i.protein)} · C ${fmt(i.carbs)} · F ${fmt(i.fat)}${i.alcohol ? ` · alc ${fmt(i.alcohol)}` : ''} · ${esc(i.portion)}${i.price != null ? ` · ${fmt(i.price)} Kč` : ''}</span></div>
+      <span class="chev">›</span></div>`;
+  const html = rsMenus.map(m => {
+    const cats = m.categories.map(c => ({...c, items: c.items.filter(hit)})).filter(c => c.items.length);
+    if (!cats.length) return '';
+    return (rsMenus.length > 1 ? `<h3 style="margin:18px 0 0">${esc(m.name)}</h3>` : '')
+      + cats.map(c => `<p class="card-title" style="margin:16px 0 4px">${esc(c.name)}</p><div class="card">${c.items.map(row).join('')}</div>`).join('');
+  }).join('');
+  $('#rs-list').innerHTML = html || (rsMenus.length ? '<p class="empty">Nothing on the menu matches.</p>'
+    : '<p class="empty">No menu yet. Import one with scripts/import_restaurant.py.</p>');
+}
+$('#rs-q').addEventListener('input', renderRestaurants);
+
+$('#rs-list').addEventListener('click', async e => {
+  const el = e.target.closest('[data-rs]'); if (!el) return;
+  const item = rsMenus.flatMap(m => m.categories.flatMap(c => c.items)).find(i => i.id === +el.dataset.rs);
+  const meal = segValue($('#rs-meal'));
+  const portions = await picker(`${item.name} → ${MEAL_LABEL[meal].toLowerCase()}`, [1, .5, 2].map(k => ({
+    label: `${k === .5 ? '½' : k} × ${item.portion || 'portion'} — ${fmt(item.kcal * k)} kcal`, value: k})));
+  if (!portions) return;
+  try { await post('/api/food/restaurants/log', {item_id: item.id, portions, date: fDate, meal}); }
+  catch(err){ return toast('Not added'); }
+  toast(`Added to ${MEAL_LABEL[meal].toLowerCase()}`);
+  loadDay();
+});
+$('#f-restaurants').onclick = openRestaurants;
+$('#rs-close').onclick = () => $('#sheet-restaurants').classList.remove('open');
 $('#rc-close').onclick = () => { $('#sheet-recipes').classList.remove('open'); loadDay(); };
 
 /* ---------- food: recognise a meal (only shown when the server has it switched on) ---------- */

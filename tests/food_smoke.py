@@ -596,6 +596,49 @@ backup = client.get("/api/export").json()
 check("backup includes the food log", len(backup["food"]["log"]) == 7 and len(backup["food"]["goals"]) == 2)
 check("backup keeps the training sections", {"profile", "routines", "days", "workouts"} <= backup.keys())
 
+# ─── restaurants ────────────────────────────────────────────────────────────
+MENU = [
+    {"code": "F1", "name": "Rizoto s kuřecím masem", "category": "Obědové menu", "portion": "cca 350 g (s přílohou)",
+     "price": 145, "kcal": 504, "protein": 25, "carbs": 65, "fat": 16, "alcohol": 0},
+    {"code": "21", "name": "Smažené jarní závitky", "category": "Teplé předkrmy", "portion": "2 ks",
+     "price": 85, "kcal": 296, "protein": 8, "carbs": 30, "fat": 16},
+    {"code": None, "name": "Pilsner Urquell", "category": "Alkoholické nápoje", "portion": "0,5 l",
+     "price": 60, "kcal": 207, "protein": 2, "carbs": 20, "fat": 0, "alcohol": 17},
+    {"name": "Mattoni", "category": "Nealkoholické nápoje", "portion": "0,5 l", "kcal": 0},
+]
+imp = client.post("/api/food/restaurants/import", json={"restaurant": "Čínské Zátiší", "items": MENU}).json()
+check("a menu imports", imp["ok"] and imp["items"] == 4 and imp["added"] == 4)
+menu = client.get("/api/food/restaurants").json()["restaurants"]
+check("the menu lists by category, in menu order", len(menu) == 1 and menu[0]["name"] == "Čínské Zátiší"
+      and [c["name"] for c in menu[0]["categories"]] == ["Obědové menu", "Teplé předkrmy", "Alkoholické nápoje",
+                                                          "Nealkoholické nápoje"])
+items = {i["name"]: i for c in menu[0]["categories"] for i in c["items"]}
+check("grams come from the portion when it states them", items["Rizoto s kuřecím masem"]["grams"] == 350
+      and items["Pilsner Urquell"]["grams"] == 500 and items["Smažené jarní závitky"]["grams"] is None)
+D3 = "2026-03-10"
+beer = client.post("/api/food/restaurants/log", json={"item_id": items["Pilsner Urquell"]["id"], "portions": 2,
+                                                      "date": D3, "meal": "dinner"}).json()["entry"]
+check("portions log the menu's values", beer["kcal"] == 414 and beer["grams"] == 1000
+      and beer["name"] == "Pilsner Urquell · Čínské Zátiší (2 × 0,5 l, alkohol 34 g)" and beer["entry_method"] == "restaurant")
+rolls = client.post("/api/food/restaurants/log", json={"item_id": items["Smažené jarní závitky"]["id"], "portions": 0.5,
+                                                       "date": D3, "meal": "dinner"}).json()["entry"]
+check("an item without a weight logs without grams", rolls["grams"] is None and rolls["kcal"] == 148
+      and rolls["name"].endswith("(½ × 2 ks)"))
+check("a drink with no calories can be logged", client.post("/api/food/restaurants/log", json={
+      "item_id": items["Mattoni"]["id"], "date": D3, "meal": "dinner"}).status_code == 200)
+check("a bad portion is refused", client.post("/api/food/restaurants/log", json={
+      "item_id": items["Mattoni"]["id"], "portions": 0, "date": D3, "meal": "dinner"}).status_code == 400)
+again = client.post("/api/food/restaurants/import", json={"restaurant": "Čínské Zátiší", "items": MENU[:2]}).json()
+check("re-importing removes what left the menu", again["removed"] == 2 and again["added"] == 0)
+day3 = client.get("/api/food/day", params={"date": D3}).json()
+check("logged days keep their values", len(day3["entries"]) == 3 and round(day3["totals"]["kcal"]) == 562)
+check("the AI export marks restaurant estimates", "(restaurant menu, estimated)" in
+      client.get("/api/food/export/day", params={"date": D3}).json()["markdown"])
+check("a menu with a duplicate is refused", client.post("/api/food/restaurants/import", json={
+      "restaurant": "X", "items": [MENU[0], MENU[0]]}).status_code == 400)
+check("a restaurant can be deleted", client.delete("/api/food/restaurants/" + "Čínské Zátiší").status_code == 200
+      and client.get("/api/food/restaurants").json()["restaurants"] == [])
+
 Path(os.environ["GYMTRACK_FOODS_DB"]).unlink()
 check("deleting the catalogue while running is harmless", client.get("/api/food/search", params={"q": "vejce"}).status_code == 200
       and client.get("/api/food/catalog").json()["usda"] == 0)
