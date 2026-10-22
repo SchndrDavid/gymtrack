@@ -131,6 +131,13 @@ CREATE TABLE IF NOT EXISTS body_weight (
     kg   REAL NOT NULL
 );
 
+-- The weight being aimed for; one row.
+CREATE TABLE IF NOT EXISTS weight_target (
+    id     INTEGER PRIMARY KEY CHECK (id = 1),
+    kg     REAL NOT NULL,
+    set_on TEXT NOT NULL
+);
+
 -- How a recipe ingredient maps onto a food, remembered so the next recipe that uses
 -- "stroužek česneku" does not ask again.
 CREATE TABLE IF NOT EXISTS ingredient_mappings (

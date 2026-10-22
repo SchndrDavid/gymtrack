@@ -11,7 +11,7 @@ from fastapi import APIRouter, BackgroundTasks, File, HTTPException, Request, Up
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
-from . import ai_export, barcode, catalog, log, opengym, recipes, recognize, restaurants
+from . import ai_export, barcode, catalog, log, opengym, progress, recipes, recognize, restaurants
 from .catalog import clean_food, connect, food_dict, get_food, now_iso
 from .search import search as run_search
 
@@ -369,6 +369,56 @@ def export_day(request: Request, date: str = ""):
                 "opengym": {"ok": og["ok"], "workouts": og["workouts"], "error": og["error"]}}
 
 
+@router.get("/export/week")
+def export_week(request: Request, end: str = ""):
+    """Seven days up to `end` as a prompt for an AI — the unit weight loss is judged in."""
+    try:
+        day = log.valid_date(end or Date.today().isoformat())
+    except ValueError as err:
+        bad(err)
+    host = request.headers.get("host", "")
+    og_days: dict[str, dict] = {}
+    for i in range(6, -1, -1):
+        d = (Date.fromisoformat(day) - timedelta(days=i)).isoformat()
+        # One unreachable openGym is enough to know: do not wait out the timeout seven times.
+        if og_days and not any(v["ok"] for v in og_days.values()):
+            og_days[d] = {"ok": False, "lines": [], "workouts": 0, "error": "skipped"}
+            continue
+        og_days[d] = opengym.for_day(d, host)
+    with connect() as conn:
+        start = (Date.fromisoformat(day) - timedelta(days=6)).isoformat()
+        return {"start": start, "end": day, "filename": f"week-{start}-{day}.md",
+                "markdown": ai_export.week_report(conn, day, og_days),
+                "opengym": {"ok": all(v["ok"] for v in og_days.values()),
+                            "workouts": sum(v["workouts"] for v in og_days.values())}}
+
+
+# ─── progress: weight trend, maintenance, target ────────────────────────────
+
+class TargetIn(BaseModel):
+    kg: float | None = None
+
+
+@router.get("/progress")
+def get_progress(date: str = ""):
+    try:
+        day = log.valid_date(date or Date.today().isoformat())
+    except ValueError as err:
+        bad(err)
+    with connect() as conn:
+        return progress.progress(conn, day)
+
+
+@router.put("/target")
+def put_target(body: TargetIn):
+    with connect() as conn:
+        try:
+            progress.set_target(conn, body.kg, Date.today().isoformat())
+        except ValueError as err:
+            bad(err)
+        return {"ok": True, "target": progress.get_target(conn)}
+
+
 # ─── restaurants ────────────────────────────────────────────────────────────
 
 class RestaurantImport(BaseModel):
@@ -667,6 +717,7 @@ def export() -> dict[str, Any]:
             "favorites": rows("SELECT * FROM food_favorites"),
             "goals": rows("SELECT * FROM nutrition_goals ORDER BY effective_from"),
             "body_weight": rows("SELECT * FROM body_weight ORDER BY date"),
+            "weight_target": rows("SELECT * FROM weight_target"),
             "user_foods": rows("SELECT * FROM user_foods ORDER BY id"),
             "ingredient_mappings": rows("SELECT * FROM ingredient_mappings"),
             "restaurant_items": rows("SELECT * FROM restaurant_items ORDER BY restaurant, position"),

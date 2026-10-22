@@ -70,10 +70,20 @@ without it the prompt tells the AI to assume 75 kg and say so.
   the estimated calories, macros and alcohol per portion — with a search box. Tap a dish, pick ½, 1
   or 2 portions, and it goes into the meal chosen at the top. Menus come from a spreadsheet, see
   [Restaurants](#restaurants).
-- **Days, goals, history.** Edit or delete entries, copy yesterday's breakfast, set goals that apply
+- **Weight and what you really burn.** A card under the day's totals takes the morning weigh-in and
+  shows the trend — a line through three weeks of weigh-ins, so a kilo of water does not move it —
+  with its rate per week and whether that is on track (0.25–1 % of bodyweight a week), stalled, or
+  so fast it costs muscle. From what you ate on the logged days and how the trend moved it works out
+  what you actually burn a day (7700 kcal per kg), shows the deficit your goal really gives, and
+  suggests a goal for 0.7 % a week with 1.8 g protein per kg — one tap makes it your goal. Set a
+  target weight and it says when you get there at this pace.
+- **Days, goals, history.** Edit or delete entries (× next to each), copy yesterday's breakfast, set goals that apply
   from a date on, see week and month charts, macro averages and a 7-day weight trend. The year grid
   switches between *Training* and *Food*, where each day is coloured by how close it ended to the goal.
-- **Export a day for AI.** *Export AI* copies the whole day in one tap — every entry with its amount,
+- **Export a day or a week for AI.** *Week* next to it copies the seven days up to the shown one — a
+  table of every day with weigh-ins and training, averages, trend, real burn and target — asking for a
+  rating of the week, the pace, patterns and three changes for next week.
+  *Export AI* copies the whole day in one tap — every entry with its amount,
   totals against the goal, energy split, protein per kg, that day's training here and in
   [openGym](#opengym), and the week before — as a prompt asking for a rating of the day out of 10,
   energy balance, macro check, food quality and changes for tomorrow. *Preview AI export* shows it
@@ -297,6 +307,9 @@ Food, all under `/api/food`:
 | `GET`    | `/export/day?date=`           | The day as a Markdown prompt for an AI                    |
 | `GET` `POST` | `/goals`                  | Goals with `effective_from`; `DELETE /goals/{id}`         |
 | `GET` `POST` | `/weight`                 | Body weight with 7-day average; `DELETE /weight/{date}`   |
+| `GET`    | `/progress?date=`             | Trend weight and rate, real burn, deficit, suggestion, target |
+| `PUT`    | `/target`                     | Target weight `{"kg": 85}`, `{"kg": null}` clears it      |
+| `GET`    | `/export/week?end=`           | The seven days up to `end` as a prompt for an AI          |
 | `GET`    | `/barcode/{code}`             | Catalogue, then live Open Food Facts                      |
 | `POST`   | `/barcode/scan`               | Read a barcode from an uploaded photo (not stored)        |
 | `POST`   | `/barcode/decode`             | Codes in one live-camera frame, no lookup                 |

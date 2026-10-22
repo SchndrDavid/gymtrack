@@ -8,6 +8,7 @@ import json
 import sqlite3
 from datetime import date as Date, timedelta
 
+from . import progress as prog
 from .log import MEALS, day_view, summary
 
 MEAL_LABEL = {"breakfast": "Breakfast", "lunch": "Lunch", "dinner": "Dinner", "snack": "Snacks"}
@@ -88,6 +89,7 @@ def day_report(conn: sqlite3.Connection, day: str, opengym: dict | None = None) 
     for key, label, unit in (("height", "Height", " cm"), ("age", "Age", ""), ("sex", "Sex", "")):
         if profile.get(key):
             L.append(f"{label}: {profile[key]}{unit}")
+    L.extend(prog.describe(prog.progress(conn, day)))
     L.append("")
 
     L.append("## GOAL FOR THIS DAY")
@@ -166,3 +168,73 @@ def day_report(conn: sqlite3.Connection, day: str, opengym: dict | None = None) 
              "assumptions. Answer in Czech.")
     return "\n".join(L)
 
+
+
+def week_report(conn: sqlite3.Connection, end: str, opengym_days: dict | None = None) -> str:
+    """Seven days up to `end` as one prompt — the unit weight loss is really judged in.
+
+    `opengym_days` maps each day to food.opengym.for_day() (None leaves openGym out)."""
+    e = Date.fromisoformat(end)
+    days = [(e - timedelta(days=i)).isoformat() for i in range(6, -1, -1)]
+    profile = _profile(conn)
+    p = prog.progress(conn, end)
+    by_day = {x["date"]: x for x in summary(conn, days[0], end)}
+    weights = {r["date"]: r["kg"] for r in conn.execute(
+        "SELECT date, kg FROM body_weight WHERE date BETWEEN ? AND ?", (days[0], end))}
+
+    L = [f"Here is my week, {days[0]} to {end}: what I ate each day, my weight and my training. "
+         "I am losing weight. Rate the week and tell me what to change.", ""]
+
+    L.append("## ME")
+    t = p["trend"]
+    kg = t["kg"] if t else profile.get("weight")
+    L.append(f"Bodyweight: {f1(kg)} kg (trend)" if kg else "Bodyweight: NOT PROVIDED — assume 75 kg and say so.")
+    for key, label, unit in (("height", "Height", " cm"), ("age", "Age", ""), ("sex", "Sex", "")):
+        if profile.get(key):
+            L.append(f"{label}: {profile[key]}{unit}")
+    L.extend(prog.describe(p))
+    L.append("")
+
+    L.append("## DAY BY DAY")
+    L.append("| Day | kcal | goal | protein g | carbs g | fat g | weigh-in | training |")
+    L.append("|---|---|---|---|---|---|---|---|")
+    sessions = []
+    for d in days:
+        x = by_day.get(d)
+        tr = [line[2:] for line in _training(conn, d)]
+        og = (opengym_days or {}).get(d)
+        if og and og.get("ok"):
+            tr += [line[2:] for line in og["lines"] if line.startswith("- ")]
+        sessions += [f"- {d}: {s}" for s in tr]
+        g = x["goal"]["kcal"] if x and x["goal"] else None
+        name = Date.fromisoformat(d).strftime("%a")
+        L.append(f"| {name} {d} | " + (f"{f0(x['kcal'])} | {f0(g) if g else '—'} | {f0(x['protein'])} | {f0(x['carbs'])} | "
+                 f"{f0(x['fat'])}" if x else "not logged | — | — | — | —")
+                 + f" | {f1(weights[d]) + ' kg' if d in weights else '—'} | {len(tr) or '—'} |")
+    logged = [by_day[d] for d in days if d in by_day]
+    if logged:
+        avg = {k: sum(x[k] for x in logged) / len(logged) for k in ("kcal", "protein", "carbs", "fat")}
+        L.append(f"Average over the {len(logged)} logged day{'s' if len(logged) > 1 else ''}: {f0(avg['kcal'])} kcal · "
+                 f"protein {f0(avg['protein'])} g · carbs {f0(avg['carbs'])} g · fat {f0(avg['fat'])} g")
+        if kg:
+            L.append(f"Protein per kg: {round(avg['protein'] / float(kg), 2)} g/kg")
+    if len(logged) < 7:
+        L.append(f"{7 - len(logged)} day{'s' if 7 - len(logged) > 1 else ''} not logged at all — do not count them as zero.")
+    L.append("")
+
+    L.append("## TRAINING THIS WEEK")
+    L.extend(sessions or ["Nothing logged."])
+    if opengym_days is not None and not all((v or {}).get("ok") for v in opengym_days.values()):
+        L.append("- (openGym could not be read for every day — a workout may be missing here.)")
+    L.append("")
+
+    L.append("## WHAT I WANT BACK, IN THIS ORDER")
+    L.append("1. RATING — the week out of 10, then food /10, training /10 and consistency /10, and two or")
+    L.append("   three sentences why. Judge it for losing weight, without being soft on me.")
+    L.append("2. TREND — is the weight moving at a good pace for keeping muscle? Use the trend, not single weigh-ins.")
+    L.append("3. PATTERNS — which days or meals went wrong, and what they have in common.")
+    L.append("4. NEXT WEEK — three concrete changes, with foods and amounts, and a calorie and protein target.")
+    L.append("")
+    L.append("Be concrete and numeric. Do not ask me follow-up questions first — estimate, and state your "
+             "assumptions. Answer in Czech.")
+    return "\n".join(L)

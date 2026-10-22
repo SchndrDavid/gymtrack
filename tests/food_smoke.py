@@ -639,6 +639,36 @@ check("a menu with a duplicate is refused", client.post("/api/food/restaurants/i
 check("a restaurant can be deleted", client.delete("/api/food/restaurants/" + "Čínské Zátiší").status_code == 200
       and client.get("/api/food/restaurants").json()["restaurants"] == [])
 
+# ─── progress: trend, maintenance, target, the week for AI ─────────────────
+from datetime import date as _date, timedelta as _td  # noqa: E402
+
+P_END = _date(2026, 6, 21)
+for i in range(21):
+    d = (P_END - _td(days=20 - i)).isoformat()
+    client.post("/api/food/log", json={"date": d, "meal": "lunch", "kcal": 2100 + (60 if i % 2 else -60), "protein": 150})
+    if i % 2 == 0:   # 11 weigh-ins, 0.5 kg a week down, a little water noise
+        client.post("/api/food/weight", json={"date": d, "kg": round(93 - 0.5 / 7 * i + (0.2 if i % 4 else -0.2), 2)})
+client.post("/api/food/goals", json={"effective_from": "2026-06-01", "kcal": 2100, "protein": 160})
+check("a target weight is kept", client.put("/api/food/target", json={"kg": 85}).json()["target"]["kg"] == 85)
+check("a silly target is refused", client.put("/api/food/target", json={"kg": 5}).status_code == 400)
+pr = client.get("/api/food/progress", params={"date": P_END.isoformat()}).json()
+check("the trend is fitted through the weigh-ins", pr["trend"]["fitted"] and pr["trend"]["points"] == 11
+      and -0.6 < pr["trend"]["rate_week"] < -0.4 and pr["pace"]["verdict"] == "on_track")
+check("maintenance comes out of intake and trend", 2500 < pr["maintenance"]["kcal"] < 2750
+      and pr["maintenance"]["confidence"] == "good" and pr["maintenance"]["logged_days"] == 21)
+check("the goal's deficit is shown against it", 400 < pr["goal_deficit"] < 650)
+check("the target gets a date at this pace", pr["target"]["left"] > 6 and pr["target"]["eta"] > P_END.isoformat())
+check("a suggestion keeps protein up", pr["suggestion"]["protein"] >= 160 and pr["suggestion"]["kcal"] < pr["maintenance"]["kcal"])
+early = client.get("/api/food/progress", params={"date": (P_END - _td(days=17)).isoformat()}).json()
+check("too little data says what is missing", early["maintenance"]["kcal"] is None and "logged days" in early["maintenance"]["needs"])
+wk = client.get("/api/food/export/week", params={"end": P_END.isoformat()}).json()
+check("the week export lists every day", wk["filename"] == f"week-{(P_END - _td(days=6)).isoformat()}-{P_END.isoformat()}.md"
+      and wk["markdown"].count("| ") > 7 and "## DAY BY DAY" in wk["markdown"]
+      and "1. RATING — the week out of 10" in wk["markdown"] and "Measured maintenance: about" in wk["markdown"])
+check("the day export carries the trend", "Trend weight:" in client.get("/api/food/export/day", params={
+      "date": P_END.isoformat()}).json()["markdown"])
+check("a target can be cleared", client.put("/api/food/target", json={"kg": None}).json()["target"] is None)
+
 Path(os.environ["GYMTRACK_FOODS_DB"]).unlink()
 check("deleting the catalogue while running is harmless", client.get("/api/food/search", params={"q": "vejce"}).status_code == 200
       and client.get("/api/food/catalog").json()["usda"] == 0)
