@@ -411,11 +411,6 @@ h1{font-size:34px;line-height:1.05;font-weight:700;letter-spacing:-.5px;margin:0
     </div>
 
     <div class="card fsum" id="f-summary"></div>
-    <div class="card fprog" id="f-progress" hidden></div>
-    <div class="aiexp">
-      <button class="cta" id="f-aicopy">Export AI</button>
-      <button class="cta ghost" id="f-aiweek">Week</button>
-    </div>
 
     <div class="card fsearch">
       <div class="fsearch-box">
@@ -450,7 +445,7 @@ h1{font-size:34px;line-height:1.05;font-weight:700;letter-spacing:-.5px;margin:0
       <button id="f-recipes" hidden>Recipes</button>
       <button id="f-restaurants">Restaurants</button>
     </div>
-    <button class="cta ghost" id="f-aiexport">Preview AI export</button>
+    <button class="cta ghost" id="f-stats">Stats</button>
     <p class="attrib">Food data © Open Food Facts contributors, ODbL · Basic foods: USDA FoodData Central (public domain)</p>
   </div>
 
@@ -607,6 +602,24 @@ h1{font-size:34px;line-height:1.05;font-weight:700;letter-spacing:-.5px;margin:0
     <video id="lv-video" playsinline muted autoplay></video>
     <div class="lv-frame"><i></i></div>
     <p class="lv-status" id="lv-status">Starting the camera…</p>
+  </div>
+</div>
+
+<div class="sheet" id="sheet-stats">
+  <div class="sheet-bar">
+    <button id="st-close">Done</button>
+    <b id="st-title">Stats</b>
+    <span style="width:44px"></span>
+  </div>
+  <div class="sheet-body">
+    <div class="card fprog" id="f-progress" hidden></div>
+    <p class="card-title" style="margin-top:22px">Ask an AI</p>
+    <div class="aiexp">
+      <button class="cta" id="f-aicopy">Export day</button>
+      <button class="cta ghost" id="f-aiweek">Week</button>
+    </div>
+    <p class="hint" style="margin-top:0">Copies the day — or the seven days up to it — with your food, training,
+      weight and real burn, as a prompt asking for a rating. <a class="mini" id="f-aiexport" style="cursor:pointer">Preview</a></p>
   </div>
 </div>
 
@@ -1970,10 +1983,17 @@ async function loadDay(){
   try { fDay = await api('/api/food/day?date=' + fDate); }
   catch(e){ fDay = null; toast('Server unreachable'); }
   renderDay();
-  loadProgress();
+  if ($('#sheet-stats').classList.contains('open')) loadProgress();
 }
 
-/* ---------- food: weight, trend, what you really burn ---------- */
+/* ---------- food: stats — weight, trend, what you really burn, the AI exports ---------- */
+$('#f-stats').onclick = () => {
+  $('#st-title').textContent = fDate === todayIso() ? 'Stats' : `Stats · ${dateLabel(fDate)}`;
+  $('#sheet-stats').classList.add('open');
+  loadProgress();
+};
+$('#st-close').onclick = () => $('#sheet-stats').classList.remove('open');
+
 /* The weigh-in for the shown day, the trend through three weeks of weigh-ins, the energy that
    intake and trend say is really burned (food/progress.py), and the way to the target weight. */
 let fProg = null, fpEdit = null;   // fpEdit: 'weight' | 'target' while its form is open

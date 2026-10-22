@@ -74,7 +74,7 @@ without it the prompt tells the AI to assume 75 kg and say so.
   the estimated calories, macros and alcohol per portion — with a search box. Tap a dish, pick ½, 1
   or 2 portions, and it goes into the meal chosen at the top. Menus come from a spreadsheet, see
   [Restaurants](#restaurants).
-- **Weight and what you really burn.** A card under the day's totals takes the morning weigh-in and
+- **Weight and what you really burn.** *Stats*, at the bottom of the Food tab, takes the morning weigh-in and
   shows the trend — a line through three weeks of weigh-ins, so a kilo of water does not move it —
   with its rate per week and whether that is on track (0.25–1 % of bodyweight a week), stalled, or
   so fast it costs muscle. From what you ate on the logged days and how the trend moved it works out
@@ -84,7 +84,7 @@ without it the prompt tells the AI to assume 75 kg and say so.
 - **Days, goals, history.** Edit or delete entries (× next to each), copy yesterday's breakfast, set goals that apply
   from a date on, see week and month charts, macro averages and a 7-day weight trend. The year grid
   switches between *Training* and *Food*, where each day is coloured by how close it ended to the goal.
-- **Export a day or a week for AI.** *Week* next to it copies the seven days up to the shown one — a
+- **Export a day or a week for AI.** In *Stats*, *Week* copies the seven days up to the shown one — a
   table of every day with weigh-ins and training, averages, trend, real burn and target — asking for a
   rating of the week, the pace, patterns and three changes for next week.
   *Export AI* copies the whole day in one tap — every entry with its amount,
