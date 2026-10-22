@@ -420,6 +420,7 @@ h1{font-size:34px;line-height:1.05;font-weight:700;letter-spacing:-.5px;margin:0
       <button id="f-history" hidden>History</button>
       <button id="f-recipes" hidden>Recipes</button>
     </div>
+    <button class="cta ghost" id="f-aiexport">Export day for AI</button>
     <p class="attrib">Food data © Open Food Facts contributors, ODbL · Basic foods: USDA FoodData Central (public domain)</p>
   </div>
 
@@ -576,6 +577,24 @@ h1{font-size:34px;line-height:1.05;font-weight:700;letter-spacing:-.5px;margin:0
     <video id="lv-video" playsinline muted autoplay></video>
     <div class="lv-frame"><i></i></div>
     <p class="lv-status" id="lv-status">Starting the camera…</p>
+  </div>
+</div>
+
+<div class="sheet" id="sheet-aiexport">
+  <div class="sheet-bar">
+    <button id="ax-close">Done</button>
+    <b id="ax-title">Export for AI</b>
+    <span style="width:44px"></span>
+  </div>
+  <div class="sheet-body">
+    <p class="hint" style="margin:0 0 12px">The whole day — every entry, totals against your goal, your training
+      and the week before — written as a prompt. Copy it and paste it into Claude Code, or save it as a file.</p>
+    <button class="cta" id="ax-copy" style="margin:0">Copy</button>
+    <div class="btnrow">
+      <button id="ax-share" hidden>Share…</button>
+      <button id="ax-download">Download .md</button>
+    </div>
+    <textarea class="ptext" id="ax-text" readonly style="display:block;min-height:55vh"></textarea>
   </div>
 </div>
 
@@ -2594,6 +2613,39 @@ $('#fh-wlist').onclick = async e => {
   const b = e.target.closest('[data-wdel]'); if (!b) return;
   try { await api('/api/food/weight/' + b.dataset.wdel, {method:'DELETE'}); } catch(err){ return toast('Not deleted'); }
   loadWeights();
+};
+
+/* ---------- food: export the day for an AI ---------- */
+let ax = null;
+async function openAiExport(){
+  $('#ax-title').textContent = `Export ${dateLabel(fDate).toLowerCase()}`;
+  $('#ax-text').value = 'Preparing…';
+  $('#ax-share').hidden = !navigator.share;
+  $('#sheet-aiexport').classList.add('open');
+  try { ax = await api('/api/food/export/day?date=' + fDate); }
+  catch(e){ ax = null; $('#ax-text').value = 'Server unreachable.'; return; }
+  $('#ax-text').value = ax.markdown;
+}
+$('#f-aiexport').onclick = openAiExport;
+$('#ax-close').onclick = () => $('#sheet-aiexport').classList.remove('open');
+$('#ax-copy').onclick = async () => {
+  if (!ax) return;
+  toast(await copyText(ax.markdown) ? 'Copied — paste it into Claude Code' : 'Copy failed — select the text and copy it');
+};
+$('#ax-download').onclick = () => {
+  if (!ax) return;
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([ax.markdown], {type: 'text/markdown;charset=utf-8'}));
+  a.download = ax.filename; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+};
+$('#ax-share').onclick = async () => {
+  if (!ax) return;
+  try {
+    const file = new File([ax.markdown], ax.filename, {type: 'text/markdown'});
+    if (navigator.canShare && navigator.canShare({files: [file]})) await navigator.share({files: [file], title: ax.filename});
+    else await navigator.share({title: ax.filename, text: ax.markdown});
+  } catch(e){}
 };
 
 /* ---------- food: quick add ---------- */

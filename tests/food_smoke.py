@@ -535,6 +535,25 @@ os.environ["FOOD_AI_ENABLED"] = "false"
 food.recognize.set_recognizer(None)
 check("switched off again", client.post("/api/food/recognize", files={"image": ("m.jpg", jpeg, "image/jpeg")}).status_code == 501)
 
+# ─── export a day for AI ────────────────────────────────────────────────────
+client.post("/api/workout", json={"date": D2, "name": "Push", "seconds": 2700,
+                                  "exercises": [{"name": "Bench", "type": "weight", "sets": [{"kg": "60", "reps": "8"}]}]})
+client.post("/api/food/weight", json={"date": D2, "kg": 80.5})
+exp = client.get("/api/food/export/day", params={"date": D2}).json()
+md = exp["markdown"]
+check("AI export names the file by date", exp["filename"] == f"food-{D2}.md")
+check("AI export has every section", all(h in md for h in ("## ME", "## GOAL FOR THIS DAY", "## TOTALS",
+      "## EVERYTHING I ATE", "## TRAINING THIS DAY", "## WHAT I WANT BACK")))
+check("AI export lists the entries with amounts", "Babiččin guláš — 350 g · 630 kcal" in md)
+check("AI export marks estimates", "(quick add, estimated)" in md)
+check("AI export carries the goal of that day", "2 100 kcal" in md)
+check("AI export includes the workout", "Workout: Push, 45 min, 1 sets (Bench)" in md)
+check("AI export uses the logged weight", "80.5 kg" in md and "g/kg" in md)
+check("AI export adds the week before", "## THE 7 DAYS BEFORE" in md and f"| {D1} |" in md)
+empty = client.get("/api/food/export/day", params={"date": "2026-01-05"}).json()["markdown"]
+check("AI export of an empty day still works", "Nothing logged for this day." in empty and "Rest day" in empty)
+check("AI export rejects a bad date", client.get("/api/food/export/day", params={"date": "x"}).status_code == 400)
+
 backup = client.get("/api/export").json()
 check("backup includes the food log", len(backup["food"]["log"]) == 7 and len(backup["food"]["goals"]) == 2)
 check("backup keeps the training sections", {"profile", "routines", "days", "workouts"} <= backup.keys())

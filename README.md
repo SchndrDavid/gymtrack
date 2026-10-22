@@ -69,6 +69,10 @@ without it the prompt tells the AI to assume 75 kg and say so.
 - **Days, goals, history.** Edit or delete entries, copy yesterday's breakfast, set goals that apply
   from a date on, see week and month charts, macro averages and a 7-day weight trend. The year grid
   switches between *Training* and *Food*, where each day is coloured by how close it ended to the goal.
+- **Export a day for AI.** *Export day for AI* writes the whole day — every entry with its amount,
+  totals against the goal, energy split, protein per kg, that day's training and the week before —
+  as a prompt asking for a verdict, macro check, food quality and changes for tomorrow. Copy it and
+  paste it into Claude Code, share it, or download it as `food-YYYY-MM-DD.md`.
 - **History never changes behind your back.** Each entry stores its own values, so re-importing the
   catalogue or editing a food leaves past days as they were.
 
@@ -260,6 +264,7 @@ Food, all under `/api/food`:
 | `PATCH` `DELETE` | `/log/{id}`           | Edit (grams rescale the stored values) or remove          |
 | `POST`   | `/log/copy`                   | Copy a meal or a day to another day                       |
 | `GET`    | `/summary?start=&end=`        | Per-day totals against that day's goal                    |
+| `GET`    | `/export/day?date=`           | The day as a Markdown prompt for an AI                    |
 | `GET` `POST` | `/goals`                  | Goals with `effective_from`; `DELETE /goals/{id}`         |
 | `GET` `POST` | `/weight`                 | Body weight with 7-day average; `DELETE /weight/{date}`   |
 | `GET`    | `/barcode/{code}`             | Catalogue, then live Open Food Facts                      |

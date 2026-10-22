@@ -11,7 +11,7 @@ from fastapi import APIRouter, BackgroundTasks, File, HTTPException, UploadFile
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
-from . import barcode, catalog, log, recipes, recognize
+from . import ai_export, barcode, catalog, log, recipes, recognize
 from .catalog import clean_food, connect, food_dict, get_food, now_iso
 from .search import search as run_search
 
@@ -354,6 +354,17 @@ def get_summary(start: str = "", end: str = ""):
     start, end = _range(start, end, 370)
     with connect() as conn:
         return {"start": start, "end": end, "days": log.summary(conn, start, end)}
+
+
+@router.get("/export/day")
+def export_day(date: str = ""):
+    """The whole day as a prompt for an AI — copied or downloaded from the Food tab."""
+    try:
+        day = log.valid_date(date or Date.today().isoformat())
+    except ValueError as err:
+        bad(err)
+    with connect() as conn:
+        return {"date": day, "filename": f"food-{day}.md", "markdown": ai_export.day_report(conn, day)}
 
 
 # ─── goals ──────────────────────────────────────────────────────────────────
