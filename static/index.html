@@ -245,8 +245,11 @@ h1{font-size:34px;line-height:1.05;font-weight:700;letter-spacing:-.5px;margin:0
 .meal-head .card-title{margin:0;flex:1}
 .meal-head .kc{font-family:var(--round);font-size:14px;font-weight:600;color:var(--fg-2)}
 .meal-head button{color:var(--fg-3);font-size:20px;line-height:1;padding:2px 4px 6px;min-width:34px}
-.fentry{display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:10px 0;border-top:1px solid var(--line)}
-.fentry:first-of-type{border-top:0}
+.frow{display:flex;align-items:center;border-top:1px solid var(--line)}
+.meal-head + .frow{border-top:0}
+.fentry{display:flex;align-items:center;gap:10px;flex:1;min-width:0;text-align:left;padding:10px 0}
+.fdel{flex:none;width:36px;height:36px;margin-right:-8px;color:var(--fg-3);font-size:22px;line-height:1}
+.fdel:active{color:var(--red)}
 .fentry .main{flex:1;min-width:0}
 .fentry .main b{display:block;font-size:15px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .fentry .main span{display:block;font-size:12px;color:var(--fg-2);margin-top:2px}
@@ -1743,6 +1746,7 @@ function setView(v){
   document.querySelectorAll('#viewseg button').forEach(b => b.classList.toggle('on', b.dataset.view === view));
   $('#view-training').hidden = view !== 'training';
   $('#view-food').hidden = view !== 'food';
+  $('#btn-settings').hidden = view !== 'training';   // plans and profile belong to Training
   if (view === 'food') foodShow();
 }
 document.querySelectorAll('#viewseg button').forEach(b => b.onclick = () => setView(b.dataset.view));
@@ -1920,14 +1924,21 @@ function renderDay(){
     return `<div class="card meal"><div class="meal-head">
         <p class="card-title">${MEAL_LABEL[m]}</p><span class="kc">${items.length ? fmt(fDay.meals[m].kcal) + ' kcal' : ''}</span>
         <button data-meal-menu="${m}" aria-label="${MEAL_LABEL[m]} options">⋯</button></div>
-      ${items.length ? items.map(e => `<button class="fentry" data-entry="${e.id}">
+      ${items.length ? items.map(e => `<div class="frow"><button class="fentry" data-entry="${e.id}">
           <div class="main"><b>${esc(e.name)}</b><span>${e.grams ? fmt(e.grams) + ' g · ' : ''}P ${fmt(e.protein)} · C ${fmt(e.carbs)} · F ${fmt(e.fat)}</span></div>
-          <span class="kc">${fmt(e.kcal)}</span></button>`).join('')
+          <span class="kc">${fmt(e.kcal)}</span></button>
+          <button class="fdel" data-del="${e.id}" aria-label="Delete ${esc(e.name)}">×</button></div>`).join('')
         : `<p class="empty">Nothing yet.</p>`}</div>`;
   }).join('');
 }
 
 $('#f-meals').addEventListener('click', async e => {
+  const del = e.target.closest('[data-del]');
+  if (del){
+    const x = fDay.entries.find(y => y.id === +del.dataset.del);
+    if (await picker(`${x.name} — ${fmt(x.kcal)} kcal`, [{label: 'Delete entry', value: 'del'}]) === 'del') deleteEntry(x);
+    return;
+  }
   const entry = e.target.closest('[data-entry]');
   if (entry) return openEntry(fDay.entries.find(x => x.id === +entry.dataset.entry));
   const menu = e.target.closest('[data-meal-menu]');
@@ -2053,7 +2064,8 @@ $('#po-delete').onclick = () => deleteEntry(po.entry, '#sheet-portion');
 
 async function deleteEntry(entry, sheet){
   try { await api('/api/food/log/' + entry.id, {method:'DELETE'}); } catch(e){ return toast('Not deleted'); }
-  $(sheet).classList.remove('open'); toast('Deleted'); loadDay();
+  if (sheet) $(sheet).classList.remove('open');
+  toast('Deleted'); loadDay();
 }
 
 /* An entry keeps the values it was logged with; the panel edits the amount of that snapshot. */
