@@ -13,7 +13,9 @@ import json
 import os
 import sys
 import tempfile
+import threading
 import zipfile
+from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -23,6 +25,30 @@ os.environ["GYMTRACK_DB"] = str(TMP / "test.db")
 os.environ["GYMTRACK_FOODS_DB"] = str(TMP / "foods.db")
 os.environ.pop("MORDORCOOK_URL", None)
 os.environ["FOOD_AI_ENABLED"] = "false"
+
+
+# openGym's day export (the local fork's GET /api/export/day), on localhost.
+class FakeOpenGym(BaseHTTPRequestHandler):
+    def do_GET(self):
+        day = self.path.split("date=")[-1]
+        body = {"date": day, "unit": "kg", "bodyweight": {"kg": 91.0, "date": day}, "workouts": [] if day != OG_DAY else [
+            {"name": "Pull", "minutes": 50, "volume": 4100, "prs": 1, "entries": [
+                {"name": "barbell bent over row", "target": "upper back", "sets": [{"w": 70, "r": 8}, {"w": 70, "r": 6}]},
+                {"name": "run", "target": "cardiovascular system", "mode": "cardio", "sets": [{"min": 20, "speed": 9.5}]}]}]}
+        raw = json.dumps(body).encode()
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.end_headers()
+        self.wfile.write(raw)
+
+    def log_message(self, *a):
+        pass
+
+
+OG_DAY = None
+og_server = HTTPServer(("127.0.0.1", 0), FakeOpenGym)
+threading.Thread(target=og_server.serve_forever, daemon=True).start()
+os.environ["OPENGYM_URL"] = f"http://127.0.0.1:{og_server.server_port}"
 
 from fastapi.testclient import TestClient  # noqa: E402
 
@@ -539,9 +565,10 @@ check("switched off again", client.post("/api/food/recognize", files={"image": (
 client.post("/api/workout", json={"date": D2, "name": "Push", "seconds": 2700,
                                   "exercises": [{"name": "Bench", "type": "weight", "sets": [{"kg": "60", "reps": "8"}]}]})
 client.post("/api/food/weight", json={"date": D2, "kg": 80.5})
+OG_DAY = D2
 exp = client.get("/api/food/export/day", params={"date": D2}).json()
 md = exp["markdown"]
-check("AI export names the file by date", exp["filename"] == f"food-{D2}.md")
+check("AI export names the file by date", exp["filename"] == f"day-{D2}.md")
 check("AI export has every section", all(h in md for h in ("## ME", "## GOAL FOR THIS DAY", "## TOTALS",
       "## EVERYTHING I ATE", "## TRAINING THIS DAY", "## WHAT I WANT BACK")))
 check("AI export lists the entries with amounts", "Babiččin guláš — 350 g · 630 kcal" in md)
@@ -550,9 +577,20 @@ check("AI export carries the goal of that day", "2 100 kcal" in md)
 check("AI export includes the workout", "Workout: Push, 45 min, 1 sets (Bench)" in md)
 check("AI export uses the logged weight", "80.5 kg" in md and "g/kg" in md)
 check("AI export adds the week before", "## THE 7 DAYS BEFORE" in md and f"| {D1} |" in md)
+check("AI export asks for a rating first", "1. RATING — the whole day out of 10" in md)
+check("AI export adds openGym's workout", exp["opengym"] == {"ok": True, "workouts": 1, "error": None}
+      and "- openGym workout: Pull, 50 min, volume 4100 kg, 1 personal record" in md
+      and "  - barbell bent over row (upper back): 2 sets — 70 kg × 8; 70 kg × 6" in md
+      and "  - run (cardiovascular system): 1 set — 20 min 9.5 km/h" in md)
+check("AI export keeps GymTrack's own weigh-in over openGym's", "80.5 kg (weighed" in md)
 empty = client.get("/api/food/export/day", params={"date": "2026-01-05"}).json()["markdown"]
 check("AI export of an empty day still works", "Nothing logged for this day." in empty and "Rest day" in empty)
 check("AI export rejects a bad date", client.get("/api/food/export/day", params={"date": "x"}).status_code == 400)
+og_server.shutdown()
+og_server.server_close()
+down = client.get("/api/food/export/day", params={"date": D2}).json()
+check("AI export goes out without openGym, and says so", down["opengym"]["ok"] is False
+      and "openGym could not be read" in down["markdown"] and "Workout: Push" in down["markdown"])
 
 backup = client.get("/api/export").json()
 check("backup includes the food log", len(backup["food"]["log"]) == 7 and len(backup["food"]["goals"]) == 2)

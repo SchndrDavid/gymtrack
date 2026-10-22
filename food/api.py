@@ -7,11 +7,11 @@ import sys
 from datetime import date as Date, timedelta
 from typing import Any
 
-from fastapi import APIRouter, BackgroundTasks, File, HTTPException, UploadFile
+from fastapi import APIRouter, BackgroundTasks, File, HTTPException, Request, UploadFile
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
-from . import ai_export, barcode, catalog, log, recipes, recognize
+from . import ai_export, barcode, catalog, log, opengym, recipes, recognize
 from .catalog import clean_food, connect, food_dict, get_food, now_iso
 from .search import search as run_search
 
@@ -357,14 +357,16 @@ def get_summary(start: str = "", end: str = ""):
 
 
 @router.get("/export/day")
-def export_day(date: str = ""):
-    """The whole day as a prompt for an AI — copied or downloaded from the Food tab."""
+def export_day(request: Request, date: str = ""):
+    """The whole day as a prompt for an AI — food, and training here and in openGym."""
     try:
         day = log.valid_date(date or Date.today().isoformat())
     except ValueError as err:
         bad(err)
+    og = opengym.for_day(day, request.headers.get("host", ""))
     with connect() as conn:
-        return {"date": day, "filename": f"food-{day}.md", "markdown": ai_export.day_report(conn, day)}
+        return {"date": day, "filename": f"day-{day}.md", "markdown": ai_export.day_report(conn, day, og),
+                "opengym": {"ok": og["ok"], "workouts": og["workouts"], "error": og["error"]}}
 
 
 # ─── goals ──────────────────────────────────────────────────────────────────

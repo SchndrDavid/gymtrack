@@ -69,10 +69,11 @@ without it the prompt tells the AI to assume 75 kg and say so.
 - **Days, goals, history.** Edit or delete entries, copy yesterday's breakfast, set goals that apply
   from a date on, see week and month charts, macro averages and a 7-day weight trend. The year grid
   switches between *Training* and *Food*, where each day is coloured by how close it ended to the goal.
-- **Export a day for AI.** *Export day for AI* writes the whole day — every entry with its amount,
-  totals against the goal, energy split, protein per kg, that day's training and the week before —
-  as a prompt asking for a verdict, macro check, food quality and changes for tomorrow. Copy it and
-  paste it into Claude Code, share it, or download it as `food-YYYY-MM-DD.md`.
+- **Export a day for AI.** *Export AI* copies the whole day in one tap — every entry with its amount,
+  totals against the goal, energy split, protein per kg, that day's training here and in
+  [openGym](#opengym), and the week before — as a prompt asking for a rating of the day out of 10,
+  energy balance, macro check, food quality and changes for tomorrow. *Preview AI export* shows it
+  first, and shares or downloads it as `day-YYYY-MM-DD.md`.
 - **History never changes behind your back.** Each entry stores its own values, so re-importing the
   catalogue or editing a food leaves past days as they were.
 
@@ -129,6 +130,7 @@ interacted with the document.
 | `GYMTRACK_DB`       | `/data/gymtrack.db`      | Your data: training and everything you log under Food     |
 | `GYMTRACK_FOODS_DB` | next to `GYMTRACK_DB`, `foods.db` | Food catalogue — disposable, re-importable       |
 | `MORDORCOOK_URL`    | `http://100.108.145.60:8105` in compose | MordorCook base URL. Empty hides *Recipes* |
+| `OPENGYM_URL`       | `http://100.108.145.60:8115` in compose | openGym base URL for *Export AI*; unset, port 8115 on the host you opened GymTrack at |
 | `FOOD_OFF_LIVE`     | `true`                   | Look unknown barcodes up on world.openfoodfacts.org (5 s timeout) |
 | `FOOD_AI_ENABLED`   | `false`                  | Meal recognition from a photo — plumbing only, see below  |
 | `ANTHROPIC_API_KEY` | empty                    | For the future recognizer; unused today                   |
@@ -218,6 +220,14 @@ it in the app — recipes belong in MordorCook):
 `nutrition` is optional; when present it is used instead of the ingredients. The endpoint answers
 `422` with the full analysis when ingredients still need an answer. `id` makes a re-import update
 the same food. `POST /api/food/recipes/preview` returns the same analysis without storing anything.
+
+## openGym
+
+*Export AI* also lists that day's workouts from openGym, set by set. It reads
+`GET /api/export/day?date=YYYY-MM-DD`, which upstream openGym does not have: it comes from the local
+fork on mordor, which also runs with `SINGLE_USER=1` (no passkey; every request is the one
+profile). If openGym cannot be reached the export still goes out, says so in its training section,
+and the toast tells you.
 
 ## Meal recognition (not switched on)
 

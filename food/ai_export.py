@@ -1,7 +1,7 @@
-"""One day of eating as a prompt for an AI — copied from the Food tab and pasted into Claude.
+"""One whole day as a prompt for an AI — copied from the Food tab and pasted into Claude.
 
-Everything the model needs to judge the day without asking back: who I am, the goal valid that
-day, every entry with its amount, what I trained, and the week around it for context.
+Everything the model needs to rate the day without asking back: who I am, the goal valid that
+day, every entry with its amount, what I trained here and in openGym, and the week around it.
 """
 
 import json
@@ -63,20 +63,24 @@ def _training(conn: sqlite3.Connection, day: str) -> list[str]:
     return out
 
 
-def day_report(conn: sqlite3.Connection, day: str) -> str:
+def day_report(conn: sqlite3.Connection, day: str, opengym: dict | None = None) -> str:
+    """`opengym` is food.opengym.for_day(); None leaves openGym out of the prompt entirely."""
     d = Date.fromisoformat(day)
     view = day_view(conn, day)
     t, goal, entries = view["totals"], view["goal"], view["entries"]
     profile = _profile(conn)
     kg, avg7, kg_date = _weight(conn, day)
-    body_kg = kg or (profile.get("weight") or None)
+    og_kg = (opengym or {}).get("bodyweight")
+    body_kg = kg or og_kg or (profile.get("weight") or None)
 
-    L = [f"Here is everything I ate on {d.strftime('%A')} {d.isoformat()}, as logged in my food tracker. "
-         "Analyse my day.", ""]
+    L = [f"Here is my whole day, {d.strftime('%A')} {d.isoformat()}: everything I ate, as logged in my food "
+         "tracker, and everything I trained. Rate my day and analyse it.", ""]
 
     L.append("## ME")
     if kg:
         L.append(f"Bodyweight: {f1(kg)} kg (weighed {kg_date}; 7-day average {f1(avg7)} kg)")
+    elif og_kg:
+        L.append(f"Bodyweight: {f1(og_kg)} kg (latest weigh-in in openGym)")
     elif body_kg:
         L.append(f"Bodyweight: {f1(body_kg)} kg")
     else:
@@ -127,6 +131,12 @@ def day_report(conn: sqlite3.Connection, day: str) -> str:
 
     L.append("## TRAINING THIS DAY")
     training = _training(conn, day)
+    if opengym is not None:
+        if opengym.get("ok"):
+            training += opengym["lines"]
+        else:
+            training.append(f"- (openGym could not be read: {opengym.get('error')} — "
+                            "there may be a workout missing here.)")
     L.extend(training or ["Rest day — nothing logged."])
     L.append("")
 
@@ -144,11 +154,13 @@ def day_report(conn: sqlite3.Connection, day: str) -> str:
         L.append("")
 
     L.append("## WHAT I WANT BACK, IN THIS ORDER")
-    L.append("1. VERDICT — one or two sentences: how did today go against my goal?")
-    L.append("2. MACROS — is protein enough for my weight and training, and is the split sensible?")
-    L.append("3. FOOD QUALITY — what was good, what was missing (fibre, vegetables, fruit, micronutrients),")
+    L.append("1. RATING — the whole day out of 10, then separately food /10 and training /10, and one or")
+    L.append("   two sentences why. I am losing weight: judge it by that, without being soft on me.")
+    L.append("2. ENERGY BALANCE — estimate what I burned (training included) and my deficit or surplus.")
+    L.append("3. MACROS — is protein enough for my weight and training, and is the split sensible?")
+    L.append("4. FOOD QUALITY — what was good, what was missing (fibre, vegetables, fruit, micronutrients),")
     L.append("   and anything that looks like a logging mistake (implausible amounts, duplicates).")
-    L.append("4. TOMORROW — concrete changes, with example foods and amounts, given what I trained.")
+    L.append("5. TOMORROW — concrete changes, with example foods and amounts, given what I trained.")
     L.append("")
     L.append("Be concrete and numeric. Do not ask me follow-up questions first — estimate, and state your "
              "assumptions. Answer in Czech.")

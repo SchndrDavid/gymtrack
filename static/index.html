@@ -336,11 +336,11 @@ h1{font-size:34px;line-height:1.05;font-weight:700;letter-spacing:-.5px;margin:0
   </header>
 
   <div class="seg viewseg" id="viewseg">
-    <button data-view="training" class="on">Training</button>
-    <button data-view="food">Food</button>
+    <button data-view="food" class="on">Food</button>
+    <button data-view="training">Training</button>
   </div>
 
-  <div id="view-training">
+  <div id="view-training" hidden>
   <div class="stats">
     <div class="stat b"><b id="s-gym">0</b><span>workouts / 30 days</span></div>
     <div class="stat g"><b id="s-run">0</b><span>runs / 30 days</span></div>
@@ -387,6 +387,7 @@ h1{font-size:34px;line-height:1.05;font-weight:700;letter-spacing:-.5px;margin:0
     </div>
 
     <div class="card fsum" id="f-summary"></div>
+    <button class="cta" id="f-aicopy" style="margin:0 0 12px">Export AI</button>
 
     <div class="card fsearch">
       <div class="fsearch-box">
@@ -420,7 +421,7 @@ h1{font-size:34px;line-height:1.05;font-weight:700;letter-spacing:-.5px;margin:0
       <button id="f-history" hidden>History</button>
       <button id="f-recipes" hidden>Recipes</button>
     </div>
-    <button class="cta ghost" id="f-aiexport">Export day for AI</button>
+    <button class="cta ghost" id="f-aiexport">Preview AI export</button>
     <p class="attrib">Food data © Open Food Facts contributors, ODbL · Basic foods: USDA FoodData Central (public domain)</p>
   </div>
 
@@ -588,7 +589,8 @@ h1{font-size:34px;line-height:1.05;font-weight:700;letter-spacing:-.5px;margin:0
   </div>
   <div class="sheet-body">
     <p class="hint" style="margin:0 0 12px">The whole day — every entry, totals against your goal, your training
-      and the week before — written as a prompt. Copy it and paste it into Claude Code, or save it as a file.</p>
+      here and in openGym, and the week before — written as a prompt that asks for a rating. Copy it and paste
+      it into an AI, or save it as a file.</p>
     <button class="cta" id="ax-copy" style="margin:0">Copy</button>
     <div class="btnrow">
       <button id="ax-share" hidden>Share…</button>
@@ -1715,13 +1717,12 @@ $('#d-delete').onclick = async () => {
 }));
 
 /* ---------- view switch ---------- */
-let view = 'training';
+let view = 'food';
 function setView(v){
-  view = v === 'food' ? 'food' : 'training';
+  view = v === 'training' ? 'training' : 'food';
   document.querySelectorAll('#viewseg button').forEach(b => b.classList.toggle('on', b.dataset.view === view));
   $('#view-training').hidden = view !== 'training';
   $('#view-food').hidden = view !== 'food';
-  try { localStorage.setItem('gymtrack-view', view); } catch(e){}
   if (view === 'food') foodShow();
 }
 document.querySelectorAll('#viewseg button').forEach(b => b.onclick = () => setView(b.dataset.view));
@@ -2627,10 +2628,27 @@ async function openAiExport(){
   $('#ax-text').value = ax.markdown;
 }
 $('#f-aiexport').onclick = openAiExport;
+/* One tap: the day — food, GymTrack and openGym training — straight to the clipboard. When the
+   browser refuses a copy that comes after the fetch, the sheet opens and its Copy button works. */
+$('#f-aicopy').onclick = async () => {
+  const btn = $('#f-aicopy');
+  btn.disabled = true; btn.textContent = 'Preparing…';
+  try { ax = await api('/api/food/export/day?date=' + fDate); }
+  catch(e){ ax = null; toast('Server unreachable'); return; }
+  finally { btn.disabled = false; btn.textContent = 'Export AI'; }
+  const og = ax.opengym || {};
+  const note = og.ok ? (og.workouts ? ` · ${og.workouts} from openGym` : '') : ' · openGym not reachable';
+  if (await copyText(ax.markdown)){ toast('Day copied — paste it into your AI' + note); return; }
+  $('#ax-title').textContent = `Export ${dateLabel(fDate).toLowerCase()}`;
+  $('#ax-text').value = ax.markdown;
+  $('#ax-share').hidden = !navigator.share;
+  $('#sheet-aiexport').classList.add('open');
+  toast('Tap Copy to put it on the clipboard');
+};
 $('#ax-close').onclick = () => $('#sheet-aiexport').classList.remove('open');
 $('#ax-copy').onclick = async () => {
   if (!ax) return;
-  toast(await copyText(ax.markdown) ? 'Copied — paste it into Claude Code' : 'Copy failed — select the text and copy it');
+  toast(await copyText(ax.markdown) ? 'Copied — paste it into your AI' : 'Copy failed — select the text and copy it');
 };
 $('#ax-download').onclick = () => {
   if (!ax) return;
@@ -2761,7 +2779,7 @@ function renderFooter(){
 (function boot(){
   const now = new Date();
   $('#today-label').textContent = `${DAYS[now.getDay()]} ${now.getDate()} ${MONTHS[now.getMonth()]}`;
-  try { if (localStorage.getItem('gymtrack-view') === 'food') setView('food'); } catch(e){}
+  setView('food');                            // Food is the main tab: the app always opens on it
   try { if (localStorage.getItem('gymtrack-grid') === 'food') setGridMode('food'); } catch(e){}
   load().then(() => {
     try {

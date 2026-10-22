@@ -53,6 +53,7 @@ compose file (or `--env-file`); every one has a working default:
 ```yaml
     environment:
       MORDORCOOK_URL: "${MORDORCOOK_URL:-http://100.108.145.60:8105}"
+      OPENGYM_URL: "${OPENGYM_URL:-http://100.108.145.60:8115}"
       FOOD_OFF_LIVE: "${FOOD_OFF_LIVE:-true}"
       FOOD_AI_ENABLED: "${FOOD_AI_ENABLED:-false}"
       ANTHROPIC_API_KEY: "${ANTHROPIC_API_KEY:-}"
