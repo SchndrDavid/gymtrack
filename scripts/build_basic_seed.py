@@ -1,8 +1,10 @@
 """Build seed/basic_foods.json from the official USDA FoodData Central CSV release.
 
-    python scripts/build_basic_seed.py                         # download SR Legacy from USDA
-    python scripts/build_basic_seed.py --zip sr_legacy.zip     # or use a local copy
-    python scripts/build_basic_seed.py --zip sr.zip --zip foundation.zip --out /data/basic_foods.json
+    python scripts/build_basic_seed.py                         # download SR Legacy + Foundation Foods
+    python scripts/build_basic_seed.py --zip sr.zip --zip foundation.zip   # or use local copies
+    python scripts/build_basic_seed.py --out /data/basic_foods.json
+
+SR Legacy has most foods; raw skinless chicken breast and thigh exist only in Foundation Foods.
 
 seed/basic_foods.src.json lists the basic foods by Czech name, each with one or more USDA
 descriptions. The first description found in the release wins. Nothing is typed in by hand:
@@ -27,6 +29,10 @@ ROOT = Path(__file__).resolve().parent.parent
 SRC = ROOT / "seed" / "basic_foods.src.json"
 OUT = ROOT / "seed" / "basic_foods.json"
 SR_LEGACY_URL = "https://fdc.nal.usda.gov/fdc-datasets/FoodData_Central_sr_legacy_food_csv_2018-04.zip"
+FOUNDATION_URL = "https://fdc.nal.usda.gov/fdc-datasets/FoodData_Central_foundation_food_csv_2025-12-18.zip"
+# The Foundation release also lists thousands of sub-samples and branded look-alikes with the same
+# descriptions; only the main entries carry the averaged values.
+DATA_TYPES = {"sr_legacy_food", "foundation_food"}
 USER_AGENT = "GymTrack/1.0 (self-hosted)"
 
 # FDC nutrient ids, in order of preference. Foundation Foods report energy only as
@@ -65,6 +71,8 @@ def load_release(paths: list[str], wanted_descriptions: set[str]) -> dict[str, d
         with zipfile.ZipFile(path) as zf:
             for r in read_csv(zf, "food.csv"):
                 key = norm(r["description"])
+                if r.get("data_type", "sr_legacy_food") not in DATA_TYPES:
+                    continue
                 if key in wanted_descriptions and key not in foods:
                     entry = {"fdc_id": r["fdc_id"], "description": r["description"],
                              "data_type": r.get("data_type", ""), "nutrients": {}, "portions": []}
@@ -132,18 +140,20 @@ def download(url: str) -> str:
 def main(argv=None) -> Path:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--zip", action="append", default=[], help="local FDC CSV zip (repeatable)")
-    ap.add_argument("--url", default=SR_LEGACY_URL, help="release to download when no --zip is given")
+    ap.add_argument("--url", action="append", default=[],
+                    help="release to download when no --zip is given (repeatable; default SR Legacy + Foundation Foods)")
     ap.add_argument("--out", default=str(OUT), help=f"output file (default {OUT})")
     args = ap.parse_args(argv)
 
     src = json.loads(SRC.read_text(encoding="utf-8"))
     wanted = {norm(d) for item in src["foods"] for d in item["usda"]}
-    paths = args.zip or [download(args.url)]
+    paths = args.zip or [download(u) for u in (args.url or [SR_LEGACY_URL, FOUNDATION_URL])]
     try:
         release = load_release(paths, wanted)
     finally:
         if not args.zip:
-            Path(paths[0]).unlink(missing_ok=True)
+            for tmp in paths:
+                Path(tmp).unlink(missing_ok=True)
 
     foods, skipped = build(src, release)
     payload = {

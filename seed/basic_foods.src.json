@@ -1,11 +1,11 @@
 {
-  "_comment": "Czech basic foods mapped onto USDA FoodData Central (SR Legacy / Foundation) descriptions. scripts/build_basic_seed.py resolves each entry against the official USDA CSV release and writes seed/basic_foods.json with the fdc_id and the nutrient values. Entries not found in USDA are skipped.",
+  "_comment": "Czech basic foods mapped onto USDA FoodData Central descriptions (SR Legacy and Foundation Foods). scripts/build_basic_seed.py resolves each entry against the official USDA CSV releases and writes seed/basic_foods.json with the fdc_id and the nutrient values. Within an entry the first description found wins. Entries not found in USDA are skipped.",
   "foods": [
-    {"name": "Kuřecí prsa syrová", "usda": ["Chicken, broilers or fryers, breast, meat only, raw", "Chicken, broiler or fryers, breast, skinless, boneless, meat only, raw"]},
+    {"name": "Kuřecí prsa syrová", "usda": ["Chicken, breast, boneless, skinless, raw", "Chicken, broilers or fryers, breast, meat only, raw", "Chicken, broiler or fryers, breast, skinless, boneless, meat only, raw"]},
     {"name": "Kuřecí prsa pečená", "usda": ["Chicken, broilers or fryers, breast, meat only, cooked, roasted"]},
     {"name": "Kuřecí prsa grilovaná", "usda": ["Chicken, broiler or fryers, breast, skinless, boneless, meat only, cooked, grilled"]},
     {"name": "Kuřecí prsa smažená v těstíčku (řízek)", "usda": ["Chicken, broilers or fryers, breast, meat and skin, cooked, fried, batter"]},
-    {"name": "Kuřecí stehno bez kůže syrové", "usda": ["Chicken, broilers or fryers, thigh, meat only, raw"]},
+    {"name": "Kuřecí stehno bez kůže syrové", "usda": ["Chicken, thigh, boneless, skinless, raw", "Chicken, broilers or fryers, thigh, meat only, raw"]},
     {"name": "Kuřecí stehno bez kůže pečené", "usda": ["Chicken, broilers or fryers, thigh, meat only, cooked, roasted"]},
     {"name": "Kuřecí stehno s kůží syrové", "usda": ["Chicken, broilers or fryers, thigh, meat and skin, raw"]},
     {"name": "Kuřecí stehno s kůží pečené", "usda": ["Chicken, broilers or fryers, thigh, meat and skin, cooked, roasted"]},
@@ -42,7 +42,7 @@
     {"name": "Sádlo vepřové", "usda": ["Lard"]},
     {"name": "Salám trvanlivý", "usda": ["Salami, dry or hard, pork", "Salami, Italian, pork"]},
     {"name": "Párky (frankfurtské, hovězí)", "usda": ["Frankfurter, beef, unheated"]},
-    {"name": "Hovězí mleté maso 15 % tuku syrové", "usda": ["Beef, ground, 85% lean meat / 15% fat, raw"]},
+    {"name": "Hovězí mleté maso 15 % tuku syrové", "usda": ["Beef, ground, 85% lean meat / 15% fat, raw (Includes foods for USDA's Food Distribution Program)", "Beef, ground, 85% lean meat / 15% fat, raw"]},
     {"name": "Hovězí mleté maso 15 % tuku opečené", "usda": ["Beef, ground, 85% lean meat / 15% fat, patty, cooked, pan-broiled"]},
     {"name": "Hovězí mleté maso 20 % tuku syrové", "usda": ["Beef, ground, 80% lean meat / 20% fat, raw"]},
     {"name": "Hovězí mleté maso libové 5 % tuku syrové", "usda": ["Beef, ground, 95% lean meat / 5% fat, raw"]},
@@ -397,6 +397,22 @@
     {"name": "Pažitka", "usda": ["Chives, raw"]},
     {"name": "Droždí čerstvé", "usda": ["Leavening agents, yeast, baker's, compressed"]},
     {"name": "Droždí sušené", "usda": ["Leavening agents, yeast, baker's, active dry"]},
-    {"name": "Pizza sýrová (mražená, upečená)", "usda": ["Pizza, cheese topping, regular crust, frozen, cooked"]}
+    {"name": "Pizza sýrová (mražená, upečená)", "usda": ["Pizza, cheese topping, regular crust, frozen, cooked"]},
+    {"name": "Kuřecí mleté maso tepelně upravené", "usda": ["Chicken, ground, crumbles, cooked, pan-browned"]},
+    {"name": "Krůtí stehna s kůží syrová", "usda": ["Turkey, all classes, leg, meat and skin, raw"]},
+    {"name": "Krůtí stehna s kůží pečená", "usda": ["Turkey, all classes, leg, meat and skin, cooked, roasted"]},
+    {"name": "Krůtí mleté maso tepelně upravené", "usda": ["Turkey, Ground, cooked"]},
+    {"name": "Hovězí mleté maso 10 % tuku syrové", "usda": ["Beef, ground, 90% lean meat / 10% fat, raw"]},
+    {"name": "Hovězí mleté maso 10 % tuku opečené", "usda": ["Beef, ground, 90% lean meat / 10% fat, patty, cooked, pan-broiled"]},
+    {"name": "Hovězí mleté maso 20 % tuku opečené", "usda": ["Beef, ground, 80% lean meat / 20% fat, patty, cooked, pan-broiled"]},
+    {"name": "Hovězí svíčková (tenderloin) grilovaná", "usda": ["Beef, tenderloin, steak, separable lean only, trimmed to 1/8\" fat, all grades, cooked, broiled"]},
+    {"name": "Hovězí roštěná (top loin) syrová", "usda": ["Beef, short loin, top loin, steak, separable lean only, trimmed to 1/8\" fat, choice, raw"]},
+    {"name": "Hovězí roštěná (top loin) grilovaná", "usda": ["Beef, short loin, top loin, steak, separable lean only, trimmed to 1/8\" fat, choice, cooked, broiled"]},
+    {"name": "Hovězí rib eye steak syrový", "usda": ["Beef, rib eye steak, boneless, lip off, separable lean and fat, trimmed to 0\" fat, all grades, raw"]},
+    {"name": "Hovězí rib eye steak grilovaný", "usda": ["Beef, rib eye steak, boneless, lip off, separable lean and fat, trimmed to 0\" fat, all grades, cooked, grilled"]},
+    {"name": "Hovězí kližka na guláš syrová", "usda": ["Beef, chuck, arm pot roast, separable lean and fat, trimmed to 1/8\" fat, all grades, raw"]},
+    {"name": "Hovězí kližka na guláš dušená", "usda": ["Beef, chuck, arm pot roast, separable lean and fat, trimmed to 1/8\" fat, all grades, cooked, braised"]},
+    {"name": "Vepřová žebra bez kosti syrová", "usda": ["Pork, fresh, spareribs, separable lean and fat, raw"]},
+    {"name": "Vepřová žebra bez kosti pečená", "usda": ["Pork, fresh, spareribs, separable lean and fat, cooked, roasted"]}
   ]
 }

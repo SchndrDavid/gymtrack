@@ -1,0 +1,323 @@
+{
+ "_comment": "Curated meat tree for the Quick add sheet. raw/cooked name a food in seed/basic_foods.src.json (so every value traces to a USDA fdc_id). Aliases are matched without diacritics by search, so 'rizek' or 'svickova' surface the cut first.",
+ "portions": [
+  100,
+  150,
+  200,
+  250
+ ],
+ "species": [
+  {
+   "id": "chicken",
+   "label_cs": "Kuřecí",
+   "label_en": "Chicken",
+   "aliases": [
+    "kureci",
+    "kure"
+   ],
+   "cuts": [
+    {
+     "id": "breast",
+     "label_cs": "Prsní řízek (bez kůže)",
+     "label_en": "Breast, skinless",
+     "raw": "Kuřecí prsa syrová",
+     "cooked": "Kuřecí prsa pečená",
+     "aliases": [
+      "rizek",
+      "prsa",
+      "prsni",
+      "prso",
+      "filet"
+     ]
+    },
+    {
+     "id": "thigh_skinless",
+     "label_cs": "Stehenní (bez kůže)",
+     "label_en": "Thigh, skinless",
+     "raw": "Kuřecí stehno bez kůže syrové",
+     "cooked": "Kuřecí stehno bez kůže pečené",
+     "aliases": [
+      "stehno",
+      "stehna",
+      "stehenni",
+      "stehynko"
+     ]
+    },
+    {
+     "id": "thigh_skin",
+     "label_cs": "Stehenní (s kůží)",
+     "label_en": "Thigh, with skin",
+     "raw": "Kuřecí stehno s kůží syrové",
+     "cooked": "Kuřecí stehno s kůží pečené",
+     "aliases": [
+      "stehno",
+      "stehna",
+      "stehenni",
+      "kuze"
+     ]
+    },
+    {
+     "id": "wing",
+     "label_cs": "Křidélka",
+     "label_en": "Wings",
+     "raw": "Kuřecí křídla syrová",
+     "cooked": "Kuřecí křídla pečená",
+     "aliases": [
+      "kridelka",
+      "kridla",
+      "kridlo"
+     ]
+    },
+    {
+     "id": "ground",
+     "label_cs": "Mleté",
+     "label_en": "Ground",
+     "raw": "Kuřecí mleté maso syrové",
+     "cooked": "Kuřecí mleté maso tepelně upravené",
+     "aliases": [
+      "mlete",
+      "mleta",
+      "mleto"
+     ]
+    },
+    {
+     "id": "whole",
+     "label_cs": "Celé kuře",
+     "label_en": "Whole chicken",
+     "raw": "Kuře celé s kůží syrové",
+     "cooked": "Kuře celé s kůží pečené",
+     "aliases": [
+      "cele",
+      "cely",
+      "cele kure"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "turkey",
+   "label_cs": "Krůtí",
+   "label_en": "Turkey",
+   "aliases": [
+    "kruti",
+    "kruta"
+   ],
+   "cuts": [
+    {
+     "id": "breast",
+     "label_cs": "Prsa",
+     "label_en": "Breast",
+     "raw": "Krůtí prsa syrová",
+     "cooked": "Krůtí prsa pečená",
+     "aliases": [
+      "rizek",
+      "prsa",
+      "prsni",
+      "prso",
+      "filet"
+     ]
+    },
+    {
+     "id": "thigh",
+     "label_cs": "Stehna (s kůží)",
+     "label_en": "Thigh, with skin",
+     "raw": "Krůtí stehna s kůží syrová",
+     "cooked": "Krůtí stehna s kůží pečená",
+     "aliases": [
+      "stehno",
+      "stehna",
+      "stehenni"
+     ]
+    },
+    {
+     "id": "ground",
+     "label_cs": "Mleté",
+     "label_en": "Ground",
+     "raw": "Krůtí mleté maso syrové",
+     "cooked": "Krůtí mleté maso tepelně upravené",
+     "aliases": [
+      "mlete",
+      "mleta",
+      "mleto"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "beef",
+   "label_cs": "Hovězí",
+   "label_en": "Beef",
+   "aliases": [
+    "hovezi"
+   ],
+   "cuts": [
+    {
+     "id": "ground10",
+     "label_cs": "Mleté (10 % tuku)",
+     "label_en": "Ground, 10 % fat",
+     "raw": "Hovězí mleté maso 10 % tuku syrové",
+     "cooked": "Hovězí mleté maso 10 % tuku opečené",
+     "aliases": [
+      "mlete",
+      "mleta",
+      "mleto"
+     ]
+    },
+    {
+     "id": "ground15",
+     "label_cs": "Mleté (15 % tuku)",
+     "label_en": "Ground, 15 % fat",
+     "raw": "Hovězí mleté maso 15 % tuku syrové",
+     "cooked": "Hovězí mleté maso 15 % tuku opečené",
+     "aliases": [
+      "mlete",
+      "mleta",
+      "mleto"
+     ]
+    },
+    {
+     "id": "tenderloin",
+     "label_cs": "Svíčková (libová)",
+     "label_en": "Tenderloin, lean",
+     "raw": "Hovězí svíčková (tenderloin) syrová",
+     "cooked": "Hovězí svíčková (tenderloin) grilovaná",
+     "aliases": [
+      "svickova",
+      "svicka",
+      "svickove",
+      "tenderloin",
+      "filet"
+     ]
+    },
+    {
+     "id": "striploin",
+     "label_cs": "Roštěná (libová)",
+     "label_en": "Striploin, lean",
+     "raw": "Hovězí roštěná (top loin) syrová",
+     "cooked": "Hovězí roštěná (top loin) grilovaná",
+     "aliases": [
+      "rostena",
+      "rostenka",
+      "striploin",
+      "sirloin"
+     ]
+    },
+    {
+     "id": "chuck",
+     "label_cs": "Kližka / guláš (s tukem)",
+     "label_en": "Chuck / stew, with fat",
+     "raw": "Hovězí kližka na guláš syrová",
+     "cooked": "Hovězí kližka na guláš dušená",
+     "aliases": [
+      "klizka",
+      "gulas",
+      "gulasove",
+      "plec",
+      "dusene"
+     ]
+    },
+    {
+     "id": "ribeye",
+     "label_cs": "Steak rib eye (s tukem)",
+     "label_en": "Rib eye steak, with fat",
+     "raw": "Hovězí rib eye steak syrový",
+     "cooked": "Hovězí rib eye steak grilovaný",
+     "aliases": [
+      "steak",
+      "ribeye",
+      "rib",
+      "rib eye",
+      "entrecote"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "pork",
+   "label_cs": "Vepřové",
+   "label_en": "Pork",
+   "aliases": [
+    "veprove",
+    "vepr",
+    "vepri"
+   ],
+   "cuts": [
+    {
+     "id": "ground",
+     "label_cs": "Mleté",
+     "label_en": "Ground",
+     "raw": "Vepřové mleté maso syrové",
+     "cooked": "Vepřové mleté maso tepelně upravené",
+     "aliases": [
+      "mlete",
+      "mleta",
+      "mleto"
+     ]
+    },
+    {
+     "id": "tenderloin",
+     "label_cs": "Panenka",
+     "label_en": "Tenderloin",
+     "raw": "Vepřová panenka syrová",
+     "cooked": "Vepřová panenka pečená",
+     "aliases": [
+      "panenka",
+      "panenky",
+      "svickova"
+     ]
+    },
+    {
+     "id": "chop",
+     "label_cs": "Kotleta (karé)",
+     "label_en": "Loin chop",
+     "raw": "Vepřová kotleta (karé) syrová",
+     "cooked": "Vepřová kotleta (karé) pečená",
+     "aliases": [
+      "kotleta",
+      "kotlety",
+      "kare",
+      "rizek",
+      "rizky"
+     ]
+    },
+    {
+     "id": "shoulder",
+     "label_cs": "Plec",
+     "label_en": "Shoulder",
+     "raw": "Vepřová plec syrová",
+     "cooked": "Vepřová plec pečená",
+     "aliases": [
+      "plec",
+      "plecko",
+      "plecka",
+      "gulas"
+     ]
+    },
+    {
+     "id": "ribs",
+     "label_cs": "Žebra (bez kosti)",
+     "label_en": "Spareribs, boneless weight",
+     "raw": "Vepřová žebra bez kosti syrová",
+     "cooked": "Vepřová žebra bez kosti pečená",
+     "aliases": [
+      "zebra",
+      "zebirka",
+      "zebirko"
+     ]
+    }
+   ]
+  }
+ ],
+ "skipped": [
+  {
+   "species": "Vepřové",
+   "cut": "Krkovice",
+   "reason": "USDA has the pork neck/blade (Boston butt) only cooked, with no raw counterpart to pair it with."
+  },
+  {
+   "species": "Ryby",
+   "cut": "—",
+   "reason": "Not requested; fish stays in the normal search."
+  }
+ ]
+}

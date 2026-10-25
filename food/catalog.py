@@ -270,10 +270,10 @@ def num(value, lo: float = 0.0, hi: float | None = None) -> float | None:
     return v
 
 
-def clean_food(raw: dict) -> dict | None:
+def clean_food(raw: dict, max_kcal: float = 900) -> dict | None:
     """Validate a food's nutrition. None when it is obviously wrong."""
     name = re.sub(r"\s+", " ", str(raw.get("name") or "")).strip()[:200]
-    kcal = num(raw.get("kcal_100g"), 0, 900)
+    kcal = num(raw.get("kcal_100g"), 0, max_kcal)
     if not name or kcal is None:
         return None
     macros = {}

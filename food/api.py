@@ -11,7 +11,7 @@ from fastapi import APIRouter, BackgroundTasks, File, HTTPException, Request, Up
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
-from . import ai_export, barcode, catalog, log, mymeals, opengym, progress, recipes, recognize, restaurants
+from . import ai_export, barcode, catalog, log, meat, mymeals, opengym, progress, recipes, recognize, restaurants, seed
 from .catalog import clean_food, connect, food_dict, get_food, now_iso
 from .search import search as run_search
 
@@ -20,6 +20,7 @@ router = APIRouter(prefix="/api/food")
 
 def init() -> None:
     catalog.init()
+    seed.sync()
     with connect() as conn:
         recognize.cleanup(conn)
 
@@ -80,6 +81,13 @@ def start_catalog_import():
             cwd=ROOT, stdout=log_file, stderr=subprocess.STDOUT,
             preexec_fn=lambda: os.nice(19), start_new_session=True)
     return {"ok": True, "pid": _import_proc.pid}
+
+
+@router.get("/meat")
+def get_meat():
+    """The curated meat tree for Quick add: species → cuts → raw and cooked values per 100 g."""
+    with connect() as conn:
+        return meat.tree(conn)
 
 
 @router.get("/foods/{ref}")

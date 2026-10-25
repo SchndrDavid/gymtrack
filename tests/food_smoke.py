@@ -24,6 +24,7 @@ TMP = Path(tempfile.mkdtemp())
 os.environ["GYMTRACK_DB"] = str(TMP / "test.db")
 os.environ["GYMTRACK_FOODS_DB"] = str(TMP / "foods.db")
 os.environ.pop("MORDORCOOK_URL", None)
+os.environ["FOOD_SEED_SYNC"] = "0"      # the synthetic catalogue below is the whole catalogue
 os.environ["FOOD_AI_ENABLED"] = "false"
 
 
@@ -714,5 +715,64 @@ for _ in range(120):
 check("catalogue import finishes", st["import"]["state"] == "done" and not st["import"]["errors"])
 check("catalogue import fills both sources", st["usda"] > 0 and st["off"] == 6)
 check("imported catalogue is searchable", names("tatranka")[0] == "Tatranka lísková")
+
+# ─── meat presets (real committed seed, loaded into a fresh catalogue) ──────
+import food.catalog as fcat  # noqa: E402
+import food.seed as fseed  # noqa: E402
+
+os.environ["FOOD_SEED_SYNC"] = "1"
+old_foods_db = fcat.FOODS_DB
+fcat.FOODS_DB = str(TMP / "meat_foods.db")
+check("the committed seed loads on first start", (fseed.sync() or 0) > 300)
+check("an unchanged seed is not loaded again", fseed.sync() is None)
+
+meat = client.get("/api/food/meat").json()
+check("every meat preset resolves", meat["missing"] == [])
+check("all four species are there", [s["id"] for s in meat["species"]] == ["chicken", "turkey", "beef", "pork"])
+cuts = [(s["label_cs"], c) for s in meat["species"] for c in s["cuts"]]
+check("the tree has a useful number of cuts", len(cuts) >= 18)
+check("default portions", meat["portions"] == [100, 150, 200, 250])
+check("every cut has raw and cooked values", all(
+    c[k] and all(c[k][m] is not None for m in ("kcal_100g", "protein_100g", "carbs_100g", "fat_100g")) and c[k]["kcal_100g"] > 0
+    for _, c in cuts for k in ("raw", "cooked")))
+check("raw kcal is below cooked kcal for every cut",
+      all(c["raw"]["kcal_100g"] < c["cooked"]["kcal_100g"] for _, c in cuts))
+check("every preset ref is an existing USDA food",
+      all(client.get(f"/api/food/foods/{c[k]['ref']}").status_code == 200 and c[k]["ref"].startswith("usda:")
+          for _, c in cuts for k in ("raw", "cooked")))
+check("a skipped cut is listed with its reason", any(x["cut"] == "Krkovice" for x in meat["skipped"]))
+src_names = {f["name"] for f in json.loads((ROOT / "seed" / "basic_foods.src.json").read_text())["foods"]}
+presets_json = json.loads((ROOT / "seed" / "meat_presets.json").read_text())
+check("presets reuse the basic foods list", all(c["raw"] in src_names and c["cooked"] in src_names
+                                                 for s in presets_json["species"] for c in s["cuts"]))
+chicken = meat["species"][0]["cuts"][0]
+check("chicken breast raw is the USDA Foundation value", chicken["raw"]["name"] == "Kuřecí prsa syrová"
+      and 100 < chicken["raw"]["kcal_100g"] < 125 and 20 < chicken["raw"]["protein_100g"] < 25)
+
+check("alias: rizek surfaces chicken breast first", names("rizek")[:2] == ["Kuřecí prsa syrová", "Kuřecí prsa pečená"])
+check("alias: mlete surfaces ground meat first", names("mlete")[0] == "Kuřecí mleté maso syrové"
+      and all("mleté" in n for n in names("mlete")[:6]))
+check("alias: stehno surfaces thighs", names("stehno")[0] == "Kuřecí stehno bez kůže syrové")
+check("alias: svickova surfaces the beef tenderloin first", names("svickova")[0] == "Hovězí svíčková (tenderloin) syrová")
+check("alias works with diacritics and a species", names("kuřecí mleté")[0] == "Kuřecí mleté maso syrové"
+      and names("hovezi mlete")[0].startswith("Hovězí mleté"))
+check("a lone species word is an ordinary search", names("kureci") != [] and names("kureci")[0] not in ("Kuřecí prsa pečená",))
+check("normal word search still finds the same food", "Kuřecí prsa syrová" in names("kuř pr"))
+check("unrelated queries are untouched", names("banan")[0] == "Banán")
+
+# the seed can change: a food whose USDA source moved gets its new id and is not listed twice
+seed2 = json.loads((ROOT / "seed" / "basic_foods.json").read_text())
+for f in seed2["foods"]:
+    if f["name"] == "Kuřecí prsa syrová":
+        f["fdc_id"] = 999001
+        f["kcal_100g"] = 111
+(TMP / "seed2.json").write_text(json.dumps(seed2))
+check("a changed seed is loaded", fseed.sync(TMP / "seed2.json") > 300)
+rows = [n for n in names("kuřecí prsa syrová", limit=50) if n == "Kuřecí prsa syrová"]
+check("a food that moved to a new fdc_id is listed once", len(rows) == 1
+      and client.get("/api/food/foods/usda:999001").json()["kcal_100g"] == 111)
+os.environ["FOOD_SEED_SYNC"] = "0"
+check("FOOD_SEED_SYNC=0 switches the loading off", fseed.sync(TMP / "seed2.json") is None)
+fcat.FOODS_DB = old_foods_db
 
 print(f"\n{checks} checks passed")

@@ -12,6 +12,7 @@ import sqlite3
 from datetime import date, timedelta
 
 from .catalog import fold, food_dict, fts_query, get_foods, ref_of
+from .meat import alias_refs
 
 RECENT_DAYS = 120
 HALF_LIFE_DAYS = 14
@@ -101,6 +102,13 @@ def search(conn: sqlite3.Connection, q: str, limit: int = 20) -> list[dict]:
                 else:
                     key = (2, 0, pos)       # bm25 order as FTS returned it
                 found[ref] = (d, key)
+
+    # "rizek", "mlete", "svickova": the meat preset a query names goes first, raw before cooked.
+    refs = alias_refs(conn, q)
+    preset = get_foods(conn, refs)
+    for pos, ref in enumerate(refs):
+        if ref in preset:
+            found[ref] = (item(preset[ref]), (-1, pos, 0))
 
     ranked = sorted(found.values(), key=lambda x: x[1])
     return [d for d, _ in ranked[:limit]]
