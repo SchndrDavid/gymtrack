@@ -11,7 +11,7 @@ from fastapi import APIRouter, BackgroundTasks, File, HTTPException, Request, Up
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
-from . import ai_export, barcode, catalog, log, meat, mymeals, opengym, progress, recipes, recognize, restaurants, seed
+from . import ai_export, barcode, catalog, frequent, log, meat, mymeals, opengym, progress, recipes, recognize, restaurants, seed
 from .catalog import clean_food, connect, food_dict, get_food, now_iso
 from .search import search as run_search
 
@@ -81,6 +81,13 @@ def start_catalog_import():
             cwd=ROOT, stdout=log_file, stderr=subprocess.STDOUT,
             preexec_fn=lambda: os.nice(19), start_new_session=True)
     return {"ok": True, "pid": _import_proc.pid}
+
+
+@router.get("/frequent")
+def get_frequent(days: int = 60, limit: int = 12):
+    """What is logged again and again, with the usual portion — one tap each in Quick add."""
+    with connect() as conn:
+        return {"days": max(7, min(365, days)), "items": frequent.frequent(conn, days, limit)}
 
 
 @router.get("/meat")

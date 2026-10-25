@@ -52,6 +52,11 @@ without it the prompt tells the AI to assume 75 kg and say so.
   finds *řízek*), favourites and what you ate lately first, then ~400 basic foods with USDA values,
   then Open Food Facts products sold here — Czech and Slovak ones plus the own brands of Lidl,
   Kaufland, Albert, Billa, Penny, Tesco and Globus, whatever country they were entered under.
+- **Quick add, no typing.** One bottom sheet (swipe it down to close) with four tabs: *Frequent* —
+  what you log again and again, one tap logs the usual portion (the amount you most often eat) into the
+  meal the clock suggests, with an Undo; *Meat* — species, cut, grams, raw or cooked (weighed raw by
+  default) with the values live; *My foods*; and *Calories* for a plain number. A fresh install opens
+  on Meat until there is something frequent.
 - **Portions, not arithmetic.** Picking a food opens a panel with the serving prefilled (1 egg,
   1 pot of yoghurt) and ½ / 1 / 2 × buttons, totals update as you type, and the meal is preselected
   by the time of day.
@@ -308,6 +313,8 @@ Food, all under `/api/food`:
 | `GET`    | `/catalog`                    | How many foods are imported, progress of a running import |
 | `POST`   | `/catalog/import`             | Download and import the catalogue in the background       |
 | `GET`    | `/foods/{ref}`                | One food (`usda:<fdc_id>`, `off:<barcode>`, `user:<id>`)  |
+| `GET`    | `/meat`                       | The meat tree: species → cuts → raw and cooked per 100 g  |
+| `GET`    | `/frequent?days=60&limit=12`  | Foods logged repeatedly, with the usual portion           |
 | `POST` `PUT` `DELETE` | `/foods`, `/foods/{ref}` | Your own foods                                    |
 | `PUT` `DELETE` | `/favorites/{ref}`      | Star or unstar a food                                     |
 | `GET`    | `/day?date=`                  | Entries, totals per meal and the goal valid that day      |

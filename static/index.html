@@ -340,6 +340,64 @@ h1{font-size:34px;line-height:1.05;font-weight:700;letter-spacing:-.5px;margin:0
   font-size:15px;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.8);margin:0;padding:0 20px}
 .lv-body.hit .lv-frame{border-color:var(--green)}
 
+/* ---------- quick add: a bottom sheet, controls within thumb reach ---------- */
+.bs{position:fixed;inset:0;z-index:45;visibility:hidden;pointer-events:none}
+.bs.open{visibility:visible;pointer-events:auto}
+.bs-dim{position:absolute;inset:0;background:rgba(0,0,0,.55);opacity:0;transition:opacity .28s}
+.bs.open .bs-dim{opacity:1}
+.bs-panel{position:absolute;left:0;right:0;bottom:0;margin:0 auto;max-width:720px;height:72vh;height:72dvh;
+  background:var(--card);border-radius:22px 22px 0 0;display:flex;flex-direction:column;
+  transform:translateY(105%);transition:transform .32s cubic-bezier(.32,.72,0,1);
+  padding-bottom:env(safe-area-inset-bottom);box-shadow:0 -10px 40px rgba(0,0,0,.5)}
+.bs.open .bs-panel{transform:none}
+.bs-head{flex:none;padding:8px 18px 6px;touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none}
+.bs-grab{display:block;width:42px;height:5px;border-radius:3px;background:var(--fg-3);margin:2px auto 10px}
+.bs-title{display:flex;align-items:baseline;justify-content:space-between}
+.bs-title b{font-size:19px;font-weight:700;letter-spacing:-.3px}
+.bs-title span{font-size:13px;color:var(--fg-2)}
+.bs-body{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:4px 16px 0}
+.bs-foot{flex:none;padding:10px 14px 12px;border-top:1px solid var(--line);background:var(--card)}
+.bs-foot .seg{margin:0 0 8px;width:auto}
+.bs-foot .seg:last-child{margin:0}
+.bs-foot .seg button{min-height:44px}
+.qa-tabs button{font-size:13px;padding:10px 2px}
+.bs-open .toast{bottom:calc(env(safe-area-inset-bottom) + 170px)}
+.toast.act{pointer-events:auto;display:flex;align-items:center;gap:12px;padding-right:6px;width:max-content;max-width:92vw;white-space:normal}
+.toast.act button{color:var(--blue);font-weight:700;font-size:14px;padding:10px 12px;min-height:40px}
+.qa-pane{padding-bottom:14px}
+.qa-row{display:flex;align-items:center;border-top:1px solid var(--line);border-radius:10px;transition:background .3s}
+.qa-row:first-child{border-top:0}
+.qa-row.done{background:rgba(48,209,88,.16)}
+.qa-main{flex:1;min-width:0;text-align:left;padding:11px 4px;min-height:58px}
+.qa-main b{display:block;font-size:16px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.qa-main span{display:block;font-size:13px;color:var(--fg-2);margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.qa-more{flex:none;width:54px;min-height:58px;color:var(--fg-3);font-size:26px;line-height:1}
+.qa-row.sel{background:var(--card-2)}
+.qa-row.sel .qa-more{color:var(--blue);font-size:14px;font-weight:600;width:70px}
+.chips{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding:2px 0 10px}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;padding:11px 17px;border-radius:24px;background:var(--card-2);font-size:15px;font-weight:600;min-height:44px}
+.chip.on{background:var(--blue);color:#fff}
+.mt-comp{position:sticky;bottom:0;margin:6px -16px 0;padding:12px 16px 14px;background:var(--card);border-top:1px solid var(--line)}
+.mt-state{margin-bottom:10px}
+.mt-state button{min-height:44px;line-height:1.15}
+.mt-state small{display:block;font-size:11px;font-weight:500;color:var(--fg-3)}
+.mt-state button.on small{color:var(--fg-2)}
+.mt-state button:disabled{opacity:.35}
+.mt-row{display:flex;align-items:center;gap:8px}
+.mt-row .grams{margin:0;flex:none;gap:4px}
+.mt-row .grams input{width:92px;font-size:26px;padding:8px 4px;border-radius:12px;background:var(--card-2)}
+.mt-row .grams span{font-size:16px}
+.mt-quick{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;flex:1;min-width:0}
+.mt-quick button{min-height:48px;border-radius:11px;background:var(--card-2);font-size:13px;font-weight:600;padding:0}
+.mt-quick button.on{background:var(--blue);color:#fff}
+.mt-prev{display:flex;justify-content:space-between;align-items:baseline;font-family:var(--round);font-size:14px;color:var(--fg-2);margin:8px 2px 8px}
+.mt-prev b{color:var(--fg);font-size:16px}
+.mine-top{display:flex;gap:8px;align-items:center;margin-bottom:6px}
+.mine-top .fsearch-box{flex:1;min-width:0}
+.mine-top .fsearch-box input{padding:11px 0}
+.factions button.prim{background:var(--blue);color:#fff}
+.factions button.prim svg{color:#fff}
 .attrib{font-size:11px;color:var(--fg-3);text-align:center;margin:26px 0 0;line-height:1.5}
 
 /* Desktop only — on a phone, and in the home-screen app, the screen is for training. */
@@ -419,9 +477,10 @@ h1{font-size:34px;line-height:1.05;font-weight:700;letter-spacing:-.5px;margin:0
       </div>
       <div id="f-results" class="fresults"></div>
       <div class="factions">
+        <button id="f-qa" class="prim"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>Quick add</button>
         <button id="f-scan" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2M7 8v8M10 8v8M13 8v8M17 8v8"/></svg>Scan</button>
         <button id="f-ean-toggle" hidden>EAN</button>
-        <button id="f-mine"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 2.7 5.5 6 .9-4.3 4.2 1 6L12 16.8 6.6 19.6l1-6-4.3-4.2 6-.9z"/></svg>My foods</button>
+        
         <button id="f-recognize" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>Recognize meal</button>
       </div>
       <form class="fean" id="f-ean-form" hidden>
@@ -662,21 +721,65 @@ h1{font-size:34px;line-height:1.05;font-weight:700;letter-spacing:-.5px;margin:0
   </div>
 </div>
 
-<div class="sheet" id="sheet-mine">
-  <div class="sheet-bar">
-    <button id="mi-close">Done</button>
-    <b>My foods</b>
-    <button id="mi-new">New</button>
-  </div>
-  <div class="sheet-body">
-    <div class="seg miniseg" id="mi-meal" style="margin-bottom:12px"></div>
-    <div class="fsearch-box" style="margin-bottom:6px">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-      <input id="mi-q" type="search" placeholder="Search my foods" autocomplete="off" autocorrect="off" spellcheck="false">
+<div class="bs" id="bs-quick" aria-hidden="true">
+  <div class="bs-dim" id="bs-dim"></div>
+  <div class="bs-panel" role="dialog" aria-label="Quick add">
+    <div class="bs-head" id="bs-head">
+      <i class="bs-grab"></i>
+      <div class="bs-title"><b>Quick add</b><span id="qa-for">Today</span></div>
     </div>
-    <div class="card" id="mi-list"><p class="empty">Loading…</p></div>
-    <p class="hint">What you eat often — a protein shake, your usual breakfast. Tap one to log it, or
-      <b>New</b> to make one: put it together from foods, or just type its calories.</p>
+    <div class="bs-body" id="bs-body">
+      <div class="qa-pane" id="qa-p-frequent">
+        <div id="qa-freq"><p class="empty">Loading…</p></div>
+      </div>
+
+      <div class="qa-pane" id="qa-p-meat" hidden>
+        <div class="chips" id="mt-species"></div>
+        <div id="mt-cuts"></div>
+        <div class="mt-comp" id="mt-comp" hidden>
+          <div class="seg mt-state" id="mt-state">
+            <button data-s="raw" class="on">Raw<small>weighed raw</small></button>
+            <button data-s="cooked">Cooked<small>weighed cooked</small></button>
+          </div>
+          <div class="mt-row">
+            <div class="grams"><input id="mt-grams" inputmode="decimal" autocomplete="off" aria-label="Grams"><span>g</span></div>
+            <div class="mt-quick" id="mt-quick"></div>
+          </div>
+          <div class="mt-prev" id="mt-prev"></div>
+          <button class="cta" id="mt-add">Add</button>
+        </div>
+      </div>
+
+      <div class="qa-pane" id="qa-p-mine" hidden>
+        <div class="mine-top">
+          <div class="fsearch-box">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+            <input id="mi-q" type="search" placeholder="Search my foods" autocomplete="off" autocorrect="off" spellcheck="false">
+          </div>
+          <button class="chip" id="mi-new">New</button>
+        </div>
+        <div id="mi-list"><p class="empty">Loading…</p></div>
+      </div>
+
+      <div class="qa-pane" id="qa-p-calories" hidden>
+        <div class="card prof" style="background:var(--card-2)">
+          <label class="pfield wide"><span>Calories (kcal)</span><input id="qa-kcal" inputmode="decimal" placeholder="800"></label>
+          <label class="pfield wide"><span>What (optional)</span><input id="qa-name" placeholder="Restaurant dinner" autocomplete="off"></label>
+          <label class="pfield"><span>Protein (g)</span><input id="qa-protein" inputmode="decimal" placeholder="—"></label>
+          <label class="pfield"><span>Carbs (g)</span><input id="qa-carbs" inputmode="decimal" placeholder="—"></label>
+          <label class="pfield"><span>Fat (g)</span><input id="qa-fat" inputmode="decimal" placeholder="—"></label>
+        </div>
+        <button class="cta" id="qa-cal-add" style="margin:14px 0 0">Add</button>
+        <p class="hint">For when there is no food to pick — a guess at a restaurant, a snack you did not weigh.</p>
+      </div>
+    </div>
+    <div class="bs-foot">
+      <div class="seg miniseg" id="qa-meal"></div>
+      <div class="seg qa-tabs" id="qa-tabs">
+        <button data-pane="frequent" class="on">Frequent</button><button data-pane="meat">Meat</button>
+        <button data-pane="mine">My foods</button><button data-pane="calories">Calories</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -908,7 +1011,7 @@ let historyList = [], detailW = null;
 let active = null, elapsedId = null, countdown = null, audio = null;
 
 function toast(msg){
-  const el = $('#toast'); el.textContent = msg; el.classList.add('show');
+  const el = $('#toast'); el.textContent = msg; el.classList.remove('act'); el.classList.add('show');
   clearTimeout(el._t); el._t = setTimeout(()=>el.classList.remove('show'), 1900);
 }
 
@@ -2138,7 +2241,7 @@ $('#f-meals').addEventListener('click', async e => {
     {label: 'Quick add calories', value: 'quick'},
   ]);
   if (choice === 'add'){ fMeal = meal; $('#f-q').focus(); }
-  else if (choice === 'quick') openQuick(null, meal);
+  else if (choice === 'quick') openQuickAdd('calories', meal);
   else if (choice === 'prev') copyMeal(addDays(fDate, -1), meal);
   else if (choice === 'other'){
     const from = await pickDate(addDays(fDate, -1));
@@ -2974,38 +3077,225 @@ async function logMine(m, meal){
   return true;
 }
 
-async function openMine(){
-  $('#sheet-mine').classList.add('open');
-  mealSeg($('#mi-meal'), fMeal || mealNow());
+/* ---------- food: quick add — one bottom sheet for what is logged again and again ---------- */
+/* Frequent foods (one tap), the meat tree (species → cut → grams), my foods, and plain calories. Nothing
+   needs typing; a tap that logs says so with an Undo. */
+const qa = {pane: 'frequent', switched: false, freq: null, meat: null};
+const mt = {species: null, cut: null, state: 'raw', grams: 150};
+const lsGet = (k, d) => { try { return localStorage.getItem(k) ?? d; } catch(e){ return d; } };
+const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch(e){} };
+const qaOpen = () => $('#bs-quick').classList.contains('open');
+
+function toastUndo(msg, undo){
+  const el = $('#toast');
+  el.innerHTML = '<span></span><button type="button">Undo</button>';
+  el.firstChild.textContent = msg;
+  el.classList.add('show', 'act');
+  clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove('show', 'act'), 5000);
+  el.querySelector('button').onclick = async () => { clearTimeout(el._t); el.classList.remove('show', 'act'); await undo(); };
+}
+
+/* Log something and offer to take it back. `request` resolves to {entry:{id}}. */
+async function qaUndoable(request, label, meal){
+  let r;
+  try { r = await request; } catch(e){ toast('Not added'); return null; }
+  loadDay();
+  toastUndo(`Added ${label} to ${MEAL_LABEL[meal].toLowerCase()}`, async () => {
+    try { await api('/api/food/log/' + r.entry.id, {method: 'DELETE'}); } catch(e){ return toast('Not undone'); }
+    toast('Removed'); loadDay();
+  });
+  return r.entry;
+}
+const qaMeal = () => segValue($('#qa-meal'));
+
+function openQuickAdd(pane, meal){
+  qa.switched = !!pane; qa.freq = null;
+  mealSeg($('#qa-meal'), meal || fMeal || mealNow());
+  $('#qa-for').textContent = dateLabel(fDate);
+  const bs = $('#bs-quick');
+  bs.classList.add('open'); bs.setAttribute('aria-hidden', 'false');
+  document.body.classList.add('bs-open');
+  qaPane(pane || 'frequent');
+}
+function closeQuickAdd(){
+  const bs = $('#bs-quick');
+  bs.classList.remove('open'); bs.setAttribute('aria-hidden', 'true');
+  document.body.classList.remove('bs-open');
+  bs.querySelector('.bs-panel').style.transform = '';
+  document.activeElement?.blur?.();
+}
+function qaPane(name){
+  qa.pane = name;
+  document.querySelectorAll('#qa-tabs button').forEach(b => b.classList.toggle('on', b.dataset.pane === name));
+  ['frequent', 'meat', 'mine', 'calories'].forEach(n => $('#qa-p-' + n).hidden = n !== name);
+  $('#bs-body').scrollTop = 0;
+  if (name === 'frequent') loadFrequent();
+  else if (name === 'meat') loadMeat();
+  else if (name === 'mine') openMineList();
+  else if (name === 'calories' && !matchMedia('(pointer:coarse)').matches) setTimeout(() => $('#qa-kcal').focus(), 60);
+}
+$('#qa-tabs').addEventListener('click', e => { const b = e.target.closest('button'); if (b){ qa.switched = true; qaPane(b.dataset.pane); } });
+$('#f-qa').onclick = () => openQuickAdd();
+$('#bs-dim').onclick = closeQuickAdd;
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && qaOpen() && !document.querySelector('.sheet.open')) closeQuickAdd(); });
+
+/* Swipe down on the grabber/header to close. Only the header listens, so the lists scroll freely. */
+(function(){
+  const head = $('#bs-head'), panel = $('#bs-quick .bs-panel');
+  let y0 = null, dy = 0, t0 = 0;
+  head.addEventListener('pointerdown', e => { y0 = e.clientY; dy = 0; t0 = e.timeStamp; panel.style.transition = 'none'; head.setPointerCapture(e.pointerId); });
+  head.addEventListener('pointermove', e => {
+    if (y0 == null) return;
+    dy = Math.max(0, e.clientY - y0); panel.style.transform = `translateY(${dy}px)`;
+  });
+  const end = e => {
+    if (y0 == null) return;
+    const fast = dy / Math.max(1, e.timeStamp - t0) > .5;     // px per ms
+    y0 = null; panel.style.transition = '';
+    if (dy > 110 || (fast && dy > 30)) closeQuickAdd(); else panel.style.transform = '';
+  };
+  head.addEventListener('pointerup', end); head.addEventListener('pointercancel', end);
+})();
+
+/* A — frequent */
+async function loadFrequent(){
+  $('#qa-freq').innerHTML = qa.freq ? $('#qa-freq').innerHTML : '<p class="empty">Loading…</p>';
+  try { qa.freq = (await api('/api/food/frequent?days=60&limit=12')).items; } catch(e){ qa.freq = []; }
+  renderFrequent();
+  if (!qa.freq.length && !qa.switched && qa.pane === 'frequent') qaPane('meat');   // a fresh install starts at the meat
+}
+function renderFrequent(){
+  $('#qa-freq').innerHTML = qa.freq.length ? qa.freq.map((it, i) => `<div class="qa-row" data-row="${i}">
+      <button class="qa-main" data-freq="${i}"><b>${esc(it.name)}</b>
+        <span>${fmt(it.grams)} g · ${fmt(it.kcal)} kcal · P ${fmt(it.protein)} g</span></button>
+      <button class="qa-more" data-freq-more="${i}" aria-label="Other portion of ${esc(it.name)}">›</button></div>`).join('')
+    : '<p class="empty">Log a few meals and your frequent foods appear here.</p>';
+}
+$('#qa-freq').addEventListener('click', async e => {
+  const more = e.target.closest('[data-freq-more]'), one = e.target.closest('[data-freq]');
+  if (more){ fMeal = qaMeal(); return openPortion(qa.freq[+more.dataset.freqMore].food, null, 'search'); }
+  if (!one) return;
+  const it = qa.freq[+one.dataset.freq], meal = qaMeal(), row = one.closest('.qa-row');
+  const ok = await qaUndoable(post('/api/food/log', {date: fDate, meal, food_ref: it.ref, grams: it.grams, entry_method: 'search'}),
+                              `${it.name} · ${fmt(it.grams)} g`, meal);
+  if (ok){ row.classList.add('done'); setTimeout(() => row.classList.remove('done'), 700); }
+});
+
+/* B — meat */
+async function loadMeat(){
+  if (!qa.meat){
+    try { qa.meat = await api('/api/food/meat'); } catch(e){ qa.meat = {species: [], portions: [100, 150, 200, 250]}; }
+    const want = lsGet('gymtrack-meat-species', '');
+    mt.species = qa.meat.species.some(s => s.id === want) ? want : (qa.meat.species[0] || {}).id;
+    mt.state = lsGet('gymtrack-meat-state', 'raw') === 'cooked' ? 'cooked' : 'raw';
+    mt.grams = +lsGet('gymtrack-meat-grams', '150') || 150;
+  }
+  renderMeat();
+}
+const mtSpecies = () => qa.meat.species.find(s => s.id === mt.species);
+const mtCut = () => (mtSpecies() || {cuts: []}).cuts.find(c => c.id === mt.cut);
+function renderMeat(){
+  const m = qa.meat;
+  if (!m.species.length){
+    $('#mt-species').innerHTML = ''; $('#mt-comp').hidden = true;
+    $('#mt-cuts').innerHTML = '<p class="empty">The meat list needs the food database — download it from the Food tab first.</p>';
+    return;
+  }
+  $('#mt-species').innerHTML = m.species.map(s => `<button class="chip${s.id === mt.species ? ' on' : ''}" data-species="${s.id}">${esc(s.label_cs)}</button>`).join('');
+  const cut = mtCut();
+  $('#mt-cuts').innerHTML = mtSpecies().cuts.filter(c => !cut || c.id === cut.id).map(c => `<div class="qa-row${c.id === mt.cut ? ' sel' : ''}">
+      <button class="qa-main" data-cut="${c.id}"><b>${esc(c.label_cs)}</b>
+        <span>raw ${fmt(c.raw.kcal_100g)} kcal${c.cooked ? ` · cooked ${fmt(c.cooked.kcal_100g)} kcal` : ''} / 100 g</span></button>
+      ${c.id === mt.cut ? '<span class="qa-more" style="display:grid;place-items:center">Change</span>' : ''}</div>`).join('');
+  $('#mt-comp').hidden = !cut;
+  if (cut){
+    if (mt.state === 'cooked' && !cut.cooked) mt.state = 'raw';
+    document.querySelectorAll('#mt-state button').forEach(b => {
+      b.classList.toggle('on', b.dataset.s === mt.state);
+      b.disabled = b.dataset.s === 'cooked' && !cut.cooked;
+    });
+    $('#mt-grams').value = String(mt.grams);
+    $('#mt-quick').innerHTML = m.portions.map(g => `<button data-g="${g}" class="${g === mt.grams ? 'on' : ''}">${g} g</button>`).join('');
+    mtPreview();
+  }
+}
+function mtPreview(){
+  const cut = mtCut(); if (!cut) return;
+  const f = cut[mt.state], g = num($('#mt-grams').value) || 0, k = g / 100;
+  $('#mt-prev').innerHTML = `<span><b>${fmt(f.kcal_100g * k)}</b> kcal</span><span>P ${fmt(f.protein_100g * k, 1)} · C ${fmt(f.carbs_100g * k, 1)} · F ${fmt(f.fat_100g * k, 1)} g</span>`;
+  document.querySelectorAll('#mt-quick button').forEach(b => b.classList.toggle('on', +b.dataset.g === g));
+}
+$('#mt-species').addEventListener('click', e => {
+  const b = e.target.closest('[data-species]'); if (!b) return;
+  mt.species = b.dataset.species; mt.cut = null; lsSet('gymtrack-meat-species', mt.species); renderMeat();
+});
+$('#mt-cuts').addEventListener('click', e => {
+  const b = e.target.closest('[data-cut]'); if (!b) return;
+  mt.cut = mt.cut === b.dataset.cut ? null : b.dataset.cut;     // the picked row folds the list; tap it to unfold
+  renderMeat();
+  $('#bs-body').scrollTop = 0;
+});
+$('#mt-state').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b || b.disabled) return;
+  mt.state = b.dataset.s; lsSet('gymtrack-meat-state', mt.state); renderMeat();
+});
+$('#mt-quick').addEventListener('click', e => {
+  const b = e.target.closest('[data-g]'); if (!b) return;
+  mt.grams = +b.dataset.g; $('#mt-grams').value = String(mt.grams); mtPreview();
+});
+$('#mt-grams').addEventListener('input', () => { mt.grams = num($('#mt-grams').value) || 0; mtPreview(); });
+$('#mt-add').onclick = async () => {
+  const cut = mtCut(), g = num($('#mt-grams').value);
+  if (!cut || !g || g <= 0) return toast('Enter the grams');
+  const f = cut[mt.state], meal = qaMeal();
+  lsSet('gymtrack-meat-grams', String(g));
+  await qaUndoable(post('/api/food/log', {date: fDate, meal, food_ref: f.ref, grams: g, entry_method: 'search'}),
+                   `${f.name} · ${fmt(g)} g`, meal);
+};
+
+/* C — my foods: one tap logs one portion, the arrow offers half, double or editing */
+async function openMineList(){
   $('#mi-q').value = '';
   await loadMyMeals();
   renderMine();
 }
 function renderMine(){
   const list = mineMatching($('#mi-q').value.trim());
-  $('#mi-list').innerHTML = list.length ? list.map(m => `<div class="row" data-mine="${m.id}" style="cursor:pointer">
-      <div class="main"><b>${esc(m.name)}</b><span>${fmt(m.kcal)} kcal · ${esc(mineSub(m))}</span></div>
-      <span class="chev">›</span></div>`).join('')
+  $('#mi-list').innerHTML = list.length ? list.map(m => `<div class="qa-row">
+      <button class="qa-main" data-mine="${m.id}"><b>${esc(m.name)}</b><span>${fmt(m.kcal)} kcal · ${esc(mineSub(m))}</span></button>
+      <button class="qa-more" data-mine-more="${m.id}" aria-label="More for ${esc(m.name)}">›</button></div>`).join('')
     : `<p class="empty">${myMeals.length ? 'Nothing matches.' : 'Nothing saved yet — tap New.'}</p>`;
 }
 $('#mi-q').addEventListener('input', renderMine);
+$('#mi-new').onclick = () => openMyMeal(null);
 $('#mi-list').addEventListener('click', async e => {
-  const row = e.target.closest('[data-mine]'); if (!row) return;
-  const m = myMeals.find(x => x.id === +row.dataset.mine);
-  const meal = segValue($('#mi-meal'));
+  const more = e.target.closest('[data-mine-more]'), one = e.target.closest('[data-mine]');
+  const m = myMeals.find(x => x.id === +(more ? more.dataset.mineMore : one && one.dataset.mine));
+  if (!m) return;
+  const meal = qaMeal(), row = (more || one).closest('.qa-row');
+  if (one){
+    const ok = await qaUndoable(post('/api/food/mymeals/log', {meal_id: m.id, portions: 1, date: fDate, meal}), m.name, meal);
+    if (ok){ row.classList.add('done'); setTimeout(() => row.classList.remove('done'), 700); }
+    return;
+  }
   const choice = await picker(m.name, [
-    ...[1, .5, 2].map(k => ({label: `Log ${k === .5 ? '½' : k} portion${k > 1 ? 's' : ''} — ${fmt(m.kcal * k)} kcal`, value: k})),
+    ...[.5, 2].map(k => ({label: `Log ${k === .5 ? '½' : k} portion${k > 1 ? 's' : ''} — ${fmt(m.kcal * k)} kcal`, value: k})),
     {label: 'Edit', value: 'edit'}]);
   if (choice === 'edit') return openMyMeal(m);
-  if (!choice) return;
-  try { await post('/api/food/mymeals/log', {meal_id: m.id, portions: choice, date: fDate, meal}); }
-  catch(err){ return toast('Not added'); }
-  toast(`Added to ${MEAL_LABEL[meal].toLowerCase()}`);
-  loadDay();
+  if (choice) qaUndoable(post('/api/food/mymeals/log', {meal_id: m.id, portions: choice, date: fDate, meal}),
+                         `${m.name} × ${choice === .5 ? '½' : choice}`, meal);
 });
-$('#f-mine').onclick = openMine;
-$('#mi-close').onclick = () => $('#sheet-mine').classList.remove('open');
-$('#mi-new').onclick = () => openMyMeal(null);
+
+/* D — calories only */
+$('#qa-cal-add').onclick = async () => {
+  const kcal = num($('#qa-kcal').value);
+  if (!kcal || kcal <= 0) return toast('Enter the calories');
+  const meal = qaMeal(), name = $('#qa-name').value.trim();
+  const body = {date: fDate, meal, kcal, name, entry_method: 'quick'};
+  for (const k of ['protein', 'carbs', 'fat']) body[k] = num($('#qa-' + k).value) || 0;
+  const ok = await qaUndoable(post('/api/food/log', body), `${fmt(kcal)} kcal`, meal);
+  if (ok) for (const id of ['kcal', 'name', 'protein', 'carbs', 'fat']) $('#qa-' + id).value = '';
+};
 
 /* The creator. Items carry their values per 100 g, so a changed amount recalculates at once. */
 let mm = null;   // {meal, items: [{food_ref, name, grams, per: {kcal, protein, carbs, fat} per 100 g}]}
@@ -3083,7 +3373,7 @@ $('#mm-save').onclick = async () => {
   $('#sheet-mymeal').classList.remove('open');
   toast(`Saved “${body.name}”`);
   await loadMyMeals();
-  if ($('#sheet-mine').classList.contains('open')) renderMine();
+  if (qaOpen() && qa.pane === 'mine') renderMine();
 };
 $('#mm-delete').onclick = async () => {
   if (await picker(`Delete “${mm.meal.name}”?`, [{label: 'Delete — logged days keep their values', value: 'del'}]) !== 'del') return;
@@ -3091,7 +3381,7 @@ $('#mm-delete').onclick = async () => {
   $('#sheet-mymeal').classList.remove('open');
   toast('Deleted');
   await loadMyMeals();
-  if ($('#sheet-mine').classList.contains('open')) renderMine();
+  if (qaOpen() && qa.pane === 'mine') renderMine();
 };
 $('#q-cancel').onclick = () => $('#sheet-quick').classList.remove('open');
 $('#q-delete').onclick = () => deleteEntry(qEntry, '#sheet-quick');

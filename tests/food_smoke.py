@@ -773,6 +773,67 @@ check("a food that moved to a new fdc_id is listed once", len(rows) == 1
       and client.get("/api/food/foods/usda:999001").json()["kcal_100g"] == 111)
 os.environ["FOOD_SEED_SYNC"] = "0"
 check("FOOD_SEED_SYNC=0 switches the loading off", fseed.sync(TMP / "seed2.json") is None)
+
+# ─── frequent foods (Quick add) — own user database, real seed catalogue ────
+old_db_path = fcat.DB_PATH
+fcat.DB_PATH = str(TMP / "freq.db")
+fcat.init()
+from datetime import date as _D, timedelta as _T  # noqa: E402
+
+
+def ago(n):
+    return (_D.today() - _T(days=n)).isoformat()
+
+
+def ref_of_name(name):
+    return next(r["ref"] for r in client.get("/api/food/search", params={"q": name, "limit": 5}).json()["results"] if r["name"] == name)
+
+
+def log_g(ref, grams, days_ago, **kw):
+    r = client.post("/api/food/log", json={"date": ago(days_ago), "meal": "lunch", "food_ref": ref, "grams": grams, **kw})
+    assert r.status_code == 200, r.text
+
+
+check("frequent is empty on a fresh log", client.get("/api/food/frequent").json()["items"] == [])
+banana, egg, oats, milk, rice = (ref_of_name(n) for n in ("Banán", "Vejce slepičí syrové", "Ovesné vločky",
+                                                         "Mléko plnotučné (3,25 %)", "Rýže bílá dlouhozrnná (jasmínová, basmati) vařená"))
+for g, d in ((150, 5), (150, 3), (200, 1)):
+    log_g(banana, g, d)                    # 3 times, usually 150 g, last yesterday
+for g, d in ((100, 2), (100, 1)):
+    log_g(egg, g, d)                       # twice
+for g, d in ((50, 50), (50, 45), (60, 40), (50, 35)):
+    log_g(oats, g, d)                      # four times, but a month and a half ago
+log_g(milk, 250, 1)                        # once: a one-off
+for g, d in ((100, 40), (160, 38)):
+    log_g(rice, g, d)                      # twice, no repeated amount
+for g, d in ((70, 100), (70, 99), (70, 98)):
+    log_g(milk, g, d)                      # outside the 60 days
+client.post("/api/food/log", json={"date": ago(1), "meal": "snack", "kcal": 300})        # a quick add has no food
+client.post("/api/food/log", json={"date": ago(2), "meal": "snack", "kcal": 300})
+fr = client.get("/api/food/frequent").json()["items"]
+check("frequent skips one-offs, quick adds and old foods", [x["name"] for x in fr] ==
+      ["Banán", "Vejce slepičí syrové", "Ovesné vločky", "Rýže bílá dlouhozrnná (jasmínová, basmati) vařená"])
+check("frequent ranks by count with a recency boost (a recent staple beats an older habit)", fr[0]["count"] == 3 and fr[2]["count"] == 4)
+check("usual portion is the most common amount", fr[0]["grams"] == 150 and fr[2]["grams"] == 50)
+check("usual portion falls back to the median", fr[3]["grams"] == 130)
+check("frequent carries the nutrition of the usual portion", fr[0]["kcal"] == round(fr[0]["food"]["kcal_100g"] * 1.5, 1)
+      and fr[1]["protein"] == round(fr[1]["food"]["protein_100g"], 1))
+check("frequent carries the food for the portion panel", fr[0]["food"]["ref"] == banana and fr[0]["food"]["serving_g"] == 118)
+check("frequent last date", fr[0]["last_date"] == ago(1))
+check("frequent limit", len(client.get("/api/food/frequent", params={"limit": 2}).json()["items"]) == 2)
+wide = client.get("/api/food/frequent", params={"days": 120}).json()
+check("a longer window sees older habits", "Mléko plnotučné (3,25 %)" in [x["name"] for x in wide["items"]] and wide["days"] == 120)
+check("days is clamped", client.get("/api/food/frequent", params={"days": 99999}).json()["days"] == 365)
+mine_food = client.post("/api/food/foods", json={"name": "Moje granola", "kcal_100g": 450, "protein_100g": 10, "carbs_100g": 60, "fat_100g": 18}).json()
+log_g(mine_food["ref"], 40, 3)
+log_g(mine_food["ref"], 40, 2)
+check("own foods are frequent too", any(x["name"] == "Moje granola" for x in client.get("/api/food/frequent").json()["items"]))
+client.delete(f"/api/food/foods/{mine_food['ref']}")
+check("a deleted own food drops out", all(x["name"] != "Moje granola" for x in client.get("/api/food/frequent").json()["items"]))
+undo = client.post("/api/food/log", json={"date": ago(0), "meal": "lunch", "food_ref": egg, "grams": 100}).json()["entry"]
+client.delete(f"/api/food/log/{undo['id']}")
+check("one-tap logging can be undone", client.get("/api/food/day", params={"date": ago(0)}).json()["entries"] == [])
 fcat.FOODS_DB = old_foods_db
+fcat.DB_PATH = old_db_path
 
 print(f"\n{checks} checks passed")
