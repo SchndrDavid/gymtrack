@@ -64,12 +64,15 @@ without it the prompt tells the AI to assume 75 kg and say so.
   with a tap (½, 1 or 2 portions). Make one from foods (30 g whey + 300 ml milk, the values add up by
   themselves) or just type its calories and macros. They come first in the food search too, and can
   be opened and changed later; days already logged keep their values.
-- **Barcodes, live or from a photo.** On an `https://` address *Scan* opens a live camera view and
-  reads the code as soon as it is in the frame (the browser's own detector where it has one, else
-  the server reads a small frame a few times a second). Over plain `http://` browsers refuse a live
-  camera, so *Scan* takes an ordinary photo and the server reads that — see
-  [HTTPS through Tailscale](docs/deployment.md#live-barcode-scanning-https) to get the live view. Unknown codes are looked up live on Open Food Facts
-  and remembered; still unknown, you get a *New food* form with the code filled in. Or type the EAN.
+- **Barcodes: a round button, live or from a photo.** The floating button at the bottom right of the Food
+  tab (hidden while a sheet is open or you are typing) scans a barcode. On an `https://` address it opens
+  a full-screen live view with a frame, a torch switch and tap-to-focus where the phone offers them; the
+  moment a code is read the camera stops, the phone buzzes where it can, and the portion panel opens with
+  the meal preselected — nothing is logged until you tap. The same code is ignored for 3 seconds. Over plain
+  `http://` browsers refuse a live camera, so one tap opens the camera app instead and the server reads
+  the photo — see [HTTPS through Tailscale](docs/deployment.md#live-barcode-scanning-https) for the live
+  view. *Type EAN* is in the scanner and after an unreadable photo. Unknown codes are looked up live on
+  Open Food Facts and remembered; still unknown, you get the *New food* form with the code filled in.
 - **Recipes from [MordorCook](https://github.com/SchndrDavid/mordorcook).** *Recipes* lists the recipes
   of your MordorCook, fetched from it each time you open the list. Every ingredient is matched to a
   food and its amount turned into grams; anything ambiguous is shown to you instead of guessed, and

@@ -236,7 +236,6 @@ h1{font-size:34px;line-height:1.05;font-weight:700;letter-spacing:-.5px;margin:0
   border-radius:11px;background:var(--card-2);font-size:14px;font-weight:600;min-height:46px}
 .factions button svg{width:17px;height:17px;color:var(--fg-2)}
 .factions button:active{opacity:.7}
-.factions #f-ean-toggle{flex:0 0 auto;min-width:64px}
 .fean{display:flex;gap:8px;margin-top:10px}
 .fean input{flex:1;min-width:0;background:var(--card-2);border:0;border-radius:11px;padding:12px;font-size:17px;outline:none;font-family:var(--round)}
 .fean button{padding:0 16px;border-radius:11px;background:var(--blue);color:#fff;font-weight:600;font-size:15px}
@@ -329,16 +328,30 @@ h1{font-size:34px;line-height:1.05;font-weight:700;letter-spacing:-.5px;margin:0
 .ctip span{color:var(--fg-2)}
 
 .live{background:#000}
-.lv-body{position:relative;flex:1;overflow:hidden;display:flex;align-items:center;justify-content:center}
+.lv-body{position:absolute;inset:0;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center}
 .lv-body video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-.lv-frame{position:relative;width:min(84vw,520px);aspect-ratio:2.2/1;border-radius:16px;
-  box-shadow:0 0 0 100vmax rgba(0,0,0,.45);border:2px solid rgba(255,255,255,.85)}
-.lv-frame i{position:absolute;left:8%;right:8%;top:50%;height:2px;background:var(--red);opacity:.8;
+.lv-frame{position:relative;width:min(84vw,520px);aspect-ratio:2.2/1;border-radius:18px;border:2.5px solid rgba(255,255,255,.9);
+  box-shadow:0 0 0 100vmax rgba(0,0,0,.58);transition:border-color .15s}
+.lv-frame i{position:absolute;left:8%;right:8%;top:50%;height:2px;background:var(--red);opacity:.85;
   animation:lvscan 1.6s ease-in-out infinite alternate}
-@keyframes lvscan{from{transform:translateY(-38px)}to{transform:translateY(38px)}}
-.lv-status{position:absolute;left:0;right:0;bottom:calc(env(safe-area-inset-bottom) + 28px);text-align:center;
-  font-size:15px;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.8);margin:0;padding:0 20px}
+@keyframes lvscan{from{transform:translateY(-36px)}to{transform:translateY(36px)}}
+.lv-status{position:relative;margin:18px 24px 0;text-align:center;font-size:15px;line-height:1.35;color:#fff;text-shadow:0 1px 6px rgba(0,0,0,.9)}
+.lv-top{position:absolute;left:0;right:0;top:calc(env(safe-area-inset-top) + 12px);padding:0 16px;display:flex;justify-content:space-between;z-index:2}
+.lv-btn{width:48px;height:48px;border-radius:50%;background:rgba(40,40,42,.72);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);
+  display:grid;place-items:center;color:#fff}
+.lv-btn svg{width:22px;height:22px}
+.lv-btn.on{background:#ffd60a;color:#000}
+.lv-bottom{position:absolute;left:0;right:0;bottom:calc(env(safe-area-inset-bottom) + 24px);display:flex;gap:12px;justify-content:center;z-index:2}
+.lv-pill{min-height:48px;padding:0 24px;border-radius:26px;background:rgba(40,40,42,.72);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);
+  color:#fff;font-size:16px;font-weight:600}
+.lv-flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none}
+.lv-body.hit .lv-flash{animation:lvflash .45s ease-out}
+@keyframes lvflash{from{opacity:.75}to{opacity:0}}
 .lv-body.hit .lv-frame{border-color:var(--green)}
+.lv-body.hit .lv-frame i{display:none}
+.lv-focus{position:absolute;width:64px;height:64px;margin:-32px 0 0 -32px;border:2px solid #ffd60a;border-radius:50%;opacity:0;pointer-events:none;transform:scale(1.4)}
+.lv-focus.go{animation:lvfocus .9s ease-out}
+@keyframes lvfocus{0%{opacity:1;transform:scale(1.4)}30%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(1)}}
 
 /* ---------- quick add: a bottom sheet, controls within thumb reach ---------- */
 .bs{position:fixed;inset:0;z-index:45;visibility:hidden;pointer-events:none}
@@ -398,7 +411,30 @@ h1{font-size:34px;line-height:1.05;font-weight:700;letter-spacing:-.5px;margin:0
 .mine-top .fsearch-box input{padding:11px 0}
 .factions button.prim{background:var(--blue);color:#fff}
 .factions button.prim svg{color:#fff}
-.attrib{font-size:11px;color:var(--fg-3);text-align:center;margin:26px 0 0;line-height:1.5}
+/* ---------- the scan button: a floating action button on the Food tab ---------- */
+.fab{position:fixed;z-index:40;right:calc(env(safe-area-inset-right) + 18px);bottom:calc(env(safe-area-inset-bottom) + 18px);
+  width:62px;height:62px;border-radius:50%;background:var(--blue);color:#fff;display:grid;place-items:center;
+  box-shadow:0 8px 24px rgba(10,132,255,.45),0 2px 8px rgba(0,0,0,.5);
+  opacity:0;transform:scale(.6);pointer-events:none;transition:opacity .2s,transform .2s}
+.fab.show{opacity:1;transform:none;pointer-events:auto}
+.fab.show:active{transform:scale(.93)}
+.fab svg{width:28px;height:28px}
+#view-food{padding-bottom:calc(env(safe-area-inset-bottom) + 84px)}   /* so the button never covers the last row */
+
+/* ---------- a small centred dialog (keyboard-safe: it sits near the top) ---------- */
+.dlg{position:fixed;inset:0;z-index:65;visibility:hidden;pointer-events:none}
+.dlg.open{visibility:visible;pointer-events:auto}
+.dlg.open .bs-dim{opacity:1}
+.dlg-card{position:absolute;left:50%;top:max(12vh,calc(env(safe-area-inset-top) + 24px));transform:translate(-50%,-14px);width:min(92vw,380px);
+  background:var(--card);border-radius:18px;padding:18px;opacity:0;transition:opacity .2s,transform .2s;box-shadow:0 14px 50px rgba(0,0,0,.6)}
+.dlg.open .dlg-card{opacity:1;transform:translate(-50%,0)}
+.dlg-card b{display:block;font-size:18px;margin-bottom:12px}
+.dlg-card input{width:100%;background:var(--card-2);border:0;border-radius:12px;padding:14px;font-size:22px;font-family:var(--round);letter-spacing:1px;outline:none}
+.dlg-btns{display:flex;gap:10px;margin-top:14px}
+.dlg-btns button{flex:1;min-height:48px;border-radius:12px;background:var(--card-2);font-size:16px;font-weight:600}
+.dlg-btns button.go{background:var(--blue);color:#fff}
+
+.attrib{.attrib{font-size:11px;color:var(--fg-3);text-align:center;margin:26px 0 0;line-height:1.5}
 
 /* Desktop only — on a phone, and in the home-screen app, the screen is for training. */
 @media (max-width:640px){.foot{display:none}}
@@ -478,15 +514,9 @@ h1{font-size:34px;line-height:1.05;font-weight:700;letter-spacing:-.5px;margin:0
       <div id="f-results" class="fresults"></div>
       <div class="factions">
         <button id="f-qa" class="prim"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>Quick add</button>
-        <button id="f-scan" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2M7 8v8M10 8v8M13 8v8M17 8v8"/></svg>Scan</button>
-        <button id="f-ean-toggle" hidden>EAN</button>
-        
         <button id="f-recognize" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>Recognize meal</button>
       </div>
-      <form class="fean" id="f-ean-form" hidden>
-        <input id="f-ean" inputmode="numeric" pattern="[0-9]*" placeholder="Type the barcode (EAN)" autocomplete="off">
-        <button type="submit">Look up</button>
-      </form>
+      
       <input type="file" id="f-scan-file" accept="image/*" capture="environment" hidden>
       <input type="file" id="f-photo-file" accept="image/*" capture="environment" hidden>
     </div>
@@ -651,18 +681,34 @@ h1{font-size:34px;line-height:1.05;font-weight:700;letter-spacing:-.5px;margin:0
   </div>
 </div>
 
-<div class="sheet live" id="sheet-live">
-  <div class="sheet-bar">
-    <button id="lv-close">Close</button>
-    <b>Scan barcode</b>
-    <button id="lv-photo">Photo</button>
-  </div>
-  <div class="lv-body">
+<div class="sheet live" id="sheet-live" aria-label="Scan barcode">
+  <div class="lv-body" id="lv-body">
     <video id="lv-video" playsinline muted autoplay></video>
+    <div class="lv-flash" id="lv-flash"></div>
+    <div class="lv-top">
+      <button class="lv-btn" id="lv-close" aria-label="Close scanner"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+      <button class="lv-btn" id="lv-torch" aria-label="Torch" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 2h10l-2 7H9zM9 9v3a3 3 0 0 0 6 0V9M12 15v7"/></svg></button>
+    </div>
     <div class="lv-frame"><i></i></div>
+    <div class="lv-focus" id="lv-focus"></div>
     <p class="lv-status" id="lv-status">Starting the camera…</p>
+    <div class="lv-bottom">
+      <button class="lv-pill" id="lv-ean">Type EAN</button>
+      <button class="lv-pill" id="lv-photo">Photo</button>
+    </div>
   </div>
 </div>
+
+<div class="dlg" id="dlg-ean" aria-hidden="true">
+  <div class="bs-dim" id="dlg-ean-dim"></div>
+  <form class="dlg-card" id="ean-form">
+    <b>Type the barcode</b>
+    <input id="ean-in" inputmode="numeric" pattern="[0-9]*" placeholder="EAN, 8–14 digits" autocomplete="off" enterkeyhint="go" aria-label="Barcode">
+    <div class="dlg-btns"><button type="button" id="ean-cancel">Cancel</button><button type="submit" class="go">Look up</button></div>
+  </form>
+</div>
+
+<button class="fab" id="fab-scan" aria-label="Scan barcode" tabindex="-1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2M7 8v8M10 8v8M13 8v8M17 8v8"/></svg></button>
 
 <div class="sheet" id="sheet-stats">
   <div class="sheet-bar">
@@ -1937,7 +1983,9 @@ function setView(v){
   $('#view-training').hidden = view !== 'training';
   $('#view-food').hidden = view !== 'food';
   $('#btn-settings').hidden = view !== 'training';   // plans and profile belong to Training
+  if (view !== 'food') closeLive();
   if (view === 'food') foodShow();
+  fabSoon();
 }
 document.querySelectorAll('#viewseg button').forEach(b => b.onclick = () => setView(b.dataset.view));
 
@@ -2035,7 +2083,7 @@ async function foodShow(){
     fConfig = await api('/api/config');
     $('#f-recognize').hidden = !fConfig.food_ai_enabled;
     $('#f-recipes').hidden = !fConfig.mordorcook_enabled;
-    $('#f-scan').hidden = $('#f-ean-toggle').hidden = !fConfig.barcode;
+    fabSync();
     $('#f-history').hidden = !fConfig.history;
   } catch(e){}
   catalogStatus();
@@ -2405,30 +2453,39 @@ function barcodeResult(res){
     return;
   }
   toast('No barcode found — get closer, or type it');
-  $('#f-ean-form').hidden = false; $('#f-ean').focus();
+  openEan();
 }
 
-/* Live scanning needs a secure page (https:// or localhost) — browsers refuse the camera otherwise.
-   Frames are read by the browser's own BarcodeDetector where it exists, otherwise by the server. */
+/* Live scanning needs a secure page (https:// or localhost) — browsers refuse the camera otherwise; there the
+   button takes a photo instead. Frames are read by the browser's own BarcodeDetector where it exists,
+   otherwise by the server. The camera is released whenever the scanner closes, the tab changes or the page hides. */
 const liveScanOK = () => window.isSecureContext && !!navigator.mediaDevices?.getUserMedia;
-let lv = null;
+let lv = null, lvToken = 0, lastScan = {code: '', at: 0};
+const DEDUPE_MS = 3000;
 
-$('#f-scan').onclick = () => liveScanOK() ? openLive() : $('#f-scan-file').click();
+$('#fab-scan').onclick = () => liveScanOK() ? openLive() : $('#f-scan-file').click();
 
 async function openLive(){
+  if ($('#sheet-live').classList.contains('open')) return;
+  const token = ++lvToken;
+  $('#lv-body').classList.remove('hit');
   $('#lv-status').textContent = 'Starting the camera…';
-  $('.lv-body').classList.remove('hit');
+  $('#lv-torch').hidden = true; $('#lv-torch').classList.remove('on');
   $('#sheet-live').classList.add('open');
   let stream;
   try {
     stream = await navigator.mediaDevices.getUserMedia({audio: false,
       video: {facingMode: {ideal: 'environment'}, width: {ideal: 1280}, height: {ideal: 720}}});
   } catch(e){
+    if (token !== lvToken) return;
     $('#sheet-live').classList.remove('open');
     toast('No camera access — take a photo instead');
     $('#f-scan-file').click();
     return;
   }
+  // Closed while the permission prompt was up: the stream arrives with nobody to show it to. Let it go.
+  const gone = () => token !== lvToken || !$('#sheet-live').classList.contains('open');
+  if (gone()){ stream.getTracks().forEach(t => t.stop()); return; }
   let detector = null;
   try {
     if ('BarcodeDetector' in window){
@@ -2437,20 +2494,33 @@ async function openLive(){
       if (want.length) detector = new BarcodeDetector({formats: want});
     }
   } catch(e){ detector = null; }
-  lv = {stream, detector, busy: false, timer: null, canvas: document.createElement('canvas'), done: false};
+  if (gone()){ stream.getTracks().forEach(t => t.stop()); return; }
+  const track = stream.getVideoTracks()[0];
+  let caps = {}; try { caps = track.getCapabilities ? track.getCapabilities() : {}; } catch(e){}
+  lv = {stream, track, caps, detector, timer: null, canvas: document.createElement('canvas'), done: false, torch: false};
+  $('#lv-torch').hidden = !caps.torch;                       // not on iOS Safari — then there is simply no button
+  if (caps.focusMode && caps.focusMode.includes('continuous'))
+    track.applyConstraints({advanced: [{focusMode: 'continuous'}]}).catch(() => {});
   const video = $('#lv-video');
   video.srcObject = stream;
   try { await video.play(); } catch(e){}
-  $('#lv-status').textContent = 'Point the camera at the barcode';
+  if (gone()) return lvStop();
+  $('#lv-status').textContent = 'Align the barcode with the frame';
   lvTick();
 }
 
 function lvStop(){
   if (!lv) return;
   clearTimeout(lv.timer);
+  lv.done = true;
   lv.stream.getTracks().forEach(t => t.stop());
   $('#lv-video').srcObject = null;
-  lv.done = true; lv = null;
+  lv = null;
+}
+function closeLive(){
+  lvToken++;                                                  // a camera request still pending must not open anything
+  lvStop();
+  $('#sheet-live').classList.remove('open');
 }
 
 /* The middle of the frame, where the guide box is — smaller upload, fewer false reads. */
@@ -2480,27 +2550,51 @@ async function lvTick(){
     }
   } catch(e){}
   if (me.done) return;
+  if (code && code === lastScan.code && Date.now() - lastScan.at < DEDUPE_MS) code = null;   // the one just handled
   if (code) return lvFound(code);
   me.timer = setTimeout(lvTick, me.detector ? 120 : 350);
 }
 
 async function lvFound(code){
-  $('.lv-body').classList.add('hit');
-  $('#lv-status').textContent = `Found ${code} — looking it up…`;
+  lastScan = {code, at: Date.now()};
+  $('#lv-body').classList.add('hit');                         // green frame and a flash
+  $('#lv-status').textContent = `Found ${code}`;
   try { navigator.vibrate?.(60); } catch(e){}
   beep();
-  lvStop();
+  lvStop();                                                   // the camera is off from here on
+  const token = lvToken;
   let res;
   try { res = await api('/api/food/barcode/' + code); } catch(e){ res = {barcode: code, food: null}; }
+  if (token !== lvToken) return;                              // closed meanwhile
   $('#sheet-live').classList.remove('open');
   barcodeResult(res);
 }
 
-$('#lv-close').onclick = () => { lvStop(); $('#sheet-live').classList.remove('open'); };
-$('#lv-photo').onclick = () => { lvStop(); $('#sheet-live').classList.remove('open'); $('#f-scan-file').click(); };
-document.addEventListener('visibilitychange', () => {
-  if (document.hidden && lv){ lvStop(); $('#sheet-live').classList.remove('open'); }
+$('#lv-close').onclick = closeLive;
+$('#lv-photo').onclick = () => { closeLive(); $('#f-scan-file').click(); };
+$('#lv-ean').onclick = () => { closeLive(); openEan(); };
+$('#lv-torch').onclick = async () => {
+  if (!lv || !lv.caps.torch) return;
+  const on = !lv.torch;
+  try { await lv.track.applyConstraints({advanced: [{torch: on}]}); lv.torch = on; $('#lv-torch').classList.toggle('on', on); }
+  catch(e){ toast('The torch is not available'); }
+};
+/* Tap to focus, where the camera allows pointing the focus at a spot. */
+$('#lv-body').addEventListener('click', e => {
+  if (!lv || e.target.closest('button') || !(lv.caps.focusMode || []).includes('single-shot')) return;
+  const r = $('#lv-video').getBoundingClientRect();
+  const ring = $('#lv-focus');
+  ring.style.left = e.clientX + 'px'; ring.style.top = e.clientY + 'px';
+  ring.classList.remove('go'); void ring.offsetWidth; ring.classList.add('go');
+  const track = lv.track, continuous = (lv.caps.focusMode || []).includes('continuous');
+  track.applyConstraints({advanced: [{focusMode: 'single-shot', pointsOfInterest: [{x: (e.clientX - r.left) / r.width, y: (e.clientY - r.top) / r.height}]}]})
+    .then(() => continuous && setTimeout(() => lv && lv.track === track && track.applyConstraints({advanced: [{focusMode: 'continuous'}]}).catch(() => {}), 1500))
+    .catch(() => {});
 });
+document.addEventListener('visibilitychange', () => { if (document.hidden) closeLive(); });
+window.addEventListener('pagehide', closeLive);
+
+/* a photo (no live camera) */
 $('#f-scan-file').addEventListener('change', async e => {
   const file = e.target.files[0]; e.target.value = '';
   if (!file) return;
@@ -2511,14 +2605,42 @@ $('#f-scan-file').addEventListener('change', async e => {
     barcodeResult(r.body);
   } catch(err){ toast('Could not read the photo'); }
 });
-$('#f-ean-toggle').onclick = () => { const f = $('#f-ean-form'); f.hidden = !f.hidden; if (!f.hidden) $('#f-ean').focus(); };
-$('#f-ean-form').addEventListener('submit', async e => {
+
+/* typing the number */
+const eanOpen = () => $('#dlg-ean').classList.contains('open');
+function openEan(){
+  $('#ean-in').value = '';
+  $('#dlg-ean').classList.add('open'); $('#dlg-ean').setAttribute('aria-hidden', 'false');
+  setTimeout(() => $('#ean-in').focus(), 120);
+}
+function closeEan(){ $('#dlg-ean').classList.remove('open'); $('#dlg-ean').setAttribute('aria-hidden', 'true'); $('#ean-in').blur(); }
+$('#ean-cancel').onclick = $('#dlg-ean-dim').onclick = closeEan;
+$('#ean-form').addEventListener('submit', async e => {
   e.preventDefault();
-  const code = $('#f-ean').value.replace(/\D/g, '');
-  if (code.length < 8) return toast('A barcode has 8 to 14 digits');
-  toast('Looking up…');
-  try { barcodeResult(await api('/api/food/barcode/' + code)); $('#f-ean').value = ''; }
+  const code = $('#ean-in').value.replace(/\D/g, '');
+  if (code.length < 8 || code.length > 14) return toast('A barcode has 8 to 14 digits');
+  closeEan(); toast('Looking up…');
+  try { barcodeResult(await api('/api/food/barcode/' + code)); }
   catch(err){ toast('Lookup failed'); }
+});
+
+/* the scan button: only on the Food tab, and only when nothing else is open or being typed into */
+let kbFocus = false, kbViewport = false;
+function fabSync(){
+  const open = document.querySelector('.sheet.open, .bs.open, .pick.open, .dlg.open');
+  const show = view === 'food' && fConfig.barcode && !open && !kbFocus && !kbViewport;
+  $('#fab-scan').classList.toggle('show', !!show);
+  $('#fab-scan').tabIndex = show ? 0 : -1;
+}
+let fabQueued = false;
+const fabSoon = () => { if (!fabQueued){ fabQueued = true; requestAnimationFrame(() => { fabQueued = false; fabSync(); }); } };
+new MutationObserver(fabSoon).observe(document.body, {subtree: true, attributes: true, attributeFilter: ['class']});
+document.addEventListener('focusin', e => { if (e.target.matches('input,textarea,select')){ kbFocus = true; fabSoon(); } });
+document.addEventListener('focusout', () => setTimeout(() => {
+  kbFocus = !!document.activeElement && document.activeElement.matches('input,textarea,select'); fabSoon();
+}, 80));
+if (window.visualViewport) visualViewport.addEventListener('resize', () => {
+  kbViewport = visualViewport.height < window.innerHeight * .75; fabSoon();
 });
 
 /* ---------- food: multi-add ---------- */
@@ -3117,11 +3239,20 @@ function openQuickAdd(pane, meal){
   document.body.classList.add('bs-open');
   qaPane(pane || 'frequent');
 }
+/* The on-screen keyboard covers the bottom of the page: keep the sheet above it, whatever the browser does. */
+function bsFit(){
+  const panel = $('#bs-quick .bs-panel'), vv = window.visualViewport;
+  const covered = vv && qaOpen() ? Math.max(0, window.innerHeight - vv.offsetTop - vv.height) : 0;
+  panel.style.bottom = covered > 40 ? covered + 'px' : '';
+  panel.style.maxHeight = covered > 40 ? Math.round(vv.height - 12) + 'px' : '';
+}
+if (window.visualViewport){ visualViewport.addEventListener('resize', bsFit); visualViewport.addEventListener('scroll', bsFit); }
 function closeQuickAdd(){
   const bs = $('#bs-quick');
   bs.classList.remove('open'); bs.setAttribute('aria-hidden', 'true');
   document.body.classList.remove('bs-open');
   bs.querySelector('.bs-panel').style.transform = '';
+  bsFit();
   document.activeElement?.blur?.();
 }
 function qaPane(name){

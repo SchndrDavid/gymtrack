@@ -836,4 +836,46 @@ check("one-tap logging can be undone", client.get("/api/food/day", params={"date
 fcat.FOODS_DB = old_foods_db
 fcat.DB_PATH = old_db_path
 
+# ─── the page itself: every element the script reaches for exists ───────────
+import re as _re  # noqa: E402
+
+page = (ROOT / "static" / "index.html").read_text(encoding="utf-8")
+defined = set(_re.findall(r'id="([^"]+)"', page))          # in the markup, and in the templates the script builds
+used = set(_re.findall(r"\$\('#([A-Za-z0-9_-]+)'\)", page[page.index("<script>"):]))
+check("every element id the script uses exists in the page" + (f" (missing: {sorted(used - defined)})" if used - defined else ""), used <= defined)
+check("the Stats and AI export sheets are still there", {"sheet-stats", "sheet-aiexport", "sheet-live", "fab-scan", "bs-quick"} <= defined)
+
+from html.parser import HTMLParser as _HP  # noqa: E402
+
+
+class _Nesting(_HP):
+    VOID = {"meta", "link", "input", "br", "img", "hr", "path", "circle", "rect", "line", "source"}
+
+    def __init__(self):
+        super().__init__()
+        self.stack, self.nested = [], []
+
+    def handle_starttag(self, tag, attrs):
+        if tag in self.VOID:
+            return
+        a = dict(attrs)
+        if (a.get("id", "").startswith("sheet-") or a.get("id") in ("bs-quick", "dlg-ean", "fab-scan")) and len(self.stack) > 2:
+            self.nested.append(a["id"])                      # a sheet inside another element: broken markup
+        self.stack.append(tag)
+
+    def handle_endtag(self, tag):
+        if tag not in self.VOID and self.stack:
+            self.stack.pop()
+
+
+_n = _Nesting()
+_n.feed(page[:page.index("<script>")])
+check("sheets and dialogs are top-level (no unclosed or duplicated tags)" + (f" — nested: {_n.nested}" if _n.nested else ""),
+      not _n.nested and _n.stack == ["html", "body"])
+check("every sheet id exists once", len(_re.findall(r'id="sheet-[a-z]+"', page)) == len(set(_re.findall(r'id="sheet-[a-z]+"', page))))
+
+css = page[page.index("<style>"):page.index("</style>")]
+check("the stylesheet still has the rules of every panel", all(sel in css for sel in (
+    ".bs-panel{", ".qa-row{", ".mt-comp{", ".fab{", ".fab.show{", ".lv-frame{", ".dlg-card{", ".chart{", ".fres{", ".sheet{", ".pick{")))
+
 print(f"\n{checks} checks passed")
