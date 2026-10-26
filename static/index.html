@@ -213,7 +213,6 @@ h1{font-size:34px;line-height:1.05;font-weight:700;letter-spacing:-.5px;margin:0
 .fres .kc{font-family:var(--round);font-size:14px;font-weight:600;color:var(--fg-2);flex:none;text-align:right}
 .fres .kc small{display:block;font-size:10px;font-weight:500;color:var(--fg-3)}
 .fres .tag,#rs-list .tag{font-size:10px;font-weight:700;letter-spacing:.3px;color:var(--orange);margin-right:4px}
-.fhead{font-size:12px;font-weight:600;color:var(--fg-3);text-transform:uppercase;letter-spacing:.6px;padding:10px 4px 2px}
 .fdate{display:flex;align-items:center;gap:10px;margin:0 0 12px}
 .fdate-label{flex:1;position:relative;text-align:center;font-size:17px;font-weight:600;padding:8px 0;cursor:pointer}
 .fdate-label input{position:absolute;inset:0;opacity:0;width:100%;cursor:pointer;-webkit-appearance:none}
@@ -254,19 +253,6 @@ h1{font-size:34px;line-height:1.05;font-weight:700;letter-spacing:-.5px;margin:0
 .mmitem input{width:64px;background:var(--card-2);border-radius:9px;padding:8px;text-align:right;font-size:15px;
   color:var(--fg);border:0;outline:none}
 .prof input[readonly]{color:var(--fg-2)}
-.aiexp{display:flex;gap:8px;margin:0 0 12px}
-.aiexp .cta{margin:0}
-.aiexp .ghost{flex:0 0 96px}
-.fprog .card-title{display:flex;align-items:center;margin-bottom:8px}
-.fprog .card-title span{flex:1}
-.fprog .trend{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-top:10px}
-.fprog .trend b{font-family:var(--round);font-size:30px;font-weight:700;letter-spacing:-.5px}
-.fprog .trend span{font-size:14px;font-weight:600}
-.fprog .good{color:var(--green)} .fprog .warn{color:var(--orange)} .fprog .bad{color:var(--red)}
-.fprog p{margin:8px 0 0;font-size:14px;color:var(--fg-2);line-height:1.4}
-.fprog p b{color:var(--fg);font-weight:600}
-.fprog .fean{margin-top:4px}
-.fprog .mini{margin-top:0;cursor:pointer}
 .fentry{display:flex;align-items:center;gap:10px;flex:1;min-width:0;text-align:left;padding:10px 0}
 .fdel{flex:none;width:36px;height:36px;margin-right:-8px;color:var(--fg-3);font-size:22px;line-height:1}
 .fdel:active{color:var(--red)}
@@ -314,7 +300,6 @@ h1{font-size:34px;line-height:1.05;font-weight:700;letter-spacing:-.5px;margin:0
 .mu-portions button{width:40px;height:40px;border-radius:50%;background:var(--card);font-size:22px;color:var(--fg)}
 .mu-portions b{font-family:var(--round);font-size:22px;min-width:40px;text-align:center;color:var(--fg)}
 
-.chart-card{padding:16px 14px 14px}
 .chart{position:relative;width:100%}
 .chart svg{display:block;width:100%;overflow:visible}
 .chart .ax{fill:var(--fg-3);font-size:10px;font-family:var(--sans)}
@@ -411,6 +396,47 @@ h1{font-size:34px;line-height:1.05;font-weight:700;letter-spacing:-.5px;margin:0
 .mine-top .fsearch-box input{padding:11px 0}
 .factions button.prim{background:var(--blue);color:#fff}
 .factions button.prim svg{color:#fff}
+/* ---------- stats ---------- */
+.st-range{margin:0 0 6px}
+.st-range button{min-height:44px;font-size:15px}
+.st-period{margin:0 0 14px;text-align:center}
+.st-tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:6px}
+.st-tile{background:var(--card);border-radius:var(--r);padding:12px 10px;min-width:0}
+.st-tile b{display:block;font-family:var(--round);font-size:23px;font-weight:700;letter-spacing:-.4px;line-height:1.1;white-space:nowrap}
+.st-tile b small{font-size:12px;font-weight:600;color:var(--fg-2);letter-spacing:0}
+.st-tile span{display:block;font-size:11px;color:var(--fg-2);margin-top:5px;line-height:1.3}
+.st-note{font-size:12px;color:var(--fg-3);margin:6px 2px 14px;line-height:1.4}
+.st-sec{margin-bottom:14px;padding:16px 14px}
+.st-sec .card-title{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.sheet-bar #st-close,.sheet-bar #st-more{min-height:44px;min-width:44px}
+.sheet-bar #st-more{text-align:right}
+.st-sec .card-title .more{color:var(--fg-2);font-size:20px;line-height:1;min-width:48px;min-height:44px;margin:-14px -10px -14px 0;text-align:right;padding-right:10px;letter-spacing:1px}
+.st-empty{color:var(--fg-3);font-size:14px;text-align:center;padding:26px 0}
+.st-sub{font-size:12px;color:var(--fg-3);margin:14px 0 6px;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+.st-line{font-size:14px;color:var(--fg-2);line-height:1.5;margin:8px 0 0}
+.st-line b{color:var(--fg)}
+.st-big{font-family:var(--round);font-size:34px;font-weight:700;letter-spacing:-.6px;line-height:1.05}
+.st-big small{font-size:15px;color:var(--fg-2);font-weight:600;letter-spacing:0}
+.st-badge{display:inline-block;font-family:var(--sans);font-size:12px;font-weight:700;letter-spacing:0;padding:3px 9px;border-radius:10px;margin-left:8px;vertical-align:5px}
+.st-badge.good{background:rgba(48,209,88,.18);color:var(--green)}
+.st-badge.warn{background:rgba(255,159,10,.18);color:var(--orange)}
+.st-badge.bad{background:rgba(255,69,58,.18);color:var(--red)}
+.split{display:flex;height:16px;border-radius:8px;overflow:hidden;gap:2px;margin:4px 0 12px}
+.split i{display:block;min-width:4px}
+.split-legend{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.split-legend b{display:block;font-family:var(--round);font-size:16px;font-weight:700}
+.split-legend span{display:block;font-size:11px;color:var(--fg-2);margin-top:2px}
+.split-legend span::before{content:'';display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:5px;background:var(--c)}
+.gauge{position:relative;height:10px;border-radius:5px;background:var(--card-2);margin:26px 0 8px}
+.gauge i{position:absolute;left:0;top:0;bottom:0;border-radius:5px;background:var(--blue)}
+.gauge u{position:absolute;top:-6px;bottom:-6px;width:2px;background:var(--fg);border-radius:1px;text-decoration:none}
+.gauge u b{position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-size:10px;font-weight:600;color:var(--fg-2);white-space:nowrap}
+.st-cta{margin:14px 0 0;padding:15px;border-radius:14px;font-size:16px}
+#bs-export{z-index:55}
+.bx-open .toast{bottom:calc(env(safe-area-inset-bottom) + 330px)}
+.bs-panel.auto{height:auto;max-height:86vh;max-height:86dvh;padding-bottom:calc(env(safe-area-inset-bottom) + 14px)}
+.bs-panel.auto .bs-body{padding-bottom:6px}
+
 /* ---------- the scan button: a floating action button on the Food tab ---------- */
 .fab{position:fixed;z-index:40;right:calc(env(safe-area-inset-right) + 18px);bottom:calc(env(safe-area-inset-bottom) + 18px);
   width:62px;height:62px;border-radius:50%;background:var(--blue);color:#fff;display:grid;place-items:center;
@@ -530,7 +556,6 @@ h1{font-size:34px;line-height:1.05;font-weight:700;letter-spacing:-.5px;margin:0
 
     <div class="btnrow fmore">
       <button id="f-goals">Goals</button>
-      <button id="f-history" hidden>History</button>
       <button id="f-recipes" hidden>Recipes</button>
       <button id="f-restaurants">Restaurants</button>
     </div>
@@ -714,18 +739,57 @@ h1{font-size:34px;line-height:1.05;font-weight:700;letter-spacing:-.5px;margin:0
   <div class="sheet-bar">
     <button id="st-close">Done</button>
     <b id="st-title">Stats</b>
+    <button id="st-more" aria-label="More options">&middot;&middot;&middot;</button>
+  </div>
+  <div class="sheet-body" id="st-scroll">
+    <div class="seg st-range" id="st-range">
+      <button data-n="7">7d</button><button data-n="30">30d</button><button data-n="90">90d</button>
+    </div>
+    <p class="hint st-period" id="st-period"></p>
+    <div id="st-body"><p class="st-empty">Loading…</p></div>
+  </div>
+</div>
+
+<div class="bs" id="bs-export" aria-hidden="true">
+  <div class="bs-dim" id="bx-dim"></div>
+  <div class="bs-panel auto" role="dialog" aria-label="Export for AI">
+    <div class="bs-head" id="bx-head">
+      <i class="bs-grab"></i>
+      <div class="bs-title"><b>Export for AI</b><span id="bx-for"></span></div>
+    </div>
+    <div class="bs-body">
+      <div class="seg" id="bx-scope"><button data-scope="day" class="on">Day</button><button data-scope="week">Week</button></div>
+      <p class="hint" id="bx-hint" style="margin:0 0 12px"></p>
+      <button class="cta" id="bx-copy" style="margin:0">Copy day</button>
+      <div class="btnrow"><button id="bx-preview">Preview</button><button id="bx-download">Download .md</button></div>
+    </div>
+  </div>
+</div>
+
+<div class="sheet" id="sheet-weights">
+  <div class="sheet-bar">
+    <button id="wt-close">Done</button>
+    <b>Weigh-ins</b>
     <span style="width:44px"></span>
   </div>
   <div class="sheet-body">
-    <div class="card fprog" id="f-progress" hidden></div>
-    <p class="card-title" style="margin-top:22px">Ask an AI</p>
-    <div class="aiexp">
-      <button class="cta" id="f-aicopy">Export day</button>
-      <button class="cta ghost" id="f-aiweek">Week</button>
-    </div>
-    <p class="hint" style="margin-top:0">Copies the day — or the seven days up to it — with your food, training,
-      weight and real burn, as a prompt asking for a rating. <a class="mini" id="f-aiexport" style="cursor:pointer">Preview</a></p>
+    <form class="fean" id="wt-form">
+      <input id="wt-date" type="date" style="flex:0 0 150px;font-size:15px" aria-label="Date">
+      <input id="wt-kg" inputmode="decimal" placeholder="kg" aria-label="Weight in kg">
+      <button type="submit">Save</button>
+    </form>
+    <div class="card" id="wt-list" style="margin-top:12px"></div>
+    <p class="hint">The last six months. The trend is what the rest of the app goes by, not a single morning.</p>
   </div>
+</div>
+
+<div class="dlg" id="dlg-num" aria-hidden="true">
+  <div class="bs-dim" id="dlg-num-dim"></div>
+  <form class="dlg-card" id="num-form">
+    <b id="num-title">Value</b>
+    <input id="num-in" inputmode="decimal" autocomplete="off" aria-label="Value">
+    <div class="dlg-btns"><button type="button" id="num-cancel">Cancel</button><button type="button" id="num-clear" hidden>Clear</button><button type="submit" class="go">Save</button></div>
+  </form>
 </div>
 
 <div class="sheet" id="sheet-aiexport">
@@ -735,9 +799,8 @@ h1{font-size:34px;line-height:1.05;font-weight:700;letter-spacing:-.5px;margin:0
     <span style="width:44px"></span>
   </div>
   <div class="sheet-body">
-    <p class="hint" style="margin:0 0 12px">The whole day — every entry, totals against your goal, your training
-      here and in openGym, and the week before — written as a prompt that asks for a rating. Copy it and paste
-      it into an AI, or save it as a file.</p>
+    <p class="hint" style="margin:0 0 12px">Food, training here and in openGym, weight and real burn, written as a
+      prompt that asks for a rating. Copy it and paste it into an AI, or save it as a file.</p>
     <button class="cta" id="ax-copy" style="margin:0">Copy</button>
     <div class="btnrow">
       <button id="ax-share" hidden>Share…</button>
@@ -986,43 +1049,6 @@ h1{font-size:34px;line-height:1.05;font-weight:700;letter-spacing:-.5px;margin:0
     <div class="dstats" id="mu-total" style="margin-top:14px"></div>
     <div class="seg mealseg" id="mu-meal"></div>
     <p class="hint" id="mu-hint">Nothing is logged until you tap Add all. Switch off what you did not eat, fix any amount.</p>
-  </div>
-</div>
-
-<div class="sheet" id="sheet-fhistory">
-  <div class="sheet-bar">
-    <button id="fh-close">Done</button>
-    <b>Food history</b>
-    <span style="width:44px"></span>
-  </div>
-  <div class="sheet-body">
-    <div class="seg" id="fh-range"><button data-range="week" class="on">Week</button><button data-range="month">Month</button></div>
-    <div class="fdate">
-      <button class="icon-btn" id="fh-prev" aria-label="Earlier"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="m15 18-6-6 6-6"/></svg></button>
-      <span class="fdate-label" id="fh-label">—</span>
-      <button class="icon-btn" id="fh-next" aria-label="Later"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="m9 18 6-6-6-6"/></svg></button>
-    </div>
-    <div class="card chart-card">
-      <p class="card-title">Calories per day</p>
-      <div class="chart" id="fh-chart"></div>
-      <div class="legend" style="margin-top:8px"><span><i style="background:var(--blue)"></i>Eaten</span>
-        <span><i style="background:none;border-top:2px dashed var(--fg-2);border-radius:0;height:0;vertical-align:3px"></i>Goal</span></div>
-    </div>
-    <p class="card-title" style="margin-top:20px">Daily average <span id="fh-avg-note" style="text-transform:none;letter-spacing:0;font-weight:500"></span></p>
-    <div class="dstats" id="fh-avg"></div>
-    <div class="card chart-card" style="margin-top:20px">
-      <p class="card-title">Body weight</p>
-      <div class="chart" id="fh-weight"></div>
-      <div class="legend" style="margin-top:8px"><span><i style="background:var(--fg-3);border-radius:50%"></i>Weigh-in</span>
-        <span><i style="background:var(--green);height:2px;vertical-align:3px"></i>7-day average</span></div>
-      <form class="fean" id="fh-wform" style="margin-top:14px">
-        <input id="fh-wdate" type="date" style="flex:0 0 150px;font-size:15px">
-        <input id="fh-wkg" inputmode="decimal" placeholder="kg">
-        <button type="submit">Save</button>
-      </form>
-      <div id="fh-wlist" style="margin-top:6px"></div>
-    </div>
-    <p class="hint" style="margin-top:12px">Weights over the last 90 days. The average smooths out water and salt — watch it, not single days.</p>
   </div>
 </div>
 
@@ -2084,7 +2110,6 @@ async function foodShow(){
     $('#f-recognize').hidden = !fConfig.food_ai_enabled;
     $('#f-recipes').hidden = !fConfig.mordorcook_enabled;
     fabSync();
-    $('#f-history').hidden = !fConfig.history;
   } catch(e){}
   catalogStatus();
 }
@@ -2134,102 +2159,8 @@ async function loadDay(){
   try { fDay = await api('/api/food/day?date=' + fDate); }
   catch(e){ fDay = null; toast('Server unreachable'); }
   renderDay();
-  if ($('#sheet-stats').classList.contains('open')) loadProgress();
+  if (stOpen()) stLoad();
 }
-
-/* ---------- food: stats — weight, trend, what you really burn, the AI exports ---------- */
-$('#f-stats').onclick = () => {
-  $('#st-title').textContent = fDate === todayIso() ? 'Stats' : `Stats · ${dateLabel(fDate)}`;
-  $('#sheet-stats').classList.add('open');
-  loadProgress();
-};
-$('#st-close').onclick = () => $('#sheet-stats').classList.remove('open');
-
-/* The weigh-in for the shown day, the trend through three weeks of weigh-ins, the energy that
-   intake and trend say is really burned (food/progress.py), and the way to the target weight. */
-let fProg = null, fpEdit = null;   // fpEdit: 'weight' | 'target' while its form is open
-async function loadProgress(){
-  try { fProg = await api('/api/food/progress?date=' + fDate); } catch(e){ fProg = null; }
-  renderProgress();
-}
-
-const shortDate = key => { const d = new Date(key + 'T12:00:00'); return `${d.getDate()} ${MONTHS[d.getMonth()]}`; };
-
-function renderProgress(){
-  const el = $('#f-progress'), p = fProg;
-  el.hidden = !p;
-  if (!p) return;
-  const t = p.trend, m = p.maintenance, tg = p.target, sg = p.suggestion;
-  const PACE = {too_fast: ['bad', 'too fast — costs muscle'], on_track: ['good', 'on track'],
-                stalled: ['warn', 'stalled'], gaining: ['bad', 'going up']};
-  const form = (id, value, label) => `<form class="fean" data-form="${id}">
-      <input inputmode="decimal" placeholder="kg" value="${value ?? ''}" aria-label="${label}">
-      <button type="submit">Save</button></form>`;
-  let h = `<p class="card-title"><span>Weight</span><a class="link" id="fp-history">History ›</a></p>`;
-
-  if (fpEdit === 'weight' || p.weighed == null){
-    h += form('weight', p.weighed, 'Weight');
-    if (p.weighed == null) h += `<p>Weigh in ${fDate === todayIso() ? 'this morning' : 'for this day'} — after the toilet, before breakfast.</p>`;
-  } else h += `<p>Weighed <b>${fmt(p.weighed, 1)} kg</b> · <a class="mini" data-edit="weight">change</a></p>`;
-
-  if (t){
-    const pc = p.pace ? PACE[p.pace.verdict] : null;
-    h += `<div class="trend"><b>${fmt(t.kg, 1)} kg</b>`
-      + (pc ? `<span class="${pc[0]}">${t.rate_week > 0 ? '+' : ''}${fmt(t.rate_week, 2)} kg/week · ${pc[1]}</span>`
-            : '<span style="color:var(--fg-3)">trend</span>') + `</div>`;
-    if (!pc) h += `<p>The rate shows after 3 weigh-ins spread over a week.</p>`;
-  }
-
-  if (m.kcal){
-    h += `<p>You really burn about <b>${fmt(m.kcal)} kcal</b> a day${m.confidence === 'rough' ? ' (rough — log and weigh more often)' : ''}.`
-      + (p.goal_deficit != null ? ` Your goal of ${fmt(p.goal_kcal)} kcal is a deficit of <b>${fmt(p.goal_deficit)}</b>.` : '') + `</p>`;
-    if (sg && (!p.goal_kcal || Math.abs(sg.kcal - p.goal_kcal) >= 100))
-      h += `<p>To lose ${sg.pct_week} % a week: <b>${fmt(sg.kcal)} kcal</b>, protein ${fmt(sg.protein)} g · <a class="mini" id="fp-usegoal">use as goal</a></p>`;
-  } else if (m.intake){
-    h += `<p>Your real burn shows after ${esc(m.needs || 'more data')} — ${m.logged_days} of the last ${m.window} days logged so far.</p>`;
-  }
-
-  if (fpEdit === 'target') h += `<p>Target weight</p>` + form('target', tg && tg.kg, 'Target weight');
-  else if (tg){
-    h += `<p>Target <b>${fmt(tg.kg, 1)} kg</b>`
-      + (tg.left != null ? (tg.left > 0 ? ` · ${fmt(tg.left, 1)} kg to go` : ' · reached 🎉') : '')
-      + (tg.eta ? ` · at this pace around <b>${shortDate(tg.eta)}</b>` : '')
-      + ` · <a class="mini" data-edit="target">change</a></p>`;
-  } else h += `<p><a class="mini" data-edit="target">Set a target weight</a></p>`;
-  el.innerHTML = h;
-}
-
-$('#f-progress').addEventListener('click', async e => {
-  const ed = e.target.closest('[data-edit]');
-  if (ed){
-    fpEdit = ed.dataset.edit; renderProgress();
-    $(`#f-progress [data-form="${fpEdit}"] input`).focus();
-    return;
-  }
-  if (e.target.closest('#fp-history')) return openFoodHistory();
-  if (e.target.closest('#fp-usegoal')){
-    const sg = fProg.suggestion, fat = Math.round(sg.kcal * 0.28 / 9);
-    const carbs = Math.max(0, Math.round((sg.kcal - sg.protein * 4 - fat * 9) / 4));
-    try { await post('/api/food/goals', {effective_from: fDate, kcal: sg.kcal, protein: sg.protein, carbs, fat}); }
-    catch(err){ return toast('Goal not saved'); }
-    toast(`Goal from ${dateLabel(fDate).toLowerCase()}: ${fmt(sg.kcal)} kcal`);
-    loadDay();
-  }
-});
-$('#f-progress').addEventListener('submit', async e => {
-  e.preventDefault();
-  const f = e.target, kg = num(f.querySelector('input').value);
-  if (f.dataset.form === 'weight'){
-    if (!kg) return;
-    try { await post('/api/food/weight', {date: fDate, kg}); } catch(err){ return toast('Weight not saved'); }
-  } else {
-    try { await api('/api/food/target', {method: 'PUT', headers: {'Content-Type': 'application/json'},
-                                         body: JSON.stringify({kg: kg || null})}); }
-    catch(err){ return toast('Target not saved'); }
-  }
-  fpEdit = null;
-  loadProgress();
-});
 
 function setDate(key){ if (key){ fDate = key; loadDay(); } }
 $('#f-prev').onclick = () => setDate(addDays(fDate, -1));
@@ -2984,144 +2915,362 @@ function bindTips(svg, tips){
   svg.addEventListener('click', e => { const h = e.target.closest('[data-tip]'); if (h){ const r = h.getBoundingClientRect(); tipAt(r.left + r.width / 2, r.top, tips[+h.dataset.tip]); } });
 }
 
-/* Bars of calories per day, with the goal as a dashed step line. One series, one axis. */
-function kcalChart(el, days, start, n){
-  const W = el.clientWidth || 320, H = 190, L = 34, R = 4, T = 10, B = 22;
-  const byDate = Object.fromEntries(days.map(d => [d.date, d]));
-  const keys = Array.from({length: n}, (_, i) => addDays(start, i));
-  const max = niceMax(Math.max(1, ...keys.map(k => Math.max(byDate[k]?.kcal || 0, byDate[k]?.goal?.kcal || 0))) * 1.05);
-  const pw = W - L - R, ph = H - T - B, slot = pw / n, bw = Math.max(3, Math.min(28, slot - 2));
-  const y = v => T + ph - v / max * ph;
-  let s = '';
-  for (let i = 0; i <= 4; i++){
-    const v = max / 4 * i;
-    s += `<line class="gl" x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}"/><text class="ax" x="${L - 6}" y="${y(v) + 3}" text-anchor="end">${fmt(v)}</text>`;
-  }
-  const tips = [];
-  let goalPath = '';
-  keys.forEach((k, i) => {
-    const d = byDate[k], x = L + slot * i + (slot - bw) / 2;
-    if (d && d.kcal > 0){
-      const r = Math.min(4, bw / 2), top = Math.min(y(d.kcal), T + ph - 2);
-      s += `<path d="M${x},${T + ph} V${top + r} Q${x},${top} ${x + r},${top} H${x + bw - r} Q${x + bw},${top} ${x + bw},${top + r} V${T + ph} Z" fill="var(--blue)"/>`;
-    }
-    if (d && d.goal) goalPath += `${goalPath ? 'L' : 'M'}${L + slot * i},${y(d.goal.kcal)} H${L + slot * (i + 1)} `;
-    const dt = new Date(k + 'T12:00:00');
-    if (n <= 7 || dt.getDate() === 1 || dt.getDate() % 7 === 1)
-      s += `<text class="ax" x="${L + slot * i + slot / 2}" y="${H - 6}" text-anchor="middle">${n <= 7 ? DAYS[dt.getDay()].slice(0,3) : dt.getDate()}</text>`;
-    tips.push(`<b>${dateLabel(k)}</b><br>` + (d ? `${fmt(d.kcal)} kcal${d.goal ? ` <span>of ${fmt(d.goal.kcal)}</span>` : ''}<br><span>P ${fmt(d.protein)} · C ${fmt(d.carbs)} · F ${fmt(d.fat)} g</span>` : '<span>nothing logged</span>'));
-    s += `<rect class="hit" data-tip="${i}" x="${L + slot * i}" y="${T}" width="${slot}" height="${ph}"/>`;
-  });
-  if (goalPath) s += `<path d="${goalPath}" fill="none" stroke="var(--fg-2)" stroke-width="2" stroke-dasharray="4 3" pointer-events="none"/>`;
-  el.innerHTML = `<svg xmlns="${svgNs}" viewBox="0 0 ${W} ${H}" height="${H}" role="img" aria-label="Calories per day">${s}</svg>`;
-  bindTips(el.firstChild, tips);
-}
+/* ---------- food: stats — one page, everything follows the range ---------- */
+/* Range (7 / 30 / 90 days) ending on the day open in the Food tab: calories against the goal, the macros,
+   the weight with its trend, what is really burned, and the export for an AI. Days without a log are
+   gaps, never zeros. The numbers come from the same endpoints as the rest of the app. */
+const st = {n: 7, end: null, sum: [], prog: null, goals: [], weights: [], trend: [], loaded: false};
+const stOpen = () => $('#sheet-stats').classList.contains('open');
+const stStart = () => addDays(st.end, -(st.n - 1));
+const shortDate = key => { const d = new Date(key + 'T12:00:00'); return `${d.getDate()} ${MONTHS[d.getMonth()]}`; };
+const MACRO = {p: {col: 'var(--blue)', k: 4, name: 'Protein'}, c: {col: '#bf5af2', k: 4, name: 'Carbs'}, f: {col: 'var(--orange)', k: 9, name: 'Fat'}};
+const PACE_BADGE = {too_fast: ['bad', 'too fast — costs muscle'], on_track: ['good', 'on track'], stalled: ['warn', 'stalled'], gaining: ['bad', 'going up']};
+const TARGET_G_PER_KG = 1.8;     // used when the goal has no protein — same figure as the suggested goal
+const gkg = v => (Math.round(v * 10) / 10).toFixed(1);
+const goalOn = key => st.goals.find(g => g.effective_from <= key) || null;
 
-/* Weigh-ins as dots, the 7-day average as the line to read. */
-function weightChart(el, weights, start, end){
-  if (!weights.length){ el.innerHTML = '<p class="empty">No weigh-ins yet.</p>'; return; }
-  const W = el.clientWidth || 320, H = 170, L = 34, R = 8, T = 10, B = 22;
-  const t0 = new Date(start + 'T12:00:00').getTime(), t1 = new Date(end + 'T12:00:00').getTime();
-  const vals = weights.flatMap(w => [w.kg, w.avg7]);
-  let lo = Math.floor(Math.min(...vals) - .5), hi = Math.ceil(Math.max(...vals) + .5);
-  if (hi - lo < 2){ lo -= 1; hi += 1; }
-  const x = d => L + (new Date(d + 'T12:00:00').getTime() - t0) / Math.max(1, t1 - t0) * (W - L - R);
-  const y = v => T + (hi - v) / (hi - lo) * (H - T - B);
-  let s = '';
-  const step = (hi - lo) <= 4 ? 1 : Math.ceil((hi - lo) / 4);
-  for (let v = lo; v <= hi; v += step) s += `<line class="gl" x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}"/><text class="ax" x="${L - 6}" y="${y(v) + 3}" text-anchor="end">${v}</text>`;
-  for (let i = 0; i <= 3; i++){
-    const d = new Date(t0 + (t1 - t0) * i / 3);
-    s += `<text class="ax" x="${L + (W - L - R) * i / 3}" y="${H - 6}" text-anchor="${i === 0 ? 'start' : i === 3 ? 'end' : 'middle'}">${d.getDate()} ${MONTHS[d.getMonth()]}</text>`;
-  }
-  s += `<path d="${weights.map((w, i) => `${i ? 'L' : 'M'}${x(w.date)},${y(w.avg7)}`).join(' ')}" fill="none" stroke="var(--green)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
-  const tips = [];
-  weights.forEach((w, i) => {
-    s += `<circle cx="${x(w.date)}" cy="${y(w.kg)}" r="4" fill="var(--fg-3)" stroke="var(--card)" stroke-width="2"/>`
-       + `<circle class="hit" data-tip="${i}" cx="${x(w.date)}" cy="${y(w.kg)}" r="12"/>`;
-    tips.push(`<b>${dateLabel(w.date)}</b><br>${fmt(w.kg, 1)} kg <span>· avg ${fmt(w.avg7, 1)}</span>`);
-  });
-  el.innerHTML = `<svg xmlns="${svgNs}" viewBox="0 0 ${W} ${H}" height="${H}" role="img" aria-label="Body weight">${s}</svg>`;
-  bindTips(el.firstChild, tips);
-}
-
-/* ---------- food: history ---------- */
-let fh = {range: 'week', anchor: todayIso()};
-
-function fhPeriod(){
-  const d = new Date(fh.anchor + 'T12:00:00');
-  if (fh.range === 'week'){
-    const start = addDays(fh.anchor, -((d.getDay() + 6) % 7));
-    return {start, n: 7, label: `${dateLabel(start)} – ${dateLabel(addDays(start, 6))}`};
-  }
-  const start = iso(new Date(d.getFullYear(), d.getMonth(), 1));
-  const n = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
-  return {start, n, label: `${MONTHS[d.getMonth()]} ${d.getFullYear()}`};
-}
-
-async function openFoodHistory(){
-  $('#sheet-fhistory').classList.add('open');
-  $('#fh-wdate').value = todayIso();
-  renderFoodHistory(); loadWeights();
-}
-
-async function renderFoodHistory(){
-  const p = fhPeriod(), end = addDays(p.start, p.n - 1);
-  $('#fh-label').textContent = p.label;
-  let res;
-  try { res = await api(`/api/food/summary?start=${p.start}&end=${end}`); } catch(e){ return toast('Server unreachable'); }
-  kcalChart($('#fh-chart'), res.days, p.start, p.n);
-  const days = res.days, n = days.length;
-  const avg = k => n ? days.reduce((s, d) => s + d[k], 0) / n : 0;
-  const withGoal = days.filter(d => d.goal);
-  const onTarget = withGoal.filter(d => Math.abs(d.kcal - d.goal.kcal) / d.goal.kcal <= .1).length;
-  const cell = (v, label, d=0) => `<div class="dstat"><b>${v}</b><span>${label}</span></div>`;
-  $('#fh-avg').innerHTML = cell(fmt(avg('kcal')), 'kcal') + cell(fmt(avg('protein')), 'protein g')
-    + cell(fmt(avg('carbs')), 'carbs g') + cell(fmt(avg('fat')), 'fat g');
-  $('#fh-avg-note').textContent = n ? `· ${n} logged day${n > 1 ? 's' : ''}${withGoal.length ? ` · ${onTarget} within 10 % of goal` : ''}` : '· nothing logged';
-}
-
-async function loadWeights(){
-  const end = todayIso(), start = addDays(end, -90);
-  let res;
-  try { res = await api(`/api/food/weight?start=${start}&end=${end}`); } catch(e){ return; }
-  weightChart($('#fh-weight'), res.weights, start, end);
-  $('#fh-wlist').innerHTML = res.weights.slice(-5).reverse().map(w => `<div class="row">
-      <div class="main"><b>${fmt(w.kg, 1)} kg</b><span>${dateLabel(w.date)} · 7-day average ${fmt(w.avg7, 1)} kg</span></div>
-      <button class="del" data-wdel="${w.date}" aria-label="Delete">×</button></div>`).join('');
-}
-
-$('#fh-range').onclick = e => { const b = e.target.closest('[data-range]'); if (!b) return;
-  fh.range = b.dataset.range; $('#fh-range').querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); renderFoodHistory(); };
-$('#fh-prev').onclick = () => { fh.anchor = fh.range === 'week' ? addDays(fh.anchor, -7) : iso(new Date(new Date(fh.anchor + 'T12:00:00').getFullYear(), new Date(fh.anchor + 'T12:00:00').getMonth() - 1, 1)); renderFoodHistory(); };
-$('#fh-next').onclick = () => { fh.anchor = fh.range === 'week' ? addDays(fh.anchor, 7) : iso(new Date(new Date(fh.anchor + 'T12:00:00').getFullYear(), new Date(fh.anchor + 'T12:00:00').getMonth() + 1, 1)); renderFoodHistory(); };
-$('#fh-close').onclick = () => { $('#sheet-fhistory').classList.remove('open'); tipHide(); loadProgress(); };
-$('#f-history').onclick = openFoodHistory;
-$('#fh-wform').addEventListener('submit', async e => {
-  e.preventDefault();
-  const kg = num($('#fh-wkg').value);
-  if (!kg) return toast('Enter your weight in kg');
-  try { await post('/api/food/weight', {date: $('#fh-wdate').value || todayIso(), kg}); } catch(err){ return toast('Not saved — 20 to 400 kg'); }
-  $('#fh-wkg').value = ''; toast('Weight saved'); loadWeights();
+$('#f-stats').onclick = () => {
+  st.end = fDate; st.loaded = false;
+  const saved = +lsGet('gymtrack-stats-range', '7'); st.n = [7, 30, 90].includes(saved) ? saved : 7;
+  $('#st-title').textContent = 'Stats';
+  $('#sheet-stats').classList.add('open');
+  stLoad();
+};
+$('#st-close').onclick = () => { $('#sheet-stats').classList.remove('open'); tipHide(); };
+$('#st-range').addEventListener('click', e => {
+  const b = e.target.closest('[data-n]'); if (!b || +b.dataset.n === st.n) return;
+  st.n = +b.dataset.n; lsSet('gymtrack-stats-range', String(st.n)); tipHide(); stLoad();
 });
-$('#fh-wlist').onclick = async e => {
+$('#st-more').onclick = async () => {
+  const c = await picker('Stats', [{label: `End date: ${dateLabel(st.end)}…`, value: 'end'}, {label: 'Goals…', value: 'goals'}]);
+  if (c === 'goals') openGoals();
+  else if (c === 'end'){ const d = await pickDate(st.end); if (d && d !== st.end){ st.end = d; stLoad(); } }
+};
+
+async function stLoad(){
+  const end = st.end, start = stStart(), n = st.n, get = path => api(path).catch(() => null);
+  $('#st-range').querySelectorAll('button').forEach(b => b.classList.toggle('on', +b.dataset.n === st.n));
+  $('#st-period').textContent = `${shortDate(start)} – ${shortDate(end)}` + (end === todayIso() ? ' · today' : '');
+  const [sum, prog, wt, tr, goals] = await Promise.all([
+    get(`/api/food/summary?start=${start}&end=${end}`), get(`/api/food/progress?date=${end}`),
+    get(`/api/food/weight?start=${start}&end=${end}`), get(`/api/food/trend?start=${start}&end=${end}`), get('/api/food/goals')]);
+  if (end !== st.end || n !== st.n) return;                          // another range was chosen meanwhile
+  if (!sum && !prog){ $('#st-body').innerHTML = '<p class="st-empty">Server unreachable.</p>'; return; }
+  Object.assign(st, {sum: sum ? sum.days : [], prog, weights: wt ? wt.weights : [], trend: tr ? tr.trend : [],
+                     goals: goals ? goals.goals : [], loaded: true});
+  stRender();
+}
+
+function stNumbers(){
+  const days = st.sum, n = days.length, avg = k => n ? days.reduce((s, d) => s + d[k], 0) / n : null;
+  const withGoal = days.filter(d => d.goal && d.goal.kcal);
+  const kg = st.prog && st.prog.trend ? st.prog.trend.kg : null;
+  const goalEnd = goalOn(st.end);
+  return {days, n, kcal: avg('kcal'), protein: avg('protein'), carbs: avg('carbs'), fat: avg('fat'),
+          goalAvg: withGoal.length ? withGoal.reduce((s, d) => s + d.goal.kcal, 0) / withGoal.length : null,
+          goalDays: withGoal.length, onTarget: withGoal.filter(d => Math.abs(d.kcal - d.goal.kcal) / d.goal.kcal <= .10).length,
+          kg, goalProtein: goalEnd && goalEnd.protein ? goalEnd.protein : null};
+}
+
+function stRender(){
+  const N = stNumbers(), p = st.prog, t = p && p.trend, m = p && p.maintenance, sg = p && p.suggestion;
+  const perKg = N.kg && N.n ? N.protein / N.kg : null;
+  const target = N.kg && N.goalProtein ? N.goalProtein / N.kg : TARGET_G_PER_KG;
+  let h = '';
+
+  /* 1 — summary */
+  h += `<div class="st-tiles">
+    <div class="st-tile"><b>${N.n ? fmt(N.kcal) : '—'}</b><span>avg kcal a day${N.goalAvg ? ` · goal ${fmt(N.goalAvg)}` : ''}</span></div>
+    <div class="st-tile"><b>${N.n ? fmt(N.protein) : '—'}<small> g</small></b><span>avg protein${perKg ? ` · ${gkg(perKg)} g/kg` : ''}</span></div>
+    <div class="st-tile"><b>${N.goalDays ? `${N.onTarget}<small> of ${N.goalDays}</small>` : '—'}</b><span>${N.goalDays ? 'days within 10 % of the goal' : 'set a goal to count days'}</span></div></div>`;
+  if (N.n && N.n < st.n) h += `<p class="st-note">Averages cover the ${N.n} logged day${N.n > 1 ? 's' : ''} of ${st.n} — days without a log are left out, not counted as zero.</p>`;
+  else h += '<p class="st-note"></p>';
+
+  /* 2 — calories */
+  h += `<div class="card st-sec"><p class="card-title"><span>Calories</span></p>`
+    + (N.n ? `<div class="chart" id="st-kcal"></div><div class="legend" style="margin-top:8px"><span><i style="background:var(--blue)"></i>Eaten</span>
+        <span><i style="background:var(--orange)"></i>Over goal</span><span><i style="background:none;border-top:2px dashed var(--fg-2);border-radius:0;height:0;vertical-align:3px"></i>Goal</span></div>`
+         : `<p class="st-empty">Nothing logged in these ${st.n} days.</p>`) + '</div>';
+
+  /* 3 — macros */
+  h += '<div class="card st-sec"><p class="card-title"><span>Macros</span></p>';
+  if (N.n){
+    const kc = {p: N.protein * 4, c: N.carbs * 4, f: N.fat * 9}, tot = kc.p + kc.c + kc.f || 1;
+    const grams = {p: N.protein, c: N.carbs, f: N.fat};
+    h += `<div class="split" role="img" aria-label="Average split of protein, carbs and fat">${['p', 'c', 'f'].map(k =>
+        `<i style="flex:${kc[k]};background:${MACRO[k].col}"></i>`).join('')}</div>
+      <div class="split-legend">${['p', 'c', 'f'].map(k => `<div style="--c:${MACRO[k].col}"><b>${fmt(grams[k])} g</b><span>${MACRO[k].name} · ${Math.round(kc[k] / tot * 100)} %</span></div>`).join('')}</div>`;
+    if (tot < N.kcal * .85) h += `<p class="st-note" style="margin:10px 0 0">Part of the calories were logged without macros (quick adds), so the split covers about ${Math.round(tot / N.kcal * 100)} % of them.</p>`;
+    h += `<p class="st-sub">Per day, from calories</p><div class="chart" id="st-macro"></div>`;
+    if (perKg){
+      const scale = 3, pct = Math.min(100, perKg / scale * 100), tpct = Math.min(100, target / scale * 100);
+      h += `<p class="st-sub">Protein per kg</p>
+        <div class="gauge" role="img" aria-label="Protein ${gkg(perKg)} grams per kilogram, target ${gkg(target)}"><i style="width:${pct}%"></i><u style="left:${tpct}%"><b>target ${gkg(target)}</b></u></div>
+        <p class="st-line" style="margin-top:2px"><b>${gkg(perKg)} g/kg</b> on average${N.goalProtein ? ` · target from your goal: ${fmt(N.goalProtein)} g ÷ ${fmt(N.kg, 1)} kg` : ` · target ${TARGET_G_PER_KG} g/kg (set a protein goal to use your own)`}</p>`;
+    } else h += '<p class="st-line">Weigh in to see protein per kilogram.</p>';
+  } else h += `<p class="st-empty">Nothing logged in these ${st.n} days.</p>`;
+  h += '</div>';
+
+  /* 4 — weight */
+  const pc = p && p.pace ? PACE_BADGE[p.pace.verdict] : null, tg = p && p.target;
+  h += `<div class="card st-sec"><p class="card-title"><span>Weight</span><button class="more" data-act="wmenu" aria-label="More for weight">&middot;&middot;&middot;</button></p>
+    <div class="st-big">${t ? fmt(t.kg, 1) : '—'}<small> kg</small>${pc ? `<span class="st-badge ${pc[0]}">${pc[1]}</span>` : ''}</div>
+    <p class="st-line">${t && t.rate_week != null ? `<b>${t.rate_week > 0 ? '+' : ''}${fmt(t.rate_week, 2)} kg</b> a week` : (t ? 'The weekly rate shows after 3 weigh-ins spread over a week.' : 'No weigh-in yet.')}</p>
+    <div class="chart" id="st-weight" style="margin-top:10px"></div>
+    <div class="legend" style="margin-top:8px"><span><i style="background:var(--fg-3);border-radius:50%"></i>Weigh-in</span><span><i style="background:var(--green);height:2px;vertical-align:3px"></i>Trend</span>${tg ? '<span><i style="background:none;border-top:2px dashed var(--fg-2);border-radius:0;height:0;vertical-align:3px"></i>Target</span>' : ''}</div>`;
+  h += tg ? `<p class="st-line">Target <b>${fmt(tg.kg, 1)} kg</b>${tg.left != null ? (tg.left > 0 ? ` · ${fmt(tg.left, 1)} kg to go` : ' · reached') : ''}${tg.eta ? ` · at this pace around <b>${shortDate(tg.eta)}</b>` : ''}</p>`
+           : '<p class="st-line">No target weight yet — set one in the ··· menu.</p>';
+  if (st.weights.length < 3) h += `<p class="st-note" style="margin:8px 0 0">${st.weights.length ? `${st.weights.length} weigh-in${st.weights.length > 1 ? 's' : ''} in this range.` : 'No weigh-ins in this range.'} A trend needs 3 spread over a week.</p>`;
+  h += `<form class="fean" id="st-wform" style="margin-top:12px"><input id="st-wkg" inputmode="decimal" placeholder="Weigh-in ${shortDate(st.end)} (kg)" value="${p && p.weighed != null ? p.weighed : ''}" aria-label="Weight in kg"><button type="submit">Save</button></form></div>`;
+
+  /* 5 — energy */
+  h += '<div class="card st-sec"><p class="card-title"><span>Energy</span></p>';
+  if (m && m.kcal){
+    h += `<p class="st-line" style="margin-top:0">You really burn about <b>${fmt(m.kcal)} kcal</b> a day${m.confidence === 'rough' ? ' <span style="color:var(--fg-3)">(rough — log and weigh more often)</span>' : ''}.</p>`;
+    if (N.n){ const def = Math.round(m.kcal - N.kcal);
+      h += `<p class="st-line">You ate <b>${fmt(N.kcal)}</b> on average: a ${def >= 0 ? 'deficit' : 'surplus'} of <b>${fmt(Math.abs(def))} kcal</b> a day.</p>`; }
+    if (p.goal_deficit != null) h += `<p class="st-line">Your goal of <b>${fmt(p.goal_kcal)} kcal</b> is a ${p.goal_deficit >= 0 ? 'deficit' : 'surplus'} of <b>${fmt(Math.abs(p.goal_deficit))}</b>.</p>`;
+    if (sg && (!p.goal_kcal || Math.abs(sg.kcal - p.goal_kcal) >= 100))
+      h += `<p class="st-line">To lose ${sg.pct_week} % a week: <b>${fmt(sg.kcal)} kcal</b>, protein ${fmt(sg.protein)} g.</p>
+        <button class="cta st-cta" id="st-apply">Apply as goal from today</button>`;
+    else if (sg) h += `<p class="st-line">Your goal is in line with losing ${sg.pct_week} % a week.</p>`;
+  } else if (m && m.intake){
+    h += `<p class="st-line" style="margin-top:0">Your real burn shows after ${esc(m.needs || 'more data')} — ${m.logged_days} of the last ${m.window} days logged so far.</p>`;
+  } else h += '<p class="st-line" style="margin-top:0">Log your food and weigh in for a couple of weeks — then your real burn appears here.</p>';
+  h += '</div>';
+
+  /* 6 — export */
+  h += '<button class="cta ghost" id="st-export" style="margin-top:4px">Export for AI</button>';
+  const y = $('#st-scroll').scrollTop;
+  $('#st-body').innerHTML = h;
+  $('#st-scroll').scrollTop = y;
+  stDraw();
+}
+
+/* — charts — */
+function stGeom(el, H){
+  const n = st.n, W = el.clientWidth || 340, L = 38, R = 6, T = 10, B = 24, pw = W - L - R;
+  const start = stStart(), keys = Array.from({length: n}, (_, i) => addDays(start, i));
+  return {W, H, L, R, T, B, n, pw, ph: H - T - B, slot: pw / n, keys, bw: Math.max(2, Math.min(26, pw / n * .72))};
+}
+function niceScale(v, intervals = 5){
+  if (!(v > 0)) return {max: 1, step: .25};
+  for (const m of [1, 2, 2.5, 5, 10]) for (const e of [-1, 0, 1, 2, 3, 4]){
+    const step = m * Math.pow(10, e);
+    if (Math.ceil(v / step) <= intervals) return {max: Math.ceil(v / step) * step, step};
+  }
+  return {max: v, step: v / 4};
+}
+function stYAxis(g, sc, tick = v => fmt(v)){
+  const y = v => g.T + g.ph - v / sc.max * g.ph; let svg = '';
+  for (let v = 0; v <= sc.max + 1e-9; v += sc.step)
+    svg += `<line class="gl" x1="${g.L}" x2="${g.W - g.R}" y1="${y(v)}" y2="${y(v)}"/><text class="ax" x="${g.L - 6}" y="${y(v) + 3}" text-anchor="end">${tick(v)}</text>`;
+  return {svg, y};
+}
+function stXAxis(g){
+  const firsts = g.keys.map((k, i) => k.endsWith('-01') ? i : -9);
+  return g.keys.map((k, i) => {
+    const d = new Date(k + 'T12:00:00'); let label = '';
+    if (g.n <= 10) label = DAYS[d.getDay()].slice(0, 2);
+    else if (g.n <= 31) label = d.getDate() === 1 ? MONTHS[d.getMonth()] : (i % 5 === 0 && !firsts.some(f => Math.abs(f - i) < 3) ? String(d.getDate()) : '');
+    else label = d.getDate() === 1 && i < g.n - 6 ? MONTHS[d.getMonth()] : '';
+    return label ? `<text class="ax" x="${g.L + g.slot * i + g.slot / 2}" y="${g.H - 7}" text-anchor="middle">${label}</text>` : '';
+  }).join('');
+}
+const roundTop = (x, w, top, base, r) => { r = Math.min(r, w / 2, Math.max(0, base - top)); return `M${x},${base} V${top + r} Q${x},${top} ${x + r},${top} H${x + w - r} Q${x + w},${top} ${x + w},${top + r} V${base} Z`; };
+const gap = (g, i, base) => `<circle cx="${g.L + g.slot * i + g.slot / 2}" cy="${base - 2}" r="1.6" fill="var(--fg-3)"/>`;
+
+function stCalories(el){
+  const g = stGeom(el, 200), by = Object.fromEntries(st.sum.map(d => [d.date, d]));
+  const goals = g.keys.map(k => { const x = goalOn(k); return x ? x.kcal : null; });
+  const sc = niceScale(Math.max(...st.sum.map(d => d.kcal), ...goals.filter(Boolean), 1) * 1.04);
+  const ax = stYAxis(g, sc), base = g.T + g.ph;
+  let s = ax.svg + stXAxis(g), path = '';
+  const tips = g.keys.map((k, i) => {
+    const d = by[k], goal = goals[i], x = g.L + g.slot * i + (g.slot - g.bw) / 2;
+    if (d){
+      const over = goal && d.kcal > goal * 1.05;
+      s += `<path d="${roundTop(x, g.bw, Math.min(ax.y(d.kcal), base - 2), base, 4)}" fill="${over ? 'var(--orange)' : 'var(--blue)'}"/>`;
+    } else s += gap(g, i, base);
+    if (goal) path += `${path && goals[i - 1] ? 'L' : 'M'}${g.L + g.slot * i},${ax.y(goal)} H${g.L + g.slot * (i + 1)} `;
+    s += `<rect class="hit" data-tip="${i}" x="${g.L + g.slot * i}" y="${g.T}" width="${g.slot}" height="${g.ph}"/>`;
+    if (!d) return `<b>${dateLabel(k)}</b><br><span>nothing logged</span>`;
+    const diff = goal ? Math.round(d.kcal - goal) : null;
+    return `<b>${dateLabel(k)}</b><br>${fmt(d.kcal)} kcal${goal ? ` <span>of ${fmt(goal)} · ${diff >= 0 ? '+' : '−'}${fmt(Math.abs(diff))}</span>` : ''}<br><span>P ${fmt(d.protein)} · C ${fmt(d.carbs)} · F ${fmt(d.fat)} g</span>`;
+  });
+  if (path) s += `<path d="${path}" fill="none" stroke="var(--fg-2)" stroke-width="2" stroke-dasharray="4 3" pointer-events="none"/>`;
+  el.innerHTML = `<svg viewBox="0 0 ${g.W} ${g.H}" height="${g.H}" role="img" aria-label="Calories per day against the goal">${s}</svg>`;
+  bindTips(el.firstChild, tips);
+}
+
+function stMacros(el){
+  const g = stGeom(el, 170), by = Object.fromEntries(st.sum.map(d => [d.date, d]));
+  const tot = d => d.protein * 4 + d.carbs * 4 + d.fat * 9;
+  const sc = niceScale(Math.max(...st.sum.map(tot), 1) * 1.04), ax = stYAxis(g, sc), base = g.T + g.ph;
+  let s = ax.svg + stXAxis(g);
+  const tips = g.keys.map((k, i) => {
+    const d = by[k], x = g.L + g.slot * i + (g.slot - g.bw) / 2;
+    if (!d){ s += gap(g, i, base); s += `<rect class="hit" data-tip="${i}" x="${g.L + g.slot * i}" y="${g.T}" width="${g.slot}" height="${g.ph}"/>`; return `<b>${dateLabel(k)}</b><br><span>nothing logged</span>`; }
+    let y = base;
+    ['f', 'c', 'p'].forEach(m => {                                   // protein on top, as in the legend order
+      const hh = (d[m === 'p' ? 'protein' : m === 'c' ? 'carbs' : 'fat'] * MACRO[m].k) / sc.max * g.ph;
+      if (hh > 0.5){ s += `<rect x="${x}" y="${y - hh}" width="${g.bw}" height="${Math.max(0, hh - (g.bw > 4 ? 1.5 : 0))}" fill="${MACRO[m].col}"/>`; y -= hh; }
+    });
+    s += `<rect class="hit" data-tip="${i}" x="${g.L + g.slot * i}" y="${g.T}" width="${g.slot}" height="${g.ph}"/>`;
+    const T = tot(d) || 1;
+    return `<b>${dateLabel(k)}</b><br><span style="color:var(--blue)">●</span> P ${fmt(d.protein)} g · ${Math.round(d.protein * 4 / T * 100)} %<br><span style="color:#bf5af2">●</span> C ${fmt(d.carbs)} g · ${Math.round(d.carbs * 4 / T * 100)} %<br><span style="color:var(--orange)">●</span> F ${fmt(d.fat)} g · ${Math.round(d.fat * 9 / T * 100)} %`;
+  });
+  el.innerHTML = `<svg viewBox="0 0 ${g.W} ${g.H}" height="${g.H}" role="img" aria-label="Calories from protein, carbs and fat per day">${s}</svg>`;
+  bindTips(el.firstChild, tips);
+}
+
+function stWeight(el){
+  const g = stGeom(el, 190), wBy = Object.fromEntries(st.weights.map(w => [w.date, w.kg])), tBy = Object.fromEntries(st.trend.map(x => [x.date, x.kg]));
+  const vals = [...st.weights.map(w => w.kg), ...st.trend.map(x => x.kg)];
+  if (!vals.length){ el.innerHTML = '<p class="st-empty">No weigh-ins in this range.</p>'; return; }
+  const tg = st.prog && st.prog.target ? st.prog.target.kg : null;
+  let lo = Math.min(...vals), hi = Math.max(...vals);
+  const tgIn = tg != null && tg >= lo - 3 && tg <= hi + 3;                    // a far-away target is only written below
+  if (tgIn){ lo = Math.min(lo, tg); hi = Math.max(hi, tg); }
+  lo = Math.floor(lo - .4); hi = Math.ceil(hi + .4); if (hi - lo < 2){ lo -= 1; hi += 1; }
+  const step = Math.max(1, Math.ceil((hi - lo) / 4)), top = lo + Math.ceil((hi - lo) / step) * step;
+  const y = v => g.T + (top - v) / (top - lo) * g.ph; let s = '';
+  for (let v = lo; v <= top; v += step) s += `<line class="gl" x1="${g.L}" x2="${g.W - g.R}" y1="${y(v)}" y2="${y(v)}"/><text class="ax" x="${g.L - 6}" y="${y(v) + 3}" text-anchor="end">${v}</text>`;
+  s += stXAxis(g);
+  if (tgIn) s += `<line x1="${g.L}" x2="${g.W - g.R}" y1="${y(tg)}" y2="${y(tg)}" stroke="var(--fg-2)" stroke-width="1.5" stroke-dasharray="4 3"/>`;
+  const cx = i => g.L + g.slot * i + g.slot / 2;
+  let line = ''; g.keys.forEach((k, i) => { if (tBy[k] != null) line += `${line ? 'L' : 'M'}${cx(i)},${y(tBy[k])} `; });
+  if (line) s += `<path d="${line}" fill="none" stroke="var(--green)" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>`;
+  const tips = g.keys.map((k, i) => {
+    if (wBy[k] != null) s += `<circle cx="${cx(i)}" cy="${y(wBy[k])}" r="${g.n > 40 ? 2.6 : 3.8}" fill="var(--fg-3)" stroke="var(--card)" stroke-width="1.5"/>`;
+    s += `<rect class="hit" data-tip="${i}" x="${g.L + g.slot * i}" y="${g.T}" width="${g.slot}" height="${g.ph}"/>`;
+    return `<b>${dateLabel(k)}</b><br>` + (wBy[k] != null ? `${fmt(wBy[k], 1)} kg<br>` : '<span>no weigh-in</span><br>') + (tBy[k] != null ? `<span>trend ${fmt(tBy[k], 1)} kg</span>` : '');
+  });
+  el.innerHTML = `<svg viewBox="0 0 ${g.W} ${g.H}" height="${g.H}" role="img" aria-label="Weigh-ins and the weight trend">${s}</svg>`;
+  bindTips(el.firstChild, tips);
+}
+
+function stDraw(){
+  if ($('#st-kcal')) stCalories($('#st-kcal'));
+  if ($('#st-macro')) stMacros($('#st-macro'));
+  if ($('#st-weight')) stWeight($('#st-weight'));
+}
+window.addEventListener('resize', debounce(() => { if (stOpen() && st.loaded) stDraw(); }, 150));
+
+/* — actions — */
+$('#st-body').addEventListener('click', async e => {
+  if (e.target.closest('#st-export')) return openExport();
+  if (e.target.closest('#st-apply')){
+    const sg = st.prog.suggestion, fat = Math.round(sg.kcal * 0.28 / 9);
+    const carbs = Math.max(0, Math.round((sg.kcal - sg.protein * 4 - fat * 9) / 4));
+    try { await post('/api/food/goals', {effective_from: todayIso(), kcal: sg.kcal, protein: sg.protein, carbs, fat}); }
+    catch(err){ return toast('Goal not saved'); }
+    toast(`Goal from today: ${fmt(sg.kcal)} kcal`);
+    loadDay(); return;
+  }
+  if (e.target.closest('[data-act=wmenu]')){
+    const c = await picker('Weight', [{label: 'Target weight…', value: 'target'}, {label: 'All weigh-ins…', value: 'all'}]);
+    if (c === 'all') openWeights();
+    else if (c === 'target'){
+      const cur = st.prog && st.prog.target ? st.prog.target.kg : '';
+      const v = await askNumber('Target weight (kg)', cur, true);
+      if (v === undefined) return;
+      try { await api('/api/food/target', {method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({kg: v})}); }
+      catch(err){ return toast('Target not saved — between 30 and 300 kg'); }
+      stLoad();
+    }
+  }
+});
+$('#st-body').addEventListener('submit', async e => {
+  e.preventDefault();
+  const kg = num($('#st-wkg').value);
+  if (!kg) return toast('Enter your weight in kg');
+  try { await post('/api/food/weight', {date: st.end, kg}); } catch(err){ return toast('Weight not saved — 20 to 400 kg'); }
+  toast('Weight saved'); stLoad();
+});
+
+/* every weigh-in, with the date: add one for any day, delete a wrong one */
+async function openWeights(){
+  $('#wt-date').value = todayIso(); $('#wt-kg').value = '';
+  $('#sheet-weights').classList.add('open');
+  renderWeights();
+}
+async function renderWeights(){
+  let res; try { res = await api(`/api/food/weight?start=${addDays(todayIso(), -180)}&end=${todayIso()}`); } catch(e){ return toast('Server unreachable'); }
+  $('#wt-list').innerHTML = res.weights.length ? res.weights.slice().reverse().map(w => `<div class="row">
+      <div class="main"><b>${fmt(w.kg, 1)} kg</b><span>${dateLabel(w.date)} · 7-day average ${fmt(w.avg7, 1)} kg</span></div>
+      <button class="del" data-wdel="${w.date}" aria-label="Delete the weigh-in of ${w.date}">×</button></div>`).join('') : '<p class="empty">No weigh-ins yet.</p>';
+}
+$('#wt-close').onclick = () => { $('#sheet-weights').classList.remove('open'); if (stOpen()) stLoad(); };
+$('#wt-form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const kg = num($('#wt-kg').value);
+  if (!kg) return toast('Enter your weight in kg');
+  try { await post('/api/food/weight', {date: $('#wt-date').value || todayIso(), kg}); } catch(err){ return toast('Not saved — 20 to 400 kg'); }
+  $('#wt-kg').value = ''; toast('Weight saved'); renderWeights();
+});
+$('#wt-list').onclick = async e => {
   const b = e.target.closest('[data-wdel]'); if (!b) return;
-  try { await api('/api/food/weight/' + b.dataset.wdel, {method:'DELETE'}); } catch(err){ return toast('Not deleted'); }
-  loadWeights();
+  try { await api('/api/food/weight/' + b.dataset.wdel, {method: 'DELETE'}); } catch(err){ return toast('Not deleted'); }
+  renderWeights();
+};
+
+/* a small dialog asking for one number: undefined = cancelled, null = cleared */
+function askNumber(title, value, clearable){
+  return new Promise(resolve => {
+    const dlg = $('#dlg-num'), input = $('#num-in');
+    $('#num-title').textContent = title; input.value = value === '' || value == null ? '' : String(value);
+    $('#num-clear').hidden = !clearable;
+    dlg.classList.add('open'); dlg.setAttribute('aria-hidden', 'false'); setTimeout(() => input.focus(), 120);
+    const done = v => { dlg.classList.remove('open'); dlg.setAttribute('aria-hidden', 'true'); input.blur(); cleanup(); resolve(v); };
+    const onSubmit = e => { e.preventDefault(); const v = num(input.value); if (v == null) return toast('Enter a number'); done(v); };
+    const cleanup = () => { $('#num-form').removeEventListener('submit', onSubmit); $('#num-cancel').onclick = $('#dlg-num-dim').onclick = $('#num-clear').onclick = null; };
+    $('#num-form').addEventListener('submit', onSubmit);
+    $('#num-cancel').onclick = $('#dlg-num-dim').onclick = () => done(undefined);
+    $('#num-clear').onclick = () => done(null);
+  });
+}
+
+/* — export for an AI: one button, one small sheet — */
+const bx = {scope: 'day'};
+const bxPath = () => bx.scope === 'week' ? '/api/food/export/week?end=' + st.end : '/api/food/export/day?date=' + st.end;
+function bxLabels(){
+  document.querySelectorAll('#bx-scope button').forEach(b => b.classList.toggle('on', b.dataset.scope === bx.scope));
+  $('#bx-copy').textContent = bx.scope === 'week' ? 'Copy week' : 'Copy day';
+  $('#bx-for').textContent = bx.scope === 'week' ? `7 days to ${shortDate(st.end)}` : dateLabel(st.end);
+  $('#bx-hint').textContent = bx.scope === 'week'
+    ? 'The seven days up to that day — food, training, weight and real burn — as a prompt asking for a rating.'
+    : 'That day — every entry, totals against your goal, training, weight and real burn — as a prompt asking for a rating.';
+}
+function openExport(){
+  bx.scope = 'day'; bxLabels();
+  const el = $('#bs-export'); el.classList.add('open'); el.setAttribute('aria-hidden', 'false'); document.body.classList.add('bx-open');
+}
+function closeExport(){
+  const el = $('#bs-export'); el.classList.remove('open'); el.setAttribute('aria-hidden', 'true');
+  el.querySelector('.bs-panel').style.transform = '';
+  document.body.classList.remove('bx-open');
+}
+$('#bx-dim').onclick = closeExport;
+$('#bx-scope').addEventListener('click', e => { const b = e.target.closest('[data-scope]'); if (b){ bx.scope = b.dataset.scope; bxLabels(); } });
+$('#bx-copy').onclick = () => exportToClipboard($('#bx-copy'), bxPath(), bx.scope === 'week' ? 'Week' : 'Day');
+$('#bx-preview').onclick = () => { closeExport(); openAiExport(bxPath(), bx.scope); };
+$('#bx-download').onclick = async () => {
+  try { ax = await api(bxPath()); } catch(e){ return toast('Server unreachable'); }
+  saveMarkdown(ax);
 };
 
 /* ---------- food: export the day for an AI ---------- */
 let ax = null;
-async function openAiExport(){
-  $('#ax-title').textContent = `Export ${dateLabel(fDate).toLowerCase()}`;
+async function openAiExport(path, scope){
+  $('#ax-title').textContent = scope === 'week' ? 'Export week' : `Export ${dateLabel(st.end || fDate).toLowerCase()}`;
   $('#ax-text').value = 'Preparing…';
   $('#ax-share').hidden = !navigator.share;
   $('#sheet-aiexport').classList.add('open');
-  try { ax = await api('/api/food/export/day?date=' + fDate); }
+  try { ax = await api(path); }
   catch(e){ ax = null; $('#ax-text').value = 'Server unreachable.'; return; }
   $('#ax-text').value = ax.markdown;
 }
-$('#f-aiexport').onclick = openAiExport;
 /* One tap: the day — food, GymTrack and openGym training — straight to the clipboard. When the
    browser refuses a copy that comes after the fetch, the sheet opens and its Copy button works. */
 /* The day, or the week up to it, straight to the clipboard. */
@@ -3134,26 +3283,24 @@ async function exportToClipboard(btn, path, what){
   const og = ax.opengym || {};
   const note = og.ok ? (og.workouts ? ` · ${og.workouts} from openGym` : '') : ' · openGym not reachable';
   if (await copyText(ax.markdown)){ toast(`${what} copied — paste it into your AI` + note); return; }
-  $('#ax-title').textContent = what === 'Week' ? 'Export week' : `Export ${dateLabel(fDate).toLowerCase()}`;
+  $('#ax-title').textContent = what === 'Week' ? 'Export week' : `Export ${dateLabel(st.end || fDate).toLowerCase()}`;
   $('#ax-text').value = ax.markdown;
   $('#ax-share').hidden = !navigator.share;
   $('#sheet-aiexport').classList.add('open');
   toast('Tap Copy to put it on the clipboard');
 }
-$('#f-aicopy').onclick = () => exportToClipboard($('#f-aicopy'), '/api/food/export/day?date=' + fDate, 'Day');
-$('#f-aiweek').onclick = () => exportToClipboard($('#f-aiweek'), '/api/food/export/week?end=' + fDate, 'Week');
 $('#ax-close').onclick = () => $('#sheet-aiexport').classList.remove('open');
 $('#ax-copy').onclick = async () => {
   if (!ax) return;
   toast(await copyText(ax.markdown) ? 'Copied — paste it into your AI' : 'Copy failed — select the text and copy it');
 };
-$('#ax-download').onclick = () => {
-  if (!ax) return;
+function saveMarkdown(x){
   const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob([ax.markdown], {type: 'text/markdown;charset=utf-8'}));
-  a.download = ax.filename; document.body.appendChild(a); a.click(); a.remove();
+  a.href = URL.createObjectURL(new Blob([x.markdown], {type: 'text/markdown;charset=utf-8'}));
+  a.download = x.filename; document.body.appendChild(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-};
+}
+$('#ax-download').onclick = () => { if (ax) saveMarkdown(ax); };
 $('#ax-share').onclick = async () => {
   if (!ax) return;
   try {
@@ -3268,11 +3415,14 @@ function qaPane(name){
 $('#qa-tabs').addEventListener('click', e => { const b = e.target.closest('button'); if (b){ qa.switched = true; qaPane(b.dataset.pane); } });
 $('#f-qa').onclick = () => openQuickAdd();
 $('#bs-dim').onclick = closeQuickAdd;
-document.addEventListener('keydown', e => { if (e.key === 'Escape' && qaOpen() && !document.querySelector('.sheet.open')) closeQuickAdd(); });
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Escape') return;
+  if ($('#bs-export').classList.contains('open')) closeExport();
+  else if (qaOpen() && !document.querySelector('.sheet.open')) closeQuickAdd();
+});
 
 /* Swipe down on the grabber/header to close. Only the header listens, so the lists scroll freely. */
-(function(){
-  const head = $('#bs-head'), panel = $('#bs-quick .bs-panel');
+function bsSwipe(head, panel, close){
   let y0 = null, dy = 0, t0 = 0;
   head.addEventListener('pointerdown', e => { y0 = e.clientY; dy = 0; t0 = e.timeStamp; panel.style.transition = 'none'; head.setPointerCapture(e.pointerId); });
   head.addEventListener('pointermove', e => {
@@ -3283,10 +3433,12 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape' && qaOpen() &
     if (y0 == null) return;
     const fast = dy / Math.max(1, e.timeStamp - t0) > .5;     // px per ms
     y0 = null; panel.style.transition = '';
-    if (dy > 110 || (fast && dy > 30)) closeQuickAdd(); else panel.style.transform = '';
+    if (dy > 110 || (fast && dy > 30)) close(); else panel.style.transform = '';
   };
   head.addEventListener('pointerup', end); head.addEventListener('pointercancel', end);
-})();
+}
+bsSwipe($('#bs-head'), $('#bs-quick .bs-panel'), closeQuickAdd);
+bsSwipe($('#bx-head'), $('#bs-export .bs-panel'), closeExport);
 
 /* A — frequent */
 async function loadFrequent(){

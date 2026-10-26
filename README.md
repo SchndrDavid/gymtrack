@@ -82,24 +82,24 @@ without it the prompt tells the AI to assume 75 kg and say so.
   the estimated calories, macros and alcohol per portion — with a search box. Tap a dish, pick ½, 1
   or 2 portions, and it goes into the meal chosen at the top. Menus come from a spreadsheet, see
   [Restaurants](#restaurants).
-- **Weight and what you really burn.** *Stats*, at the bottom of the Food tab, takes the morning weigh-in and
-  shows the trend — a line through three weeks of weigh-ins, so a kilo of water does not move it —
-  with its rate per week and whether that is on track (0.25–1 % of bodyweight a week), stalled, or
-  so fast it costs muscle. From what you ate on the logged days and how the trend moved it works out
-  what you actually burn a day (7700 kcal per kg), shows the deficit your goal really gives, and
-  suggests a goal for 0.7 % a week with 1.8 g protein per kg — one tap makes it your goal. Set a
-  target weight and it says when you get there at this pace.
-- **Days, goals, history.** Edit or delete entries (× next to each), copy yesterday's breakfast, set goals that apply
-  from a date on, see week and month charts, macro averages and a 7-day weight trend. The year grid
-  switches between *Training* and *Food*, where each day is coloured by how close it ended to the goal.
-- **Export a day or a week for AI.** In *Stats*, *Week* copies the seven days up to the shown one — a
-  table of every day with weigh-ins and training, averages, trend, real burn and target — asking for a
-  rating of the week, the pace, patterns and three changes for next week.
-  *Export AI* copies the whole day in one tap — every entry with its amount,
+- **Stats.** One scrolling page behind *Stats* in the Food tab, for the last 7, 30 or 90 days (the choice is
+  remembered; ⋯ → *End date…* moves the range, *Goals* opens the goals). Summary tiles; a calories chart
+  against the goal line, with days over it tinted and days without a log left as gaps, not zeros; macros as
+  a split of kcal (protein blue, carbs purple, fat orange), per day, and protein per kg of trend weight
+  against a target; weight as raw weigh-ins with the trend line, the rate per week, whether that is on
+  track (0.25–1 % of bodyweight a week), stalled or so fast it costs muscle, the target and when you get
+  there at this pace, and a field for today's weigh-in; and energy — what you really burn a day (7700 kcal
+  per kg), the deficit your goal really gives and a suggested goal, applied from today with one tap.
+  Tap a bar or a point for the exact numbers. *All weigh-ins…* and *Target weight…* are in the weight ⋯ menu.
+- **Days, goals.** Edit or delete entries (× next to each), copy yesterday's breakfast, set goals that apply
+  from a date on. The year grid switches between *Training* and *Food*, where each day is coloured by how
+  close it ended to the goal.
+- **Export for AI.** *Export for AI* at the bottom of Stats opens a small sheet: *Day* or *Week*, then
+  *Copy*, *Preview* or *Download* (`day-YYYY-MM-DD.md` / week). The day is every entry with its amount,
   totals against the goal, energy split, protein per kg, that day's training here and in
-  [openGym](#opengym), and the week before — as a prompt asking for a rating of the day out of 10,
-  energy balance, macro check, food quality and changes for tomorrow. *Preview AI export* shows it
-  first, and shares or downloads it as `day-YYYY-MM-DD.md`.
+  [openGym](#opengym), and the week before, as a prompt asking for a rating out of 10, energy balance,
+  macro check, food quality and changes for tomorrow. The week is a table of seven days with weigh-ins and
+  training, averages, trend, real burn and target, asking for the pace, patterns and three changes.
 - **History never changes behind your back.** Each entry stores its own values, so re-importing the
   catalogue or editing a food leaves past days as they were.
 
@@ -330,6 +330,7 @@ Food, all under `/api/food`:
 | `GET` `POST` | `/goals`                  | Goals with `effective_from`; `DELETE /goals/{id}`         |
 | `GET` `POST` | `/weight`                 | Body weight with 7-day average; `DELETE /weight/{date}`   |
 | `GET`    | `/progress?date=`             | Trend weight and rate, real burn, deficit, suggestion, target |
+| `GET`    | `/trend?start=&end=`          | The fitted trend weight for every day of a range          |
 | `PUT`    | `/target`                     | Target weight `{"kg": 85}`, `{"kg": null}` clears it      |
 | `GET`    | `/export/week?end=`           | The seven days up to `end` as a prompt for an AI          |
 | `GET`    | `/barcode/{code}`             | Catalogue, then live Open Food Facts                      |

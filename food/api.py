@@ -607,6 +607,25 @@ class WeightIn(BaseModel):
     kg: float
 
 
+@router.get("/trend")
+def get_trend(start: str = "", end: str = ""):
+    """The weight trend for every day of a range — the same fit that gives the rate and the ETA.
+
+    Days with no weigh-in in the three weeks before them have no trend and are left out."""
+    start, end = _range(start, end, 90)
+    first, last = Date.fromisoformat(start), Date.fromisoformat(end)
+    if last < first or (last - first).days > 400:
+        raise HTTPException(400, "a range of 1 to 400 days")
+    out, day = [], first
+    with connect() as conn:
+        while day <= last:
+            t = progress.trend(conn, day.isoformat())
+            if t and t["points"] > 0:
+                out.append({"date": day.isoformat(), "kg": t["kg"], "rate_week": t["rate_week"], "fitted": t["fitted"]})
+            day += timedelta(days=1)
+    return {"start": start, "end": end, "trend": out}
+
+
 @router.get("/weight")
 def get_weight(start: str = "", end: str = ""):
     start, end = _range(start, end, 370)

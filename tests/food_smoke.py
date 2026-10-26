@@ -836,6 +836,25 @@ check("one-tap logging can be undone", client.get("/api/food/day", params={"date
 fcat.FOODS_DB = old_foods_db
 fcat.DB_PATH = old_db_path
 
+# ─── weight trend per day (Stats) ───────────────────────────────────────────
+fcat.DB_PATH = str(TMP / "trend.db")
+fcat.init()
+for i in range(40):                                  # 40 days, about -0.07 kg a day with a little noise
+    client.post("/api/food/weight", json={"date": ago(40 - i), "kg": round(90 - i * 0.07 + (0.3 if i % 3 == 0 else -0.2), 1)})
+tr = client.get("/api/food/trend", params={"start": ago(30), "end": ago(0)}).json()["trend"]
+check("trend has a value for every day with recent weigh-ins", len(tr) == 31 and tr[0]["date"] == ago(30) and tr[-1]["date"] == ago(0))
+prog = client.get("/api/food/progress", params={"date": ago(0)}).json()["trend"]
+check("the last trend value is the one the progress card uses", tr[-1]["kg"] == prog["kg"] and tr[-1]["rate_week"] == prog["rate_week"])
+check("the trend is falling with a rate per week", tr[-1]["rate_week"] < -0.3 and tr[-1]["kg"] < tr[0]["kg"])
+check("an early day is a plain average until there are enough weigh-ins",
+      client.get("/api/food/trend", params={"start": ago(40), "end": ago(40)}).json()["trend"][0]["fitted"] is False)
+check("days before the first weigh-in have no trend", client.get("/api/food/trend", params={"start": ago(60), "end": ago(45)}).json()["trend"] == [])
+after = client.get("/api/food/trend", params={"start": _D.today().isoformat(), "end": (_D.today() + _T(days=60)).isoformat()}).json()["trend"]
+check("the trend stops three weeks after the last weigh-in (yesterday)", after and after[-1]["date"] == (_D.today() + _T(days=19)).isoformat())
+check("a bad range is refused", client.get("/api/food/trend", params={"start": "2025-01-01", "end": "2026-12-31"}).status_code == 400
+      and client.get("/api/food/trend", params={"start": "x"}).status_code == 400)
+fcat.DB_PATH = old_db_path
+
 # ─── the page itself: every element the script reaches for exists ───────────
 import re as _re  # noqa: E402
 
