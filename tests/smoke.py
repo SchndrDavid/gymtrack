@@ -122,6 +122,21 @@ check("history pages", [w["date"] for w in page["workouts"]] == ["2026-08-21", "
 check("a page still reports the total", page["total"] == 4)
 check("an absurd limit is clamped", len(client.get("/api/workouts?limit=99999").json()["workouts"]) == 4)
 
+# Editing fixes a timer left running and moves a workout to another day
+target = history["workouts"][1]["id"]
+r = client.put(f"/api/workout/{target}", json={"seconds": 5400, "started_at": "2026-08-22T17:05:00"})
+check("edit succeeds", r.status_code == 200 and r.json()["workout"]["seconds"] == 5400)
+check("edit keeps what was not sent", r.json()["workout"]["name"] == history["workouts"][1]["name"])
+r = client.put(f"/api/workout/{target}", json={"date": "2026-08-19", "name": "Moved"})
+moved = r.json()["workout"]
+check("edit moves the day and keeps the clock", moved["date"] == "2026-08-19"
+      and moved["started_at"] == "2026-08-19T17:05:00" and moved["name"] == "Moved")
+days = client.get("/api/state").json()["days"]
+check("the new day is marked gym", days["2026-08-19"]["gym"] is True)
+check("the emptied day loses its mark", "2026-08-22" not in days)
+check("a bad edit is refused", client.put(f"/api/workout/{target}", json={"date": "x"}).status_code == 400)
+check("editing nothing that exists is a 404", client.put("/api/workout/99999", json={"seconds": 1}).status_code == 404)
+
 # Deleting a workout drops it from the history
 victim = history["workouts"][0]["id"]
 client.delete(f"/api/workout/{victim}")
