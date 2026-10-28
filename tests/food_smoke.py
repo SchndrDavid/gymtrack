@@ -855,6 +855,135 @@ check("a bad range is refused", client.get("/api/food/trend", params={"start": "
       and client.get("/api/food/trend", params={"start": "x"}).status_code == 400)
 fcat.DB_PATH = old_db_path
 
+# ─── batches: cooked once, logged by the cooked weight ──────────────────────
+DB_ = "2026-05-10"
+pot = client.post("/api/food/containers", json={"name": "Hrnec", "tare_g": "900"}).json()
+box1 = client.post("/api/food/containers", json={"name": "Krabička 1", "tare_g": "80,5"}).json()
+check("a container keeps its empty weight (comma or dot)", pot["tare_g"] == 900 and box1["tare_g"] == 80.5)
+check("a container needs a name and a weight", client.post("/api/food/containers", json={"name": "", "tare_g": 5}).status_code == 400
+      and client.post("/api/food/containers", json={"name": "X", "tare_g": "abc"}).status_code == 400)
+box1 = client.put(f"/api/food/containers/{box1['id']}", json={"name": "Krabička 1", "tare_g": 80}).json()
+check("a container can be changed", box1["tare_g"] == 80
+      and [c["name"] for c in client.get("/api/food/containers").json()["containers"]] == ["Hrnec", "Krabička 1"])
+
+MACROS_ = {"kcal": 2000, "protein": 160, "carbs": 200, "fat": 60}
+b = client.post("/api/food/batches", json={"name": "Chilli", "cooked_on": DB_, "container_id": pot["id"],
+                                          "gross_g": "2100", "boxes": 4, **MACROS_}).json()
+check("net weight is the weighing minus the pot", b["net_g"] == 1200 and b["tare_g"] == 900 and b["container_name"] == "Hrnec")
+check("kcal per 100 g of the cooked food: 2000 / 1200 g = 166.7", abs(b["per_100g"]["kcal"] - 166.67) < 0.01
+      and abs(b["per_100g"]["protein"] - 13.33) < 0.01)
+check("4 boxes of 300 g are 500 kcal each", b["box_g"] == 300 and b["per_box"]["kcal"] == 500 and b["per_box"]["protein"] == 40)
+check("a new batch has everything left and is in the fridge", b["remaining_g"] == 1200 and b["remaining_boxes"] == 4
+      and b["storage"] == "fridge" and not b["archived"])
+client.put(f"/api/food/containers/{pot['id']}", json={"name": "Hrnec", "tare_g": 1000})
+check("a changed container leaves the batch as it was made", client.get(f"/api/food/batches/{b['id']}").json()["net_g"] == 1200)
+
+for body, why in [({"name": "X", "gross_g": 800, "container_id": pot["id"], "boxes": 2, "kcal": 100}, "lighter than the pot"),
+                  ({"name": "X", "gross_g": 2100, "boxes": 0, "kcal": 100}, "no boxes"),
+                  ({"name": "X", "gross_g": 2100, "boxes": 2.5, "kcal": 100}, "half a box"),
+                  ({"name": "X", "gross_g": 2100, "boxes": 2}, "no nutrition"),
+                  ({"name": "X", "gross_g": 2100, "boxes": 2, "kcal": 100, "container_id": 999}, "unknown container"),
+                  ({"name": "X", "gross_g": 2100, "boxes": 2, "kcal": 100, "recipe_ref": "user:99999"}, "unknown recipe"),
+                  ({"name": "X", "gross_g": 1000, "boxes": 2, "kcal": 100, "box_weights": [700, 700]}, "boxes heavier than the food")]:
+    check(f"a batch is refused: {why}", client.post("/api/food/batches", json=body).status_code == 400)
+
+n0 = len(client.get("/api/food/day", params={"date": DB_}).json()["entries"])
+g300 = client.post(f"/api/food/batches/{b['id']}/log", json={"mode": "grams", "value": "300", "date": DB_, "meal": "lunch"}).json()
+check("300 g from the batch is 500 kcal", g300["entry"]["kcal"] == 500 and g300["entry"]["protein"] == 40
+      and g300["entry"]["carbs"] == 50 and g300["entry"]["fat"] == 15 and g300["entry"]["entry_method"] == "batch")
+check("and 300 g less is left, a box less", g300["batch"]["remaining_g"] == 900 and g300["batch"]["remaining_boxes"] == 3)
+gross = client.post(f"/api/food/batches/{b['id']}/log", json={"mode": "gross", "value": "380", "tare_g": "80", "date": DB_, "meal": "dinner"}).json()
+check("a box weighed with its food (380 g, box 80 g) is the same as 300 g",
+      gross["entry"]["grams"] == 300 and gross["entry"]["kcal"] == 500 and gross["batch"]["remaining_g"] == 600)
+by_box = client.post(f"/api/food/batches/{b['id']}/log", json={"mode": "gross", "value": 380, "container_id": box1["id"],
+                                                               "date": DB_, "meal": "snack"}).json()
+check("the empty box can be picked from the containers", by_box["entry"]["kcal"] == 500 and by_box["batch"]["remaining_g"] == 300)
+one = client.post(f"/api/food/batches/{b['id']}/log", json={"mode": "box", "value": 0.5, "date": DB_, "meal": "snack"}).json()
+check("half a box is 150 g", one["entry"]["grams"] == 150 and one["entry"]["kcal"] == 250)
+quarter = client.post(f"/api/food/batches/{b['id']}/log", json={"mode": "fraction", "value": 0.125, "date": DB_, "meal": "snack"}).json()
+check("a share of the batch: 1/8 of 1200 g is 150 g, remaining now 0", quarter["entry"]["grams"] == 150
+      and quarter["batch"]["remaining_g"] == 0 and quarter["batch"]["remaining_boxes"] == 0)
+check("a batch eaten up is marked done and leaves the active list", quarter["batch"]["storage"] == "done"
+      and client.get("/api/food/batches").json()["batches"] == []
+      and len(client.get("/api/food/batches", params={"done": "true"}).json()["batches"]) == 1)
+day = client.get("/api/food/day", params={"date": DB_}).json()
+check("the entries are in the day's totals", len(day["entries"]) == n0 + 5 and abs(day["totals"]["kcal"] - 2000) < 0.5)
+client.delete(f"/api/food/log/{quarter['entry']['id']}")
+back = client.get(f"/api/food/batches/{b['id']}").json()
+check("deleting an entry gives it back to the batch (and reopens a finished one)", back["remaining_g"] == 150
+      and back["storage"] == "fridge")
+for bad_ in [{"mode": "grams", "value": 0}, {"mode": "grams", "value": 6000}, {"mode": "gross", "value": 50, "tare_g": 80},
+             {"mode": "gross", "value": 380}, {"mode": "fraction", "value": 2}, {"mode": "cups", "value": 1}]:
+    check(f"a bad portion is refused: {bad_}", client.post(f"/api/food/batches/{b['id']}/log",
+          json={**bad_, "date": DB_, "meal": "lunch"}).status_code == 400)
+check("an unknown batch is a 404", client.post("/api/food/batches/9999/log", json={"mode": "grams", "value": 5,
+      "date": DB_, "meal": "lunch"}).status_code == 404)
+
+fixed = client.patch(f"/api/food/batches/{b['id']}", json={"remaining_g": "450,5"}).json()
+check("what is left can be corrected by hand (the boxes follow)", fixed["remaining_g"] == 450.5 and fixed["remaining_boxes"] == 1.5)
+fixed = client.patch(f"/api/food/batches/{b['id']}", json={"remaining_boxes": 2}).json()
+check("the boxes can be corrected on their own", fixed["remaining_boxes"] == 2 and fixed["remaining_g"] == 450.5)
+check("the state is fridge / freezer / done", client.patch(f"/api/food/batches/{b['id']}", json={"storage": "freezer"}).json()["storage"] == "freezer"
+      and client.patch(f"/api/food/batches/{b['id']}", json={"storage": "attic"}).status_code == 400)
+
+# a batch from a recipe: the totals come from the raw ingredients
+with fcat.connect() as c_:
+    c_.execute("""INSERT INTO user_foods (source, source_id, name, brand, aliases, kcal_100g, protein_100g, carbs_100g, fat_100g,
+                      serving_g, serving_label, details, updated_at, created_at)
+                  VALUES ('recipe', 'chilli1', 'Chilli con carne', 'MordorCook', '', 200, 15, 20, 6, 250, '1 portion',
+                          '{"total_grams": 1000, "servings": 4}', 'x', 'x')""")
+    rid = "user:%d" % c_.execute("SELECT id FROM user_foods WHERE source_id='chilli1'").fetchone()[0]
+from datetime import date as _D, timedelta as _T  # noqa: E402
+old = client.post("/api/food/batches", json={"recipe_ref": rid, "cooked_on": (_D.today() - _T(days=5)).isoformat(), "gross_g": 1500,
+                                            "tare_g": 300, "boxes": 6, "box_weights": [200] * 6}).json()
+check("a batch from a recipe takes its name and the whole recipe's nutrition", old["name"] == "Chilli con carne"
+      and old["kcal"] == 2000 and old["protein"] == 150 and old["net_g"] == 1200 and old["recipe_ref"] == rid)
+check("custom box weights are kept", old["box_weights"] == [200] * 6)
+with fcat.connect() as c_:
+    c_.execute("UPDATE user_foods SET kcal_100g=999 WHERE source_id='chilli1'")
+check("editing the recipe later does not change the batch", client.get(f"/api/food/batches/{old['id']}").json()["kcal"] == 2000)
+check("in the fridge for more than 3 days is flagged", old["old"] and old["age_days"] == 5)
+check("in the freezer it is not", not client.patch(f"/api/food/batches/{old['id']}", json={"storage": "freezer"}).json()["old"])
+fresh = client.post("/api/food/batches", json={"name": "Fresh", "kcal": 600, "gross_g": 500, "boxes": 1,
+                                              "cooked_on": (_D.today() - _T(days=3)).isoformat()}).json()
+check("three days is still fine", not fresh["old"])
+
+client.patch(f"/api/food/batches/{old['id']}", json={"archived": True})
+ids_ = [x["id"] for x in client.get("/api/food/batches").json()["batches"]]
+check("an archived batch leaves the list but stays", old["id"] not in ids_
+      and old["id"] in [x["id"] for x in client.get("/api/food/batches", params={"done": "true"}).json()["batches"]])
+check("a batch can be deleted, its logged entries stay", client.delete(f"/api/food/batches/{b['id']}").status_code == 200
+      and client.delete(f"/api/food/batches/{b['id']}").status_code == 404
+      and len(client.get("/api/food/day", params={"date": DB_}).json()["entries"]) == n0 + 4)
+exp = client.get("/api/export").json()["food"]
+check("containers and batches are in the backup", [c["name"] for c in exp["containers"]] == ["Hrnec", "Krabička 1"]
+      and len(exp["batches"]) == 2)
+check("batch entries are marked in the AI export", "from a batch cooked in advance" in client.get("/api/food/export/day", params={"date": DB_}).text)
+check("a plain log entry still works as before", client.post("/api/food/log", json={"date": DB_, "meal": "lunch", "kcal": 100}).status_code == 200)
+
+# the database from before batches: the column is added, the rows stay
+import sqlite3 as _sq  # noqa: E402
+old_db = Path(tempfile.mkdtemp()) / "old.db"
+c_ = _sq.connect(old_db)
+c_.executescript("""CREATE TABLE food_log (id INTEGER PRIMARY KEY AUTOINCREMENT, date TEXT NOT NULL, meal TEXT NOT NULL, food_ref TEXT,
+    grams REAL, name TEXT NOT NULL, kcal REAL NOT NULL, protein REAL NOT NULL DEFAULT 0, carbs REAL NOT NULL DEFAULT 0,
+    fat REAL NOT NULL DEFAULT 0, entry_method TEXT NOT NULL, created_at TEXT NOT NULL);
+    INSERT INTO food_log (date, meal, name, kcal, entry_method, created_at) VALUES ('2026-01-01','lunch','Old entry',321,'quick','x');""")
+c_.commit(); c_.close()
+saved_path = fcat.DB_PATH
+fcat.DB_PATH = str(old_db)
+try:
+    fcat.init()
+    fcat.init()                                   # twice is fine
+    with fcat.connect() as c_:
+        cols_ = {r[1] for r in c_.execute("PRAGMA table_info(food_log)")}
+        kept = c_.execute("SELECT kcal, batch_id FROM food_log").fetchall()
+        tables_ = {r[0] for r in c_.execute("SELECT name FROM sqlite_master WHERE type='table'")}
+finally:
+    fcat.DB_PATH = saved_path
+check("an old database gets the new column and tables, its rows untouched", "batch_id" in cols_ and {"batches", "containers"} <= tables_
+      and len(kept) == 1 and kept[0][0] == 321 and kept[0][1] is None)
+
 # ─── the page itself: every element the script reaches for exists ───────────
 import re as _re  # noqa: E402
 

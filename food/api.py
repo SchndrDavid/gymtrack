@@ -11,7 +11,7 @@ from fastapi import APIRouter, BackgroundTasks, File, HTTPException, Request, Up
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
-from . import ai_export, barcode, catalog, frequent, log, meat, mymeals, opengym, progress, recipes, recognize, restaurants, seed
+from . import ai_export, barcode, batches, catalog, frequent, log, meat, mymeals, opengym, progress, recipes, recognize, restaurants, seed
 from .catalog import clean_food, connect, food_dict, get_food, now_iso
 from .search import search as run_search
 
@@ -326,7 +326,10 @@ def edit_entry(entry_id: int, body: LogPatch):
 @router.delete("/log/{entry_id}")
 def delete_entry(entry_id: int):
     with connect() as conn:
+        r = conn.execute("SELECT batch_id, grams FROM food_log WHERE id=?", (entry_id,)).fetchone()
         conn.execute("DELETE FROM food_log WHERE id=?", (entry_id,))
+        if r and r["batch_id"] and r["grams"]:
+            batches.take(conn, r["batch_id"], -r["grams"])      # taken back: the batch has it again
     return {"ok": True}
 
 
@@ -501,6 +504,145 @@ def log_my_meal(body: MealLog):
             bad(err)
         e["id"] = log.insert_entry(conn, e)
         return {"ok": True, "entry": e}
+
+
+# ─── containers and batches ─────────────────────────────────────────────────
+
+class ContainerIn(BaseModel):
+    name: str
+    tare_g: float | str | None = None
+
+
+class BatchIn(BaseModel):
+    name: str | None = None
+    recipe_ref: str | None = None
+    kcal: float | str | None = None
+    protein: float | str | None = None
+    carbs: float | str | None = None
+    fat: float | str | None = None
+    cooked_on: str | None = None
+    container_id: int | None = None
+    tare_g: float | str | None = None
+    gross_g: float | str | None = None
+    boxes: float | str | None = None
+    box_weights: list[float | str | None] = []
+
+
+class BatchPatch(BaseModel):
+    name: str | None = None
+    cooked_on: str | None = None
+    storage: str | None = None
+    archived: bool | None = None
+    remaining_g: float | str | None = None
+    remaining_boxes: float | str | None = None
+
+
+class BatchLog(BaseModel):
+    mode: str                                   # grams | box | fraction | gross
+    value: float | str
+    date: str
+    meal: str
+    tare_g: float | str | None = None           # the empty box, for mode "gross"
+    container_id: int | None = None
+
+
+@router.get("/containers")
+def list_containers():
+    with connect() as conn:
+        return {"containers": batches.all_containers(conn)}
+
+
+@router.post("/containers")
+def create_container(body: ContainerIn):
+    with connect() as conn:
+        try:
+            return batches.save_container(conn, body.model_dump())
+        except ValueError as err:
+            bad(err)
+
+
+@router.put("/containers/{container_id}")
+def update_container(container_id: int, body: ContainerIn):
+    with connect() as conn:
+        try:
+            return batches.save_container(conn, body.model_dump(), container_id)
+        except ValueError as err:
+            bad(err)
+        except LookupError:
+            raise HTTPException(404, "no such container") from None
+
+
+@router.delete("/containers/{container_id}")
+def delete_container(container_id: int):
+    """Batches made in it keep its name and weight."""
+    with connect() as conn:
+        if not conn.execute("DELETE FROM containers WHERE id=?", (container_id,)).rowcount:
+            raise HTTPException(404, "no such container")
+    return {"ok": True}
+
+
+@router.get("/batches")
+def list_batches(done: bool = False):
+    """Active batches; `done=true` adds the finished and archived ones."""
+    with connect() as conn:
+        return {"fridge_days": batches.FRIDGE_DAYS, "batches": batches.all_batches(conn, include_done=done)}
+
+
+@router.post("/batches")
+def create_batch(body: BatchIn):
+    with connect() as conn:
+        try:
+            return batches.create(conn, body.model_dump())
+        except ValueError as err:
+            bad(err)
+
+
+@router.get("/batches/{batch_id}")
+def get_one_batch(batch_id: int):
+    with connect() as conn:
+        r = batches.get_batch(conn, batch_id)
+        if r is None:
+            raise HTTPException(404, "no such batch")
+        return batches.batch_dict(r)
+
+
+@router.patch("/batches/{batch_id}")
+def patch_batch(batch_id: int, body: BatchPatch):
+    with connect() as conn:
+        try:
+            return batches.update(conn, batch_id, body.model_dump(exclude_unset=True))
+        except ValueError as err:
+            bad(err)
+        except LookupError:
+            raise HTTPException(404, "no such batch") from None
+
+
+@router.delete("/batches/{batch_id}")
+def delete_batch(batch_id: int):
+    """Entries already logged from it keep their values."""
+    with connect() as conn:
+        if not conn.execute("DELETE FROM batches WHERE id=?", (batch_id,)).rowcount:
+            raise HTTPException(404, "no such batch")
+    return {"ok": True}
+
+
+@router.post("/batches/{batch_id}/log")
+def log_batch(batch_id: int, body: BatchLog):
+    with connect() as conn:
+        try:
+            day = log.valid_date(body.date)
+            if body.meal not in log.MEALS:
+                raise ValueError(f"meal must be one of {', '.join(log.MEALS)}")
+            item = batches.log_item(conn, batch_id, body.mode, body.value, body.tare_g, body.container_id)
+        except ValueError as err:
+            bad(err)
+        except LookupError:
+            raise HTTPException(404, "no such batch") from None
+        e = {"date": day, "meal": body.meal, "food_ref": None, "entry_method": "batch", **item}
+        e["id"] = log.insert_entry(conn, e)
+        conn.execute("UPDATE food_log SET batch_id=? WHERE id=?", (batch_id, e["id"]))
+        batches.take(conn, batch_id, item["grams"])
+        return {"ok": True, "entry": e, "batch": batches.batch_dict(batches.get_batch(conn, batch_id))}
 
 
 # ─── restaurants ────────────────────────────────────────────────────────────
