@@ -396,6 +396,35 @@ h1{font-size:34px;line-height:1.05;font-weight:700;letter-spacing:-.5px;margin:0
 .mine-top .fsearch-box input{padding:11px 0}
 .factions button.prim{background:var(--blue);color:#fff}
 .factions button.prim svg{color:#fff}
+/* ---------- batches ---------- */
+.ba-row .qa-main span{white-space:normal;line-height:1.35}
+.ba-st{font-style:normal;font-size:11px;font-weight:700;padding:2px 7px;border-radius:7px;margin-left:6px;vertical-align:2px;
+  background:var(--card-2);color:var(--fg-2)}
+.ba-st.fridge{color:var(--blue)}
+.ba-st.freezer{color:#64d2ff}
+.ba-st.done{color:var(--fg-3)}
+.ba-warn{color:var(--orange)!important;font-weight:600}
+.ba-toggle{display:block;margin:10px auto 0;font-size:13px;color:var(--fg-2);min-height:44px}
+.bn-wt-toggle{text-align:left;font-size:16px;font-family:var(--round);min-height:44px}
+.bn-wt-toggle span{display:block}
+#bn-sum p{margin:0;padding:6px 0;display:flex;justify-content:space-between;gap:12px;font-size:15px}
+#bn-sum p + p{border-top:1px solid var(--line)}
+#bn-sum b{font-family:var(--round)}
+#bn-sum .big b{font-size:18px}
+.bl-modes{margin-bottom:6px}
+.bl-modes button{min-height:44px;font-size:13px;padding:8px 2px}
+.bl-prev{margin:14px 2px 12px;padding:12px 14px;border-radius:14px;background:var(--card);font-family:var(--round);font-size:15px;line-height:1.45}
+.bl-prev b{font-size:20px}
+.bl-prev .ba-warn{display:block;font-size:13px;margin-top:4px}
+#ct-list .row{display:flex;align-items:center;gap:8px;padding:6px 0;border-top:1px solid var(--line)}
+#ct-list .row:first-child{border-top:0}
+#ct-list input{background:var(--card-2);border:0;border-radius:10px;padding:11px;font-size:16px;min-height:44px;color:var(--fg);font-family:var(--round)}
+#ct-list input.n{flex:1;min-width:0}
+#ct-list input.t{width:84px;text-align:right}
+#sheet-batch .sheet-bar button,#sheet-containers .sheet-bar button,#sheet-balog .sheet-bar button{min-height:44px;min-width:44px}
+#sheet-batch .seg button,#sheet-balog .seg button{min-height:44px}
+#sheet-batch .pfield,#sheet-containers .pfield{min-height:48px}
+#ct-list .fdel{min-width:44px;min-height:44px}
 /* ---------- stats ---------- */
 .st-range{margin:0 0 6px}
 .st-range button{min-height:44px;font-size:15px}
@@ -870,6 +899,16 @@ h1{font-size:34px;line-height:1.05;font-weight:700;letter-spacing:-.5px;margin:0
         <div id="mi-list"><p class="empty">Loading…</p></div>
       </div>
 
+      <div class="qa-pane" id="qa-p-batches" hidden>
+        <div class="mine-top">
+          <button class="chip on" id="ba-new">+ Nová dávka</button>
+          <button class="chip" id="ba-containers">Nádoby</button>
+        </div>
+        <div id="ba-list"><p class="empty">Načítám…</p></div>
+        <button class="chip ba-toggle" id="ba-toggle">Ukázat hotové a archivované</button>
+        <p class="hint">Jídlo uvařené naráz a rozdělené do krabiček. Kalorie se berou ze syrových surovin, zapisuje se váha hotového jídla.</p>
+      </div>
+
       <div class="qa-pane" id="qa-p-calories" hidden>
         <div class="card prof" style="background:var(--card-2)">
           <label class="pfield wide"><span>Calories (kcal)</span><input id="qa-kcal" inputmode="decimal" placeholder="800"></label>
@@ -886,7 +925,7 @@ h1{font-size:34px;line-height:1.05;font-weight:700;letter-spacing:-.5px;margin:0
       <div class="seg miniseg" id="qa-meal"></div>
       <div class="seg qa-tabs" id="qa-tabs">
         <button data-pane="frequent" class="on">Frequent</button><button data-pane="meat">Meat</button>
-        <button data-pane="mine">My foods</button><button data-pane="calories">Calories</button>
+        <button data-pane="mine">My foods</button><button data-pane="batches">Dávky</button><button data-pane="calories">Calories</button>
       </div>
     </div>
   </div>
@@ -920,6 +959,114 @@ h1{font-size:34px;line-height:1.05;font-weight:700;letter-spacing:-.5px;margin:0
     </div>
     <p class="hint" id="mm-hint">Add the foods it is made of and these add up by themselves — or leave it empty and type them.</p>
     <button class="cta ghost red" id="mm-delete" hidden>Delete</button>
+  </div>
+</div>
+
+<div class="sheet" id="sheet-batch">
+  <div class="sheet-bar">
+    <button id="bn-cancel">Zrušit</button>
+    <b id="bn-title">Nová dávka</b>
+    <button id="bn-save">Uložit</button>
+  </div>
+  <div class="sheet-body">
+    <div class="seg bn-new" id="bn-src"><button data-s="recipe" class="on">Z receptu</button><button data-s="manual">Ručně</button></div>
+    <div class="card prof bn-new" id="bn-recipe-box">
+      <label class="pfield wide"><span>Recept</span><select id="bn-recipe"></select></label>
+    </div>
+    <div class="card prof bn-new" id="bn-manual-box" hidden>
+      <label class="pfield wide"><span>Celá dávka — kalorie (kcal)</span><input id="bn-kcal" inputmode="decimal" placeholder="2000" autocomplete="off"></label>
+      <label class="pfield"><span>Bílkoviny (g)</span><input id="bn-protein" inputmode="decimal" placeholder="0" autocomplete="off"></label>
+      <label class="pfield"><span>Sacharidy (g)</span><input id="bn-carbs" inputmode="decimal" placeholder="0" autocomplete="off"></label>
+      <label class="pfield"><span>Tuky (g)</span><input id="bn-fat" inputmode="decimal" placeholder="0" autocomplete="off"></label>
+    </div>
+    <div class="card prof">
+      <label class="pfield wide"><span>Název</span><input id="bn-name" autocomplete="off" placeholder="Chilli"></label>
+      <label class="pfield wide"><span>Datum vaření</span><input id="bn-date" type="date"></label>
+    </div>
+
+    <div class="bn-new">
+      <p class="card-title" style="margin-top:20px">Nádoba a vážení</p>
+      <div class="chips" id="bn-cont"></div>
+      <div class="card prof">
+        <label class="pfield wide"><span>Hrubá váha — nádoba i jídlo (g)</span><input id="bn-gross" inputmode="decimal" placeholder="2100" autocomplete="off"></label>
+        <label class="pfield"><span>Počet krabiček</span><input id="bn-boxes" inputmode="numeric" placeholder="4" autocomplete="off"></label>
+        <button class="pfield bn-wt-toggle" id="bn-wt-toggle" type="button"><span>Váhy krabiček</span>stejné</button>
+      </div>
+      <div class="card prof" id="bn-wts" hidden></div>
+    </div>
+
+    <div class="bn-edit" hidden>
+      <p class="card-title" style="margin-top:20px">Stav</p>
+      <div class="seg" id="bn-state"><button data-s="fridge">Lednice</button><button data-s="freezer">Mraznička</button><button data-s="done">Hotovo</button></div>
+      <div class="card prof">
+        <label class="pfield"><span>Zbývá (g)</span><input id="bn-rem-g" inputmode="decimal" autocomplete="off"></label>
+        <label class="pfield"><span>Zbývá krabiček</span><input id="bn-rem-b" inputmode="decimal" autocomplete="off"></label>
+      </div>
+      <p class="hint">Po každém zalogování se zbývající množství samo sníží. Tady ho můžeš opravit ručně.</p>
+    </div>
+
+    <p class="card-title" style="margin-top:20px" id="bn-sum-title">Výsledek</p>
+    <div class="card" id="bn-sum"></div>
+    <p class="hint bn-new">Součet kalorií a maker se uloží jako snímek — pozdější úprava receptu dávku nezmění.</p>
+    <button class="cta ghost" id="bn-archive" hidden>Archivovat</button>
+    <button class="cta ghost red" id="bn-delete" hidden>Smazat dávku</button>
+  </div>
+</div>
+
+<div class="sheet" id="sheet-balog">
+  <div class="sheet-bar">
+    <button id="bl-cancel">Zrušit</button>
+    <b id="bl-title">Dávka</b>
+    <span></span>
+  </div>
+  <div class="sheet-body">
+    <p class="as-line" id="bl-info"></p>
+    <p class="hint" id="bl-sub" style="margin:4px 0 14px"></p>
+    <div class="seg bl-modes" id="bl-modes">
+      <button data-mode="grams" class="on">Gramy</button><button data-mode="box">Krabička</button>
+      <button data-mode="fraction">Podíl</button><button data-mode="gross">Vážení</button>
+    </div>
+
+    <div class="bl-pane" id="bl-p-grams">
+      <div class="grams"><input id="bl-g" inputmode="decimal" autocomplete="off" aria-label="Gramy"><span>g</span></div>
+      <div class="portions" id="bl-gq"></div>
+    </div>
+    <div class="bl-pane" id="bl-p-box" hidden>
+      <div class="grams"><input id="bl-box" inputmode="decimal" autocomplete="off" aria-label="Počet krabiček" value="1"><span>krabiček</span></div>
+      <div class="portions" id="bl-bq"></div>
+    </div>
+    <div class="bl-pane" id="bl-p-fraction" hidden>
+      <div class="portions" id="bl-fq"></div>
+    </div>
+    <div class="bl-pane" id="bl-p-gross" hidden>
+      <div class="card prof">
+        <label class="pfield wide"><span>Krabička s jídlem (g)</span><input id="bl-gross" inputmode="decimal" autocomplete="off" placeholder="380"></label>
+        <label class="pfield wide"><span>Prázdná krabička (g)</span><input id="bl-tare" inputmode="decimal" autocomplete="off" placeholder="80"></label>
+      </div>
+      <div class="chips" id="bl-tq" style="margin-top:10px"></div>
+    </div>
+
+    <div class="bl-prev" id="bl-prev"></div>
+    <div class="seg mealseg" id="bl-meal"></div>
+    <button class="cta" id="bl-add">Přidat</button>
+  </div>
+</div>
+
+<div class="sheet" id="sheet-containers">
+  <div class="sheet-bar">
+    <span></span>
+    <b>Nádoby</b>
+    <button id="ct-close">Hotovo</button>
+  </div>
+  <div class="sheet-body">
+    <p class="hint" style="margin:0 0 12px">Hrnec a krabičky s jejich prázdnou váhou. Odečítají se od hrubé váhy.</p>
+    <div class="card prof">
+      <label class="pfield wide"><span>Název</span><input id="ct-name" autocomplete="off" placeholder="Krabička 1"></label>
+      <label class="pfield wide"><span>Prázdná váha (g)</span><input id="ct-tare" inputmode="decimal" autocomplete="off" placeholder="80"></label>
+    </div>
+    <button class="cta" id="ct-add" style="margin-top:12px">Přidat nádobu</button>
+    <p class="card-title" style="margin-top:22px">Uložené</p>
+    <div class="card" id="ct-list"></div>
   </div>
 </div>
 
@@ -3355,9 +3502,10 @@ const lsGet = (k, d) => { try { return localStorage.getItem(k) ?? d; } catch(e){
 const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch(e){} };
 const qaOpen = () => $('#bs-quick').classList.contains('open');
 
-function toastUndo(msg, undo){
+function toastUndo(msg, undo, label = 'Undo'){
   const el = $('#toast');
-  el.innerHTML = '<span></span><button type="button">Undo</button>';
+  el.innerHTML = '<span></span><button type="button"></button>';
+  el.lastChild.textContent = label;
   el.firstChild.textContent = msg;
   el.classList.add('show', 'act');
   clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove('show', 'act'), 5000);
@@ -3405,11 +3553,12 @@ function closeQuickAdd(){
 function qaPane(name){
   qa.pane = name;
   document.querySelectorAll('#qa-tabs button').forEach(b => b.classList.toggle('on', b.dataset.pane === name));
-  ['frequent', 'meat', 'mine', 'calories'].forEach(n => $('#qa-p-' + n).hidden = n !== name);
+  ['frequent', 'meat', 'mine', 'batches', 'calories'].forEach(n => $('#qa-p-' + n).hidden = n !== name);
   $('#bs-body').scrollTop = 0;
   if (name === 'frequent') loadFrequent();
   else if (name === 'meat') loadMeat();
   else if (name === 'mine') openMineList();
+  else if (name === 'batches') loadBatches();
   else if (name === 'calories' && !matchMedia('(pointer:coarse)').matches) setTimeout(() => $('#qa-kcal').focus(), 60);
 }
 $('#qa-tabs').addEventListener('click', e => { const b = e.target.closest('button'); if (b){ qa.switched = true; qaPane(b.dataset.pane); } });
@@ -3578,6 +3727,340 @@ $('#qa-cal-add').onclick = async () => {
   for (const k of ['protein', 'carbs', 'fat']) body[k] = num($('#qa-' + k).value) || 0;
   const ok = await qaUndoable(post('/api/food/log', body), `${fmt(kcal)} kcal`, meal);
   if (ok) for (const id of ['kcal', 'name', 'protein', 'carbs', 'fat']) $('#qa-' + id).value = '';
+};
+
+/* ---------- food: batches — cooked once, split into boxes, logged by the cooked weight ---------- */
+/* The nutrition comes from the raw ingredients; the amounts are the cooked food's (food/batches.py). The sums
+   below only preview what the server will store: net = gross − pot, per 100 g = total ÷ net, per box = total ÷ boxes. */
+const ba = {list: [], showAll: false, days: 3, containers: [], recipes: null};
+const cz = (n, d = 1) => Number(n || 0).toLocaleString('cs-CZ', {maximumFractionDigits: d});
+const BA_STATE = {fridge: 'Lednice', freezer: 'Mraznička', done: 'Hotovo'};
+const krab = n => {
+  const r = Math.round(n * 10) / 10;
+  if (r !== Math.floor(r)) return cz(r) + ' krabičky';
+  return r + (r === 1 ? ' krabička' : r >= 2 && r <= 4 ? ' krabičky' : ' krabiček');
+};
+function baWhen(iso){
+  const d = Math.round((new Date(todayIso() + 'T12:00:00') - new Date(iso + 'T12:00:00')) / 864e5);
+  return d <= 0 ? 'dnes' : d === 1 ? 'včera' : `před ${d} dny`;
+}
+const baDay = iso => { const d = new Date(iso + 'T12:00:00'); return `${d.getDate()}. ${d.getMonth() + 1}.`; };
+const perOf = (b, g) => Object.fromEntries(['kcal', 'protein', 'carbs', 'fat'].map(k => [k, b[k] * g / b.net_g]));
+const macroLine = m => `B ${cz(m.protein)} · S ${cz(m.carbs)} · T ${cz(m.fat)}`;
+
+async function loadContainers(){
+  try { ba.containers = (await api('/api/food/containers')).containers; } catch(e){ /* keep the last list */ }
+  return ba.containers;
+}
+async function loadBatches(){
+  try {
+    const r = await api('/api/food/batches' + (ba.showAll ? '?done=true' : ''));
+    ba.list = r.batches; ba.days = r.fridge_days;
+  } catch(e){ ba.list = ba.list || []; }
+  renderBatches();
+}
+function renderBatches(){
+  $('#ba-toggle').textContent = ba.showAll ? 'Jen aktivní dávky' : 'Ukázat hotové a archivované';
+  $('#ba-list').innerHTML = ba.list.length ? ba.list.map(b => `<div class="qa-row ba-row">
+      <button class="qa-main" data-ba="${b.id}"><b>${esc(b.name)}<i class="ba-st ${b.storage}">${b.archived ? 'Archiv' : BA_STATE[b.storage]}</i></b>
+        <span>Uvařeno ${baDay(b.cooked_on)} (${baWhen(b.cooked_on)}) · zbývá <strong>${cz(b.remaining_g, 0)} g</strong> (≈ ${krab(b.remaining_boxes)})</span>
+        <span>${cz(b.per_100g.kcal)} kcal/100 g · ${cz(b.per_box.kcal, 0)} kcal na krabičku</span>
+        ${b.old ? `<span class="ba-warn">⚠ V lednici déle než ${ba.days} dny od uvaření</span>` : ''}</button>
+      <button class="qa-more" data-ba-more="${b.id}" aria-label="Víc pro ${esc(b.name)}">⋯</button></div>`).join('')
+    : '<p class="empty">Žádná aktivní dávka. Klepni na + Nová dávka.</p>';
+}
+$('#ba-toggle').onclick = () => { ba.showAll = !ba.showAll; loadBatches(); };
+$('#ba-new').onclick = () => openBatchSheet(null);
+$('#ba-containers').onclick = openContainers;
+$('#ba-list').addEventListener('click', async e => {
+  const more = e.target.closest('[data-ba-more]'), one = e.target.closest('[data-ba]');
+  const b = ba.list.find(x => x.id === +(more ? more.dataset.baMore : one && one.dataset.ba));
+  if (!b) return;
+  if (one) return openBatchLog(b);
+  const choice = await picker(b.name, [
+    {label: 'Upravit…', value: 'edit'},
+    ...(b.storage !== 'freezer' ? [{label: 'Do mrazničky', value: 'freezer'}] : []),
+    ...(b.storage !== 'fridge' ? [{label: 'Do lednice', value: 'fridge'}] : []),
+    ...(b.storage !== 'done' ? [{label: 'Označit jako hotovo', value: 'done'}] : []),
+    {label: b.archived ? 'Vrátit z archivu' : 'Archivovat', value: 'archive'}]);
+  if (!choice) return;
+  if (choice === 'edit') return openBatchSheet(b);
+  try {
+    await baPatch(b.id, choice === 'archive' ? {archived: !b.archived} : {storage: choice});
+  } catch(err){ return toast('Nepodařilo se uložit'); }
+  loadBatches();
+});
+const baPatch = (id, body) => api('/api/food/batches/' + id, {method: 'PATCH', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body)});
+
+/* --- containers: the pot and the boxes with their empty weight --- */
+async function openContainers(){
+  $('#ct-name').value = ''; $('#ct-tare').value = '';
+  $('#sheet-containers').classList.add('open');
+  await loadContainers();
+  renderContainers();
+}
+function renderContainers(){
+  $('#ct-list').innerHTML = ba.containers.length ? ba.containers.map(c => `<div class="row">
+      <input class="n" data-cn="${c.id}" value="${esc(c.name)}" aria-label="Název" autocomplete="off">
+      <input class="t" data-ct="${c.id}" value="${esc(String(c.tare_g).replace('.', ','))}" inputmode="decimal" aria-label="Prázdná váha v gramech" autocomplete="off">
+      <span>g</span><button class="fdel" data-cdel="${c.id}" aria-label="Smazat ${esc(c.name)}">×</button></div>`).join('')
+    : '<p class="empty">Zatím žádná nádoba.</p>';
+}
+$('#ct-add').onclick = async () => {
+  const name = $('#ct-name').value.trim(), tare = num($('#ct-tare').value);
+  if (!name) return toast('Zadej název');
+  if (tare == null || tare < 0) return toast('Zadej prázdnou váhu v gramech');
+  try { await post('/api/food/containers', {name, tare_g: tare}); } catch(e){ return toast('Nepodařilo se uložit'); }
+  $('#ct-name').value = ''; $('#ct-tare').value = '';
+  await loadContainers(); renderContainers(); bnChips();
+};
+$('#ct-list').addEventListener('change', async e => {
+  const id = e.target.dataset.cn || e.target.dataset.ct; if (!id) return;
+  const row = e.target.closest('.row');
+  const name = row.querySelector('.n').value.trim(), tare = num(row.querySelector('.t').value);
+  if (!name || tare == null || tare < 0){ toast('Název a váha v gramech'); return renderContainers(); }
+  try { await api('/api/food/containers/' + id, {method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({name, tare_g: tare})}); }
+  catch(err){ return toast('Nepodařilo se uložit'); }
+  await loadContainers(); renderContainers(); bnChips();
+});
+$('#ct-list').addEventListener('click', async e => {
+  const b = e.target.closest('[data-cdel]'); if (!b) return;
+  const c = ba.containers.find(x => x.id === +b.dataset.cdel);
+  if (await picker(`Smazat „${c.name}“?`, [{label: 'Smazat — hotové dávky si váhu nechají', value: 'del'}]) !== 'del') return;
+  try { await api('/api/food/containers/' + c.id, {method: 'DELETE'}); } catch(err){ return toast('Nepodařilo se smazat'); }
+  if (bn.cont === c.id) bn.cont = 0;
+  await loadContainers(); renderContainers(); bnChips(); bnCalc();
+});
+$('#ct-close').onclick = () => { $('#sheet-containers').classList.remove('open'); if (bnOpen()) bnCalc(); };
+
+/* --- the batch sheet: new (from a recipe or typed totals) and edit --- */
+let bn = {batch: null, src: 'recipe', cont: 0, wts: false};
+const bnOpen = () => $('#sheet-batch').classList.contains('open');
+async function openBatchSheet(b){
+  bn = {batch: b, src: 'recipe', cont: 0, wts: false};
+  $('#bn-title').textContent = b ? 'Upravit dávku' : 'Nová dávka';
+  document.querySelectorAll('#sheet-batch .bn-new').forEach(el => el.hidden = !!b);
+  document.querySelectorAll('#sheet-batch .bn-edit').forEach(el => el.hidden = !b);
+  $('#bn-archive').hidden = !b; $('#bn-delete').hidden = !b;
+  $('#bn-sum-title').textContent = b ? 'Dávka' : 'Výsledek';
+  $('#bn-name').value = b ? b.name : '';
+  $('#bn-date').value = b ? b.cooked_on : todayIso();
+  for (const id of ['kcal', 'protein', 'carbs', 'fat', 'gross', 'boxes']) $('#bn-' + id).value = '';
+  $('#bn-wts').hidden = true; $('#bn-wts').innerHTML = '';
+  if (b){
+    document.querySelectorAll('#bn-state button').forEach(x => x.classList.toggle('on', x.dataset.s === b.storage));
+    $('#bn-rem-g').value = String(b.remaining_g).replace('.', ',');
+    $('#bn-rem-b').value = String(b.remaining_boxes).replace('.', ',');
+    $('#bn-archive').textContent = b.archived ? 'Vrátit z archivu' : 'Archivovat';
+  } else {
+    bnSrc('recipe');
+    $('#bn-wt-toggle').lastChild.textContent = 'stejné';
+    await Promise.all([loadContainers(), loadRecipeChoices()]);
+    bnRecipes(); bnChips();
+  }
+  bnCalc();
+  $('#sheet-batch').classList.add('open');
+}
+async function loadRecipeChoices(){
+  try { ba.recipes = (await api('/api/food/recipes')).recipes; } catch(e){ ba.recipes = []; }
+}
+function bnRecipes(){
+  const sel = $('#bn-recipe');
+  sel.innerHTML = ba.recipes.length ? ba.recipes.map(r => `<option value="${esc(r.ref)}">${esc(r.name)}</option>`).join('')
+    : '<option value="">Žádný recept — zadej hodnoty ručně</option>';
+}
+function bnSrc(s){
+  bn.src = s;
+  document.querySelectorAll('#bn-src button').forEach(x => x.classList.toggle('on', x.dataset.s === s));
+  $('#bn-recipe-box').hidden = s !== 'recipe'; $('#bn-manual-box').hidden = s !== 'manual';
+}
+function bnChips(){
+  if (bn.batch) return;
+  $('#bn-cont').innerHTML = [`<button class="chip ${bn.cont ? '' : 'on'}" data-c="0">Bez nádoby</button>`,
+    ...ba.containers.map(c => `<button class="chip ${bn.cont === c.id ? 'on' : ''}" data-c="${c.id}">${esc(c.name)} · ${cz(c.tare_g)} g</button>`),
+    '<button class="chip" data-c="new">+ Nádoba</button>'].join('');
+}
+$('#bn-cont').addEventListener('click', e => {
+  const b = e.target.closest('[data-c]'); if (!b) return;
+  if (b.dataset.c === 'new') return openContainers();
+  bn.cont = +b.dataset.c; bnChips(); bnCalc();
+});
+$('#bn-src').addEventListener('click', e => { const b = e.target.closest('button'); if (b){ bnSrc(b.dataset.s); bnCalc(); } });
+$('#bn-state').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (b) document.querySelectorAll('#bn-state button').forEach(x => x.classList.toggle('on', x === b));
+});
+function bnRecipe(){ return ba.recipes && ba.recipes.find(r => r.ref === $('#bn-recipe').value); }
+/* The totals of the batch being made: a recipe's per-100 g values × its raw weight, or typed in. */
+function bnTotals(){
+  if (bn.src === 'recipe'){
+    const r = bnRecipe(), w = r && r.details && r.details.total_grams;
+    if (!r || !w) return null;
+    return {kcal: r.kcal_100g * w / 100, protein: r.protein_100g * w / 100, carbs: r.carbs_100g * w / 100, fat: r.fat_100g * w / 100};
+  }
+  const kcal = num($('#bn-kcal').value);
+  if (!kcal || kcal <= 0) return null;
+  return {kcal, protein: num($('#bn-protein').value) || 0, carbs: num($('#bn-carbs').value) || 0, fat: num($('#bn-fat').value) || 0};
+}
+function bnCalc(){
+  const sum = $('#bn-sum');
+  if (bn.batch){
+    const b = bn.batch;
+    sum.innerHTML = `<p><span>Čistá váha</span><b>${cz(b.net_g, 0)} g</b></p>
+      <p><span>Celkem</span><b>${cz(b.kcal, 0)} kcal · ${macroLine(b)}</b></p>
+      <p class="big"><span>Na 100 g</span><b>${cz(b.per_100g.kcal)} kcal</b></p>
+      <p class="big"><span>Na krabičku (${b.boxes}×)</span><b>${cz(b.per_box.kcal, 0)} kcal</b></p>`;
+    return;
+  }
+  const t = bnTotals(), c = ba.containers.find(x => x.id === bn.cont), tare = c ? c.tare_g : 0;
+  const gross = num($('#bn-gross').value), boxes = Math.floor(num($('#bn-boxes').value) || 0);
+  if (!t){ sum.innerHTML = '<p class="empty" style="padding:6px 0">' + (bn.src === 'recipe' ? 'Vyber recept.' : 'Zadej kalorie celé dávky.') + '</p>'; return; }
+  const net = gross != null ? gross - tare : null;
+  let h = `<p><span>Celkem</span><b>${cz(t.kcal, 0)} kcal · ${macroLine(t)}</b></p>`;
+  if (!gross) h += '<p class="empty" style="padding:6px 0">Zadej hrubou váhu (nádoba i jídlo).</p>';
+  else if (net <= 0) h += '<p class="ba-warn">Hrubá váha musí být větší než váha nádoby.</p>';
+  else {
+    h += `<p><span>Čistá váha (${cz(gross, 1)} − ${cz(tare, 1)} g)</span><b>${cz(net, 1)} g</b></p>
+      <p class="big"><span>Na 100 g</span><b>${cz(t.kcal / net * 100)} kcal</b></p>
+      <p><span></span><b>${macroLine(Object.fromEntries(Object.keys(t).map(k => [k, t[k] / net * 100])))}</b></p>`;
+    if (boxes >= 1) h += `<p class="big"><span>Na krabičku (${boxes}× po ${cz(net / boxes, 0)} g)</span><b>${cz(t.kcal / boxes, 0)} kcal</b></p>
+      <p><span></span><b>${macroLine(Object.fromEntries(Object.keys(t).map(k => [k, t[k] / boxes])))}</b></p>`;
+  }
+  sum.innerHTML = h;
+  if (bn.wts) bnWeights();
+}
+['#bn-kcal', '#bn-protein', '#bn-carbs', '#bn-fat', '#bn-gross', '#bn-boxes'].forEach(id => $(id).addEventListener('input', bnCalc));
+$('#bn-recipe').addEventListener('change', () => { const r = bnRecipe(); if (r && !$('#bn-name').value.trim()) $('#bn-name').placeholder = r.name; bnCalc(); });
+$('#bn-boxes').addEventListener('input', () => { if (bn.wts) bnWeights(true); });
+/* Optional: every box weighed separately. */
+$('#bn-wt-toggle').onclick = () => {
+  bn.wts = !bn.wts;
+  $('#bn-wt-toggle').lastChild.textContent = bn.wts ? 'každá zvlášť' : 'stejné';
+  $('#bn-wts').hidden = !bn.wts;
+  if (bn.wts) bnWeights(true);
+};
+function bnWeights(rebuild){
+  const n = Math.min(60, Math.floor(num($('#bn-boxes').value) || 0)), box = $('#bn-wts');
+  if (rebuild || box.children.length !== n){
+    const keep = [...box.querySelectorAll('input')].map(i => i.value);
+    box.innerHTML = Array.from({length: n}, (_, i) => `<label class="pfield"><span>Krabička ${i + 1} (g)</span>
+      <input data-w="${i}" inputmode="decimal" autocomplete="off" value="${esc(keep[i] || '')}"></label>`).join('');
+  }
+}
+$('#bn-cancel').onclick = () => $('#sheet-batch').classList.remove('open');
+$('#bn-save').onclick = async () => {
+  const name = $('#bn-name').value.trim();
+  if (bn.batch){
+    const b = bn.batch;
+    if (!name) return toast('Zadej název');
+    const body = {name, cooked_on: $('#bn-date').value || b.cooked_on, storage: document.querySelector('#bn-state button.on')?.dataset.s || b.storage,
+                  remaining_g: num($('#bn-rem-g').value), remaining_boxes: num($('#bn-rem-b').value)};
+    if (body.remaining_g == null || body.remaining_boxes == null) return toast('Zbývá: čísla v gramech a krabičkách');
+    try { await baPatch(b.id, body); } catch(e){ return toast('Nepodařilo se uložit'); }
+    $('#sheet-batch').classList.remove('open'); toast('Uloženo'); return loadBatches();
+  }
+  const t = bnTotals(), gross = num($('#bn-gross').value), boxes = Math.floor(num($('#bn-boxes').value) || 0);
+  if (!t) return toast(bn.src === 'recipe' ? 'Vyber recept' : 'Zadej kalorie celé dávky');
+  if (!gross) return toast('Zadej hrubou váhu');
+  if (boxes < 1) return toast('Zadej počet krabiček');
+  const body = {name, cooked_on: $('#bn-date').value || todayIso(), container_id: bn.cont || null, gross_g: gross, boxes};
+  if (bn.src === 'recipe') body.recipe_ref = $('#bn-recipe').value;
+  else Object.assign(body, {kcal: t.kcal, protein: t.protein, carbs: t.carbs, fat: t.fat});
+  if (bn.wts){
+    const ws = [...$('#bn-wts').querySelectorAll('input')].map(i => num(i.value));
+    if (ws.length !== boxes || ws.some(w => !w)) return toast('Zadej váhu každé krabičky, nebo vypni „každá zvlášť“');
+    body.box_weights = ws;
+  }
+  let made;
+  try { made = await post('/api/food/batches', body); }
+  catch(e){ return toast('Nepodařilo se uložit — zkontroluj váhy'); }
+  $('#sheet-batch').classList.remove('open');
+  toast(`Dávka „${made.name}“: ${cz(made.per_100g.kcal)} kcal/100 g, ${cz(made.per_box.kcal, 0)} kcal na krabičku`);
+  if (qaOpen() && qa.pane === 'batches') loadBatches();
+};
+$('#bn-archive').onclick = async () => {
+  const b = bn.batch;
+  try { await baPatch(b.id, {archived: !b.archived}); } catch(e){ return toast('Nepodařilo se uložit'); }
+  $('#sheet-batch').classList.remove('open'); loadBatches();
+};
+$('#bn-delete').onclick = async () => {
+  const b = bn.batch;
+  if (await picker(`Smazat dávku „${b.name}“?`, [{label: 'Smazat — zalogovaná jídla zůstanou', value: 'del'}]) !== 'del') return;
+  try { await api('/api/food/batches/' + b.id, {method: 'DELETE'}); } catch(e){ return toast('Nepodařilo se smazat'); }
+  $('#sheet-batch').classList.remove('open'); toast('Smazáno'); loadBatches();
+};
+
+/* --- logging from a batch: grams, boxes, a share of the batch, or a weighed box --- */
+const bl = {b: null, mode: 'grams', frac: 0.25};
+function openBatchLog(b){
+  bl.b = b; bl.frac = 0.25;
+  bl.mode = lsGet('gymtrack-batch-mode', 'grams');
+  if (!['grams', 'box', 'fraction', 'gross'].includes(bl.mode)) bl.mode = 'grams';
+  $('#bl-title').textContent = b.name;
+  $('#bl-info').textContent = `Zbývá ${cz(b.remaining_g, 0)} g (≈ ${krab(b.remaining_boxes)})`;
+  $('#bl-sub').textContent = `${cz(b.per_100g.kcal)} kcal/100 g · krabička ${cz(b.box_g, 0)} g = ${cz(b.per_box.kcal, 0)} kcal · uvařeno ${baDay(b.cooked_on)}`;
+  $('#bl-g').value = ''; $('#bl-box').value = '1'; $('#bl-gross').value = '';
+  $('#bl-tare').value = lsGet('gymtrack-box-tare', '');
+  $('#bl-gq').innerHTML = [100, 150, 200, 250].map(g => `<button data-g="${g}">${g} g</button>`).join('');
+  $('#bl-bq').innerHTML = [[.5, '½'], [1, '1'], [1.5, '1½'], [2, '2']].map(([k, l]) => `<button data-b="${k}">${l} krabičky = ${cz(k * b.box_g, 0)} g</button>`).join('');
+  $('#bl-fq').innerHTML = [[.25, '¼'], [1 / 3, '⅓'], [.5, '½'], [.75, '¾'], [1, 'Celá']].map(([k, l]) =>
+    `<button data-f="${k}">${l} dávky = ${cz(k * b.net_g, 0)} g</button>`).join('');
+  loadContainers().then(() => {
+    $('#bl-tq').innerHTML = ba.containers.map(c => `<button class="chip" data-t="${c.tare_g}">${esc(c.name)} · ${cz(c.tare_g)} g</button>`).join('');
+  });
+  mealSeg($('#bl-meal'), qaOpen() ? qaMeal() : (fMeal || mealNow()));
+  blMode(bl.mode);
+  $('#sheet-balog').classList.add('open');
+}
+function blMode(m){
+  bl.mode = m; lsSet('gymtrack-batch-mode', m);
+  document.querySelectorAll('#bl-modes button').forEach(x => x.classList.toggle('on', x.dataset.mode === m));
+  ['grams', 'box', 'fraction', 'gross'].forEach(n => $('#bl-p-' + n).hidden = n !== m);
+  blPreview();
+}
+/* How many grams the entry means, by the chosen way — the server computes the same from the same numbers. */
+function blGrams(){
+  const b = bl.b;
+  if (bl.mode === 'grams') return num($('#bl-g').value);
+  if (bl.mode === 'box'){ const k = num($('#bl-box').value); return k ? k * b.box_g : null; }
+  if (bl.mode === 'fraction') return bl.frac * b.net_g;
+  const g = num($('#bl-gross').value), t = num($('#bl-tare').value);
+  return g != null && t != null ? g - t : null;
+}
+function blPreview(){
+  const b = bl.b, g = blGrams(), el = $('#bl-prev');
+  document.querySelectorAll('#bl-fq button').forEach(x => x.classList.toggle('on', bl.mode === 'fraction' && Math.abs(+x.dataset.f - bl.frac) < 1e-6));
+  if (g == null || !isFinite(g) || g <= 0){
+    el.innerHTML = bl.mode === 'gross' && g != null && g <= 0 ? '<span class="ba-warn">Vážení musí být větší než prázdná krabička.</span>'
+      : 'Zadej množství.';
+    return;
+  }
+  const m = perOf(b, g);
+  el.innerHTML = `<b>${cz(m.kcal, 0)} kcal</b> · ${cz(g, 1)} g<br>${macroLine(m)}`
+    + (g > b.remaining_g + 0.5 ? `<span class="ba-warn">To je víc, než ve dávce zbývá (${cz(b.remaining_g, 0)} g).</span>` : '');
+}
+$('#bl-modes').addEventListener('click', e => { const x = e.target.closest('button'); if (x) blMode(x.dataset.mode); });
+['#bl-g', '#bl-box', '#bl-gross', '#bl-tare'].forEach(id => $(id).addEventListener('input', blPreview));
+$('#bl-gq').addEventListener('click', e => { const x = e.target.closest('[data-g]'); if (x){ $('#bl-g').value = x.dataset.g; blPreview(); } });
+$('#bl-bq').addEventListener('click', e => { const x = e.target.closest('[data-b]'); if (x){ $('#bl-box').value = String(x.dataset.b).replace('.', ','); blPreview(); } });
+$('#bl-fq').addEventListener('click', e => { const x = e.target.closest('[data-f]'); if (x){ bl.frac = +x.dataset.f; blPreview(); } });
+$('#bl-tq').addEventListener('click', e => { const x = e.target.closest('[data-t]'); if (x){ $('#bl-tare').value = String(x.dataset.t).replace('.', ','); blPreview(); } });
+$('#bl-cancel').onclick = () => $('#sheet-balog').classList.remove('open');
+$('#bl-add').onclick = async () => {
+  const b = bl.b, g = blGrams(), meal = segValue($('#bl-meal'));
+  if (g == null || !isFinite(g) || g <= 0) return toast(bl.mode === 'gross' ? 'Zadej váhu s krabičkou i prázdnou krabičku' : 'Zadej množství');
+  const body = {mode: bl.mode, date: fDate, meal};
+  if (bl.mode === 'grams') body.value = num($('#bl-g').value);
+  else if (bl.mode === 'box') body.value = num($('#bl-box').value);
+  else if (bl.mode === 'fraction') body.value = bl.frac;
+  else { body.value = num($('#bl-gross').value); body.tare_g = num($('#bl-tare').value); lsSet('gymtrack-box-tare', String(body.tare_g).replace('.', ',')); }
+  let r;
+  try { r = await post(`/api/food/batches/${b.id}/log`, body); } catch(e){ return toast('Nepřidáno — zkontroluj hodnoty'); }
+  $('#sheet-balog').classList.remove('open');
+  loadDay(); if (qaOpen() && qa.pane === 'batches') loadBatches();
+  toastUndo(`Přidáno: ${r.entry.name} · ${cz(r.entry.grams, 1)} g · ${cz(r.entry.kcal, 0)} kcal`, async () => {
+    try { await api('/api/food/log/' + r.entry.id, {method: 'DELETE'}); } catch(e){ return toast('Nevráceno'); }
+    toast('Odebráno'); loadDay(); if (qaOpen() && qa.pane === 'batches') loadBatches();
+  }, 'Zpět');
 };
 
 /* The creator. Items carry their values per 100 g, so a changed amount recalculates at once. */

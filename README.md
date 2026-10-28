@@ -100,6 +100,15 @@ without it the prompt tells the AI to assume 75 kg and say so.
   [openGym](#opengym), and the week before, as a prompt asking for a rating out of 10, energy balance,
   macro check, food quality and changes for tomorrow. The week is a table of seven days with weigh-ins and
   training, averages, trend, real burn and target, asking for the pace, patterns and three changes.
+- **Batches (Dávky).** Food cooked once and split into boxes: the nutrition comes from the raw ingredients, the
+  weighing from the cooked food, so kcal per 100 g is right. In Quick add → *Dávky* (Czech UI): save the pot and
+  boxes with their empty weight (*Nádoby*), then *Nová dávka* from a MordorCook recipe or typed-in totals, with
+  the cooking date, the pot, the gross weight and the number of boxes (optionally each box's weight). Net weight is
+  gross − pot; kcal and macros per 100 g and per box are shown and stored as a snapshot. Logging a batch takes
+  grams, boxes (½, 1, 2), a share of the batch (¼, ½ …) or a box weighed with its food minus the empty box; the
+  remaining grams and boxes drop by themselves (Undo and deleting the entry give them back) and can be corrected by
+  hand. A batch is in the fridge, in the freezer or done, can be archived or deleted without touching what was
+  logged, and a fridge batch older than 3 days since cooking is flagged. Rice stays a separate food by dry weight.
 - **History never changes behind your back.** Each entry stores its own values, so re-importing the
   catalogue or editing a food leaves past days as they were.
 
@@ -331,6 +340,9 @@ Food, all under `/api/food`:
 | `GET` `POST` | `/weight`                 | Body weight with 7-day average; `DELETE /weight/{date}`   |
 | `GET`    | `/progress?date=`             | Trend weight and rate, real burn, deficit, suggestion, target |
 | `GET`    | `/trend?start=&end=`          | The fitted trend weight for every day of a range          |
+| `GET` `POST` | `/containers`, `/containers/{id}` | Pots and boxes with their empty weight (`PUT`, `DELETE` by id) |
+| `GET` `POST` | `/batches`, `/batches/{id}`   | Batches; `?done=true` adds finished and archived (`PATCH`, `DELETE` by id) |
+| `POST`   | `/batches/{id}/log`           | Log from a batch: `mode` grams / box / fraction / gross  |
 | `PUT`    | `/target`                     | Target weight `{"kg": 85}`, `{"kg": null}` clears it      |
 | `GET`    | `/export/week?end=`           | The seven days up to `end` as a prompt for an AI          |
 | `GET`    | `/barcode/{code}`             | Catalogue, then live Open Food Facts                      |
