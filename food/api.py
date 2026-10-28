@@ -825,4 +825,6 @@ def export() -> dict[str, Any]:
             "user_foods": rows("SELECT * FROM user_foods ORDER BY id"),
             "ingredient_mappings": rows("SELECT * FROM ingredient_mappings"),
             "restaurant_items": rows("SELECT * FROM restaurant_items ORDER BY restaurant, position"),
+            "containers": rows("SELECT * FROM containers ORDER BY id"),
+            "batches": rows("SELECT * FROM batches ORDER BY id"),
         }

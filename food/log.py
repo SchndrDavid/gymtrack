@@ -11,7 +11,7 @@ from datetime import date as Date
 from .catalog import get_food, now_iso
 
 MEALS = ("breakfast", "lunch", "dinner", "snack")
-METHODS = ("search", "barcode", "recipe", "photo", "quick", "restaurant", "mine")
+METHODS = ("search", "barcode", "recipe", "photo", "quick", "restaurant", "mine", "batch")
 MACROS = ("kcal", "protein", "carbs", "fat")
 
 

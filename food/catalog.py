@@ -192,6 +192,40 @@ CREATE TABLE IF NOT EXISTS restaurant_items (
     updated_at TEXT NOT NULL,
     UNIQUE (restaurant, item_key)
 );
+
+-- Pots and lunch boxes with their empty weight, so the food can be weighed in them.
+CREATE TABLE IF NOT EXISTS containers (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    name       TEXT NOT NULL,
+    tare_g     REAL NOT NULL,
+    updated_at TEXT NOT NULL
+);
+
+-- A meal cooked once and split into boxes. The nutrition is added up from the raw ingredients and kept
+-- as a snapshot (a later edit of the recipe does not change it); what is logged is the cooked weight.
+CREATE TABLE IF NOT EXISTS batches (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    name            TEXT NOT NULL,
+    recipe_ref      TEXT,                 -- NULL when the totals were typed in
+    cooked_on       TEXT NOT NULL,
+    container_id    INTEGER,              -- the pot; its name and tare are copied below
+    container_name  TEXT,
+    tare_g          REAL NOT NULL DEFAULT 0,
+    gross_g         REAL,                 -- pot and food
+    net_g           REAL NOT NULL,        -- the cooked food alone
+    boxes           INTEGER NOT NULL,
+    box_weights     TEXT NOT NULL DEFAULT '[]',   -- grams per box when they were given
+    kcal            REAL NOT NULL,        -- the whole batch
+    protein         REAL NOT NULL DEFAULT 0,
+    carbs           REAL NOT NULL DEFAULT 0,
+    fat             REAL NOT NULL DEFAULT 0,
+    remaining_g     REAL NOT NULL,
+    remaining_boxes REAL NOT NULL,
+    storage         TEXT NOT NULL DEFAULT 'fridge',   -- fridge | freezer | done
+    archived        INTEGER NOT NULL DEFAULT 0,
+    created_at      TEXT NOT NULL,
+    updated_at      TEXT NOT NULL
+);
 """ + _fts_block("main", "user_foods")
 
 
@@ -215,11 +249,19 @@ def connect():
         conn.close()
 
 
+def migrate(conn: sqlite3.Connection) -> None:
+    """Columns added after the first release; the data already there is untouched."""
+    if "batch_id" not in {r[1] for r in conn.execute("PRAGMA table_info(food_log)")}:
+        conn.execute("ALTER TABLE food_log ADD COLUMN batch_id INTEGER")   # the batch an entry was eaten from
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_food_log_batch ON food_log(batch_id)")
+
+
 def init() -> None:
     Path(DB_PATH).parent.mkdir(parents=True, exist_ok=True)
     Path(FOODS_DB).parent.mkdir(parents=True, exist_ok=True)
     with connect() as conn:
         conn.executescript(catalog_schema("cat") + USER_SCHEMA)
+        migrate(conn)
 
 
 def open_catalog(path: str = "") -> sqlite3.Connection:
