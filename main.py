@@ -271,6 +271,15 @@ class Workout(BaseModel):
     started_at: str | None = None
 
 
+class WorkoutEdit(BaseModel):
+    """Only the fields sent are changed."""
+    date: str | None = None
+    name: str | None = None
+    seconds: int | None = None
+    exercises: list[dict[str, Any]] | None = None
+    started_at: str | None = None
+
+
 class RawText(BaseModel):
     text: str
 
@@ -735,6 +744,59 @@ def list_workouts(limit: int = 200, offset: int = 0):
         ).fetchall()
     return {"total": total, "offset": offset,
             "workouts": [_row_to_workout(r) for r in rows]}
+
+
+def _is_run_payload(exercises: list) -> bool:
+    return any(e.get("type") == "run" for e in exercises if isinstance(e, dict))
+
+
+@app.put("/api/workout/{workout_id}")
+def edit_workout(workout_id: int, edit: WorkoutEdit):
+    """Fix a logged workout — a timer left running, the wrong day, a better name."""
+    changes = edit.model_dump(exclude_unset=True)
+    if "date" in changes and not DATE_RE.match(changes["date"] or ""):
+        raise HTTPException(400, "date must be YYYY-MM-DD")
+    if "seconds" in changes and (changes["seconds"] is None or changes["seconds"] < 0):
+        raise HTTPException(400, "seconds must be 0 or more")
+    if "name" in changes:
+        changes["name"] = (changes["name"] or "").strip()
+        if not changes["name"]:
+            raise HTTPException(400, "name must not be empty")
+    if changes.get("started_at"):
+        try:
+            datetime.fromisoformat(changes["started_at"])
+        except ValueError:
+            raise HTTPException(400, "started_at must be YYYY-MM-DDTHH:MM[:SS]")
+
+    with db() as conn:
+        row = conn.execute("SELECT * FROM workouts WHERE id=?", (workout_id,)).fetchone()
+        if row is None:
+            raise HTTPException(404, "no such workout")
+        old = _row_to_workout(row)
+        new = {**old, **changes}
+        # Moving the day without a new start keeps the clock time
+        if new["date"] != old["date"] and "started_at" not in changes and old["started_at"]:
+            new["started_at"] = new["date"] + old["started_at"][10:]
+        conn.execute(
+            "UPDATE workouts SET date=?, name=?, seconds=?, payload=?, started_at=? WHERE id=?",
+            (new["date"], new["name"], new["seconds"],
+             json.dumps(new["exercises"], ensure_ascii=False), new["started_at"], workout_id),
+        )
+        if new["date"] != old["date"]:
+            kind = "run" if _is_run_payload(new["exercises"]) else "gym"
+            conn.execute(
+                f"INSERT INTO days (date, run, gym) VALUES (?,?,?) "
+                f"ON CONFLICT(date) DO UPDATE SET {kind}=1",
+                (new["date"], int(kind == "run"), int(kind == "gym")),
+            )
+            # The old day keeps its mark only if something of that kind is still on it
+            left = [json.loads(r["payload"]) for r in conn.execute(
+                "SELECT payload FROM workouts WHERE date=?", (old["date"],))]
+            if not any(_is_run_payload(p) == (kind == "run") for p in left):
+                conn.execute(f"UPDATE days SET {kind}=0 WHERE date=?", (old["date"],))
+                conn.execute("DELETE FROM days WHERE date=? AND run=0 AND gym=0", (old["date"],))
+        updated = conn.execute("SELECT * FROM workouts WHERE id=?", (workout_id,)).fetchone()
+    return {"ok": True, "workout": _row_to_workout(updated)}
 
 
 @app.delete("/api/workout/{workout_id}")

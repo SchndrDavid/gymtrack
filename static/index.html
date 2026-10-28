@@ -666,7 +666,21 @@ h1{font-size:34px;line-height:1.05;font-weight:700;letter-spacing:-.5px;margin:0
     <button class="red" id="d-delete">Delete</button>
   </div>
   <div class="sheet-body">
-    <p class="eyebrow" id="d-date" style="margin-bottom:14px">—</p>
+    <p class="eyebrow" style="margin-bottom:14px"><span id="d-date">—</span>
+      <button class="link" id="d-edit">Edit</button></p>
+    <div class="card" id="d-form" style="margin-bottom:14px" hidden>
+      <div class="prof">
+        <label class="pfield wide"><span>Name</span><input id="de-name" autocomplete="off"></label>
+        <label class="pfield"><span>Date</span><input id="de-date" type="date"></label>
+        <label class="pfield"><span>Started</span><input id="de-start" type="time"></label>
+        <label class="pfield wide"><span>Length (h:mm)</span>
+          <input id="de-length" inputmode="numeric" placeholder="1:30" autocomplete="off"></label>
+      </div>
+      <div class="btnrow">
+        <button id="de-cancel">Cancel</button>
+        <button class="on" id="de-save">Save</button>
+      </div>
+    </div>
     <div class="dstats" id="d-stats"></div>
     <div id="d-exercises"></div>
     <div class="ai">
@@ -1319,6 +1333,7 @@ function setText(type, set){
 function openDetail(w){
   if (!w) return;
   detailW = w;
+  $('#d-form').hidden = true;
   const run = getRunInfo(w);
   const [year, month, dayNo] = w.date.split('-');
   const weekday = DAYS[new Date(+year, +month-1, +dayNo).getDay()];
@@ -1979,6 +1994,47 @@ $('#d-other').onclick = async () => {
     label: AI[key].label + (AI[key].url ? '' : ' (copy only)'), value: key})));
   if (target) askAI(target);
 };
+/* Editing: a timer left running, the wrong day, a better name */
+const hmm = s => `${Math.floor(s/3600)}:${String(Math.round(s%3600/60)).padStart(2,'0')}`;
+function parseLength(text){
+  const t = String(text).trim().replace(',', '.');
+  let m = t.match(/^(\d+):(\d{1,2})$/);                     // 1:30
+  if (m) return (+m[1]) * 3600 + (+m[2]) * 60;
+  m = t.match(/^(?:(\d+(?:\.\d+)?)\s*h)?\s*(?:(\d+)\s*m(?:in)?)?$/i);   // 1.5h, 1h 30m, 90m
+  if (m && (m[1] || m[2])) return Math.round((+(m[1] || 0)) * 3600 + (+(m[2] || 0)) * 60);
+  if (/^\d+$/.test(t)) return (+t) * 60;                       // plain minutes
+  return null;
+}
+$('#d-edit').onclick = () => {
+  if (!detailW) return;
+  $('#de-name').value = detailW.name;
+  $('#de-date').value = detailW.date;
+  $('#de-start').value = (detailW.started_at || '').slice(11, 16);
+  $('#de-length').value = hmm(detailW.seconds);
+  $('#d-form').hidden = false;
+};
+$('#de-cancel').onclick = () => { $('#d-form').hidden = true; };
+$('#de-save').onclick = async () => {
+  if (!detailW) return;
+  const seconds = parseLength($('#de-length').value);
+  if (seconds === null){ toast('Length like 1:30'); return; }
+  const date = $('#de-date').value || detailW.date;
+  const start = $('#de-start').value;
+  const body = {name: $('#de-name').value.trim() || detailW.name, date, seconds};
+  if (start) body.started_at = `${date}T${start}:00`;
+  let res;
+  try { res = await api('/api/workout/' + detailW.id, {method:'PUT',
+    headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)}); }
+  catch(e){ toast('Not saved'); return; }
+  const w = res.workout;
+  historyList = historyList.map(x => x.id === w.id ? w : x);
+  $('#d-form').hidden = true;
+  await load();
+  if ($('#sheet-history').classList.contains('open')) renderHistorySheet();
+  openDetail(w);
+  toast('Workout updated');
+};
+
 $('#d-delete').onclick = async () => {
   if (!detailW) return;
   const go = await picker(`Delete "${detailW.name}"?`, [{label:'Delete', value:1}]);
