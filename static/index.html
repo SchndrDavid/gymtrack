@@ -412,6 +412,9 @@ h1{font-size:34px;line-height:1.05;font-weight:700;letter-spacing:-.5px;margin:0
 #bn-sum b{font-family:var(--round)}
 #bn-sum .big b{font-size:18px}
 .bl-modes{margin-bottom:6px}
+#bl-sides{display:block;width:100%;text-align:left;margin:0 0 12px;font-size:14px;line-height:1.35;border-radius:14px}
+#bl-sides:not(.on){background:var(--card-2);color:var(--fg-2)}
+#bn-sides .mmitem input{width:78px;text-align:right}
 .bl-modes button{min-height:44px;font-size:13px;padding:8px 2px}
 .bl-prev{margin:14px 2px 12px;padding:12px 14px;border-radius:14px;background:var(--card);font-family:var(--round);font-size:15px;line-height:1.45}
 .bl-prev b{font-size:20px}
@@ -1019,6 +1022,17 @@ h1{font-size:34px;line-height:1.05;font-weight:700;letter-spacing:-.5px;margin:0
       <p class="hint">Po každém zalogování se zbývající množství samo sníží. Tady ho můžeš opravit ručně.</p>
     </div>
 
+    <p class="card-title" style="margin-top:20px">Příloha do každé krabičky</p>
+    <div class="card">
+      <div class="fsearch-box">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input id="bn-sq" type="search" placeholder="Přidej přílohu — rýže, chléb…" autocomplete="off" autocorrect="off" spellcheck="false">
+      </div>
+      <div id="bn-sres" class="fresults"></div>
+      <div id="bn-sides"></div>
+    </div>
+    <p class="hint">Gramy na jednu krabičku, tak jak jídlo vážíš (suchou rýži jako suchou). Přičtou se ke každému zalogování úměrně snědenému podílu krabičky.</p>
+
     <p class="card-title" style="margin-top:20px" id="bn-sum-title">Výsledek</p>
     <div class="card" id="bn-sum"></div>
     <p class="hint bn-new">Součet kalorií a maker se uloží jako snímek — pozdější úprava receptu dávku nezmění.</p>
@@ -1036,6 +1050,7 @@ h1{font-size:34px;line-height:1.05;font-weight:700;letter-spacing:-.5px;margin:0
   <div class="sheet-body">
     <p class="as-line" id="bl-info"></p>
     <p class="hint" id="bl-sub" style="margin:4px 0 14px"></p>
+    <button class="chip on" id="bl-sides" type="button" hidden></button>
     <div class="seg bl-modes" id="bl-modes">
       <button data-mode="grams" class="on">Gramy</button><button data-mode="box">Krabička</button>
       <button data-mode="fraction">Podíl</button><button data-mode="gross">Vážení</button>
@@ -3820,7 +3835,7 @@ function renderBatches(){
   $('#ba-list').innerHTML = ba.list.length ? ba.list.map(b => `<div class="qa-row ba-row">
       <button class="qa-main" data-ba="${b.id}"><b>${esc(b.name)}<i class="ba-st ${b.storage}">${b.archived ? 'Archiv' : BA_STATE[b.storage]}</i></b>
         <span>Uvařeno ${baDay(b.cooked_on)} (${baWhen(b.cooked_on)}) · zbývá <strong>${cz(b.remaining_g, 0)} g</strong> (≈ ${krab(b.remaining_boxes)})</span>
-        <span>${cz(b.per_100g.kcal)} kcal/100 g · ${cz(b.per_box.kcal, 0)} kcal na krabičku</span>
+        <span>${cz(b.per_100g.kcal)} kcal/100 g · ${b.sides.length ? `${cz(b.per_box.kcal, 0)} + příloha ${cz(b.sides_box.kcal, 0)} = ${cz(b.box_total.kcal, 0)}` : cz(b.per_box.kcal, 0)} kcal na krabičku</span>
         ${b.old ? `<span class="ba-warn">⚠ V lednici déle než ${ba.days} dny od uvaření</span>` : ''}</button>
       <button class="qa-more" data-ba-more="${b.id}" aria-label="Víc pro ${esc(b.name)}">⋯</button></div>`).join('')
     : '<p class="empty">Žádná aktivní dávka. Klepni na + Nová dávka.</p>';
@@ -3890,10 +3905,13 @@ $('#ct-list').addEventListener('click', async e => {
 $('#ct-close').onclick = () => { $('#sheet-containers').classList.remove('open'); if (bnOpen()) bnCalc(); };
 
 /* --- the batch sheet: new (from a recipe or typed totals) and edit --- */
-let bn = {batch: null, src: 'recipe', cont: 0, wts: false};
+let bn = {batch: null, src: 'recipe', cont: 0, wts: false, sides: []};
 const bnOpen = () => $('#sheet-batch').classList.contains('open');
 async function openBatchSheet(b){
-  bn = {batch: b, src: 'recipe', cont: 0, wts: false};
+  bn = {batch: b, src: 'recipe', cont: 0, wts: false,
+        sides: (b ? b.sides : []).map(x => ({food_ref: x.food_ref, name: x.name, grams: x.grams,
+          per: Object.fromEntries(MM_KEYS.map(k => [k, x[k] / x.grams * 100]))}))};
+  $('#bn-sq').value = ''; $('#bn-sres').innerHTML = '';
   $('#bn-title').textContent = b ? 'Upravit dávku' : 'Nová dávka';
   document.querySelectorAll('#sheet-batch .bn-new').forEach(el => el.hidden = !!b);
   document.querySelectorAll('#sheet-batch .bn-edit').forEach(el => el.hidden = !b);
@@ -3914,7 +3932,7 @@ async function openBatchSheet(b){
     await Promise.all([loadContainers(), loadRecipeChoices()]);
     bnRecipes(); bnChips();
   }
-  bnCalc();
+  bnSides(); bnCalc();
   $('#sheet-batch').classList.add('open');
 }
 async function loadRecipeChoices(){
@@ -3964,7 +3982,7 @@ function bnCalc(){
     sum.innerHTML = `<p><span>Čistá váha</span><b>${cz(b.net_g, 0)} g</b></p>
       <p><span>Celkem</span><b>${cz(b.kcal, 0)} kcal · ${macroLine(b)}</b></p>
       <p class="big"><span>Na 100 g</span><b>${cz(b.per_100g.kcal)} kcal</b></p>
-      <p class="big"><span>Na krabičku (${b.boxes}×)</span><b>${cz(b.per_box.kcal, 0)} kcal</b></p>`;
+      <p class="big"><span>Na krabičku (${b.boxes}×)</span><b>${cz(b.per_box.kcal, 0)} kcal</b></p>` + bnSidesSum(Object.fromEntries(MM_KEYS.map(k => [k, b[k] / b.boxes])));
     return;
   }
   const t = bnTotals(), c = ba.containers.find(x => x.id === bn.cont), tare = c ? c.tare_g : 0;
@@ -3979,7 +3997,7 @@ function bnCalc(){
       <p class="big"><span>Na 100 g</span><b>${cz(t.kcal / net * 100)} kcal</b></p>
       <p><span></span><b>${macroLine(Object.fromEntries(Object.keys(t).map(k => [k, t[k] / net * 100])))}</b></p>`;
     if (boxes >= 1) h += `<p class="big"><span>Na krabičku (${boxes}× po ${cz(net / boxes, 0)} g)</span><b>${cz(t.kcal / boxes, 0)} kcal</b></p>
-      <p><span></span><b>${macroLine(Object.fromEntries(Object.keys(t).map(k => [k, t[k] / boxes])))}</b></p>`;
+      <p><span></span><b>${macroLine(Object.fromEntries(Object.keys(t).map(k => [k, t[k] / boxes])))}</b></p>` + bnSidesSum(Object.fromEntries(Object.keys(t).map(k => [k, t[k] / boxes])));
   }
   sum.innerHTML = h;
   if (bn.wts) bnWeights();
@@ -4002,6 +4020,50 @@ function bnWeights(rebuild){
       <input data-w="${i}" inputmode="decimal" autocomplete="off" value="${esc(keep[i] || '')}"></label>`).join('');
   }
 }
+/* Sides: foods that go into every box on top of the batch — 80 g of rice. Grams are per box. */
+const bnSideTotal = () => Object.fromEntries(MM_KEYS.map(k => [k, bn.sides.reduce((a, x) => a + x.per[k] * x.grams / 100, 0)]));
+function bnSidesSum(box){
+  if (!bn.sides.length) return '';
+  const sd = bnSideTotal(), tot = Object.fromEntries(MM_KEYS.map(k => [k, box[k] + sd[k]]));
+  return `<p><span>Příloha</span><b>+${cz(sd.kcal, 0)} kcal · ${macroLine(sd)}</b></p>
+    <p class="big"><span>Celá krabička s přílohou</span><b>${cz(tot.kcal, 0)} kcal</b></p>
+    <p><span></span><b>${macroLine(tot)}</b></p>`;
+}
+function bnSides(){
+  $('#bn-sides').innerHTML = bn.sides.map((x, i) => `<div class="mmitem">
+      <div class="main"><b>${esc(x.name)}</b><span>${cz(x.per.kcal * x.grams / 100, 0)} kcal · B ${cz(x.per.protein * x.grams / 100)}</span></div>
+      <label><input data-sg="${i}" inputmode="decimal" autocomplete="off" value="${esc(String(x.grams).replace('.', ','))}" aria-label="Gramy na krabičku"> g</label>
+      <button class="fdel" data-srm="${i}" aria-label="Odebrat ${esc(x.name)}">×</button></div>`).join('');
+}
+const bnSideSearch = debounce(async () => {
+  const q = $('#bn-sq').value.trim();
+  if (!q){ $('#bn-sres').innerHTML = ''; return; }
+  let res; try { res = await api('/api/food/search?limit=8&q=' + encodeURIComponent(q)); } catch(e){ return; }
+  $('#bn-sres')._found = res.results;
+  $('#bn-sres').innerHTML = res.results.length ? res.results.map((f, i) => foodRow(f, i, false)).join('') : '<p class="empty">Nic nenalezeno.</p>';
+}, 150);
+$('#bn-sq').addEventListener('input', bnSideSearch);
+$('#bn-sres').addEventListener('click', e => {
+  const b = e.target.closest('.fres'); if (!b) return;
+  const f = $('#bn-sres')._found[+b.dataset.i];
+  bn.sides.push({food_ref: f.ref, name: f.name, grams: 80,
+                 per: {kcal: f.kcal_100g, protein: f.protein_100g, carbs: f.carbs_100g, fat: f.fat_100g}});
+  $('#bn-sq').value = ''; $('#bn-sres').innerHTML = '';
+  bnSides(); bnCalc();
+  const el = $(`#bn-sides [data-sg="${bn.sides.length - 1}"]`); el.focus(); el.select();
+});
+$('#bn-sides').addEventListener('input', e => {
+  const i = e.target.dataset.sg; if (i == null) return;
+  bn.sides[+i].grams = num(e.target.value) || 0;
+  const row = e.target.closest('.mmitem'), x = bn.sides[+i];
+  row.querySelector('.main span').textContent = `${cz(x.per.kcal * x.grams / 100, 0)} kcal · B ${cz(x.per.protein * x.grams / 100)}`;
+  bnCalc();
+});
+$('#bn-sides').addEventListener('click', e => {
+  const b = e.target.closest('[data-srm]'); if (!b) return;
+  bn.sides.splice(+b.dataset.srm, 1); bnSides(); bnCalc();
+});
+const bnSidesBody = () => bn.sides.map(x => ({food_ref: x.food_ref, grams: x.grams}));
 $('#bn-cancel').onclick = () => $('#sheet-batch').classList.remove('open');
 $('#bn-save').onclick = async () => {
   const name = $('#bn-name').value.trim();
@@ -4009,7 +4071,8 @@ $('#bn-save').onclick = async () => {
     const b = bn.batch;
     if (!name) return toast('Zadej název');
     const body = {name, cooked_on: $('#bn-date').value || b.cooked_on, storage: document.querySelector('#bn-state button.on')?.dataset.s || b.storage,
-                  remaining_g: num($('#bn-rem-g').value), remaining_boxes: num($('#bn-rem-b').value)};
+                  remaining_g: num($('#bn-rem-g').value), remaining_boxes: num($('#bn-rem-b').value), sides: bnSidesBody()};
+    if (bn.sides.some(x => !x.grams)) return toast('Zadej gramy přílohy na krabičku');
     if (body.remaining_g == null || body.remaining_boxes == null) return toast('Zbývá: čísla v gramech a krabičkách');
     try { await baPatch(b.id, body); } catch(e){ return toast('Nepodařilo se uložit'); }
     $('#sheet-batch').classList.remove('open'); toast('Uloženo'); return loadBatches();
@@ -4018,7 +4081,8 @@ $('#bn-save').onclick = async () => {
   if (!t) return toast(bn.src === 'recipe' ? 'Vyber recept' : 'Zadej kalorie celé dávky');
   if (!gross) return toast('Zadej hrubou váhu');
   if (boxes < 1) return toast('Zadej počet krabiček');
-  const body = {name, cooked_on: $('#bn-date').value || todayIso(), container_id: bn.cont || null, gross_g: gross, boxes};
+  if (bn.sides.some(x => !x.grams)) return toast('Zadej gramy přílohy na krabičku');
+  const body = {name, cooked_on: $('#bn-date').value || todayIso(), container_id: bn.cont || null, gross_g: gross, boxes, sides: bnSidesBody()};
   if (bn.src === 'recipe') body.recipe_ref = $('#bn-recipe').value;
   else Object.assign(body, {kcal: t.kcal, protein: t.protein, carbs: t.carbs, fat: t.fat});
   if (bn.wts){
@@ -4046,7 +4110,16 @@ $('#bn-delete').onclick = async () => {
 };
 
 /* --- logging from a batch: grams, boxes, a share of the batch, or a weighed box --- */
-const bl = {b: null, mode: 'grams', frac: 0.25};
+const bl = {b: null, mode: 'grams', frac: 0.25, sides: false};
+function blSidesBtn(){
+  const b = bl.b, el = $('#bl-sides');
+  el.hidden = !b.sides.length;
+  if (!b.sides.length) return;
+  const what = b.sides.map(s => `${esc(s.name)} ${cz(s.grams, 1)} g`).join(', ');
+  el.classList.toggle('on', bl.sides);
+  el.innerHTML = bl.sides ? `✓ S přílohou: ${what} na krabičku (+${cz(b.sides_box.kcal, 0)} kcal)` : `Bez přílohy (klepni pro: ${what})`;
+}
+$('#bl-sides').onclick = () => { bl.sides = !bl.sides; blSidesBtn(); blPreview(); };
 function openBatchLog(b){
   bl.b = b; bl.frac = 0.25;
   bl.mode = lsGet('gymtrack-batch-mode', 'grams');
@@ -4054,6 +4127,7 @@ function openBatchLog(b){
   $('#bl-title').textContent = b.name;
   $('#bl-info').textContent = `Zbývá ${cz(b.remaining_g, 0)} g (≈ ${krab(b.remaining_boxes)})`;
   $('#bl-sub').textContent = `${cz(b.per_100g.kcal)} kcal/100 g · krabička ${cz(b.box_g, 0)} g = ${cz(b.per_box.kcal, 0)} kcal · uvařeno ${baDay(b.cooked_on)}`;
+  bl.sides = b.sides.length > 0;
   $('#bl-g').value = ''; $('#bl-box').value = '1'; $('#bl-gross').value = '';
   $('#bl-tare').value = lsGet('gymtrack-box-tare', '');
   $('#bl-gq').innerHTML = [100, 150, 200, 250].map(g => `<button data-g="${g}">${g} g</button>`).join('');
@@ -4064,7 +4138,7 @@ function openBatchLog(b){
     $('#bl-tq').innerHTML = ba.containers.map(c => `<button class="chip" data-t="${c.tare_g}">${esc(c.name)} · ${cz(c.tare_g)} g</button>`).join('');
   });
   mealSeg($('#bl-meal'), qaOpen() ? qaMeal() : (fMeal || mealNow()));
-  blMode(bl.mode);
+  blSidesBtn(); blMode(bl.mode);
   $('#sheet-balog').classList.add('open');
 }
 function blMode(m){
@@ -4090,8 +4164,9 @@ function blPreview(){
       : 'Zadej množství.';
     return;
   }
-  const m = perOf(b, g);
-  el.innerHTML = `<b>${cz(m.kcal, 0)} kcal</b> · ${cz(g, 1)} g<br>${macroLine(m)}`
+  const m = perOf(b, g), withSide = bl.sides && b.sides.length;
+  if (withSide) for (const k of MM_KEYS) m[k] += b.sides_box[k] * g / b.box_g;      // the sides follow the share of a box
+  el.innerHTML = `<b>${cz(m.kcal, 0)} kcal</b> · ${cz(g, 1)} g${withSide ? ' + příloha' : ''}<br>${macroLine(m)}`
     + (g > b.remaining_g + 0.5 ? `<span class="ba-warn">To je víc, než ve dávce zbývá (${cz(b.remaining_g, 0)} g).</span>` : '');
 }
 $('#bl-modes').addEventListener('click', e => { const x = e.target.closest('button'); if (x) blMode(x.dataset.mode); });
@@ -4104,7 +4179,7 @@ $('#bl-cancel').onclick = () => $('#sheet-balog').classList.remove('open');
 $('#bl-add').onclick = async () => {
   const b = bl.b, g = blGrams(), meal = segValue($('#bl-meal'));
   if (g == null || !isFinite(g) || g <= 0) return toast(bl.mode === 'gross' ? 'Zadej váhu s krabičkou i prázdnou krabičku' : 'Zadej množství');
-  const body = {mode: bl.mode, date: fDate, meal};
+  const body = {mode: bl.mode, date: fDate, meal, with_sides: bl.sides};
   if (bl.mode === 'grams') body.value = num($('#bl-g').value);
   else if (bl.mode === 'box') body.value = num($('#bl-box').value);
   else if (bl.mode === 'fraction') body.value = bl.frac;

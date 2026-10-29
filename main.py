@@ -21,7 +21,7 @@ from pydantic import BaseModel
 
 import food.api
 
-VERSION = "1.5.0"
+VERSION = "1.5.1"
 DB_PATH = os.environ.get("GYMTRACK_DB", "/data/gymtrack.db")
 STATIC = Path(__file__).parent / "static"
 TYPES = ("weight", "reps", "time")

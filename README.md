@@ -108,7 +108,11 @@ without it the prompt tells the AI to assume 75 kg and say so.
   grams, boxes (½, 1, 2), a share of the batch (¼, ½ …) or a box weighed with its food minus the empty box; the
   remaining grams and boxes drop by themselves (Undo and deleting the entry give them back) and can be corrected by
   hand. A batch is in the fridge, in the freezer or done, can be archived or deleted without touching what was
-  logged, and a fridge batch older than 3 days since cooking is flagged. Rice stays a separate food by dry weight.
+  logged, and a fridge batch older than 3 days since cooking is flagged.
+  A batch can also carry **sides** — foods that go into every box, such as 80 g of rice: pick them by search with the
+  grams per box (weighed the way the food is listed, dry rice as dry). Every entry from the batch then adds the side in
+  proportion to the share of a box eaten (half a box, half the rice); the log sheet lets you leave the side out. The
+  batch's own kcal per 100 g and remaining grams do not change. Sides can be edited later, for future entries only.
 - **History never changes behind your back.** Each entry stores its own values, so re-importing the
   catalogue or editing a food leaves past days as they were.
 
