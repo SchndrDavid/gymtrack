@@ -526,6 +526,7 @@ class BatchIn(BaseModel):
     gross_g: float | str | None = None
     boxes: float | str | None = None
     box_weights: list[float | str | None] = []
+    sides: list[dict[str, Any]] = []            # [{food_ref, grams}] — what goes into every box
 
 
 class BatchPatch(BaseModel):
@@ -535,6 +536,7 @@ class BatchPatch(BaseModel):
     archived: bool | None = None
     remaining_g: float | str | None = None
     remaining_boxes: float | str | None = None
+    sides: list[dict[str, Any]] | None = None
 
 
 class BatchLog(BaseModel):
@@ -544,6 +546,7 @@ class BatchLog(BaseModel):
     meal: str
     tare_g: float | str | None = None           # the empty box, for mode "gross"
     container_id: int | None = None
+    with_sides: bool = True                     # False: the batch alone, without the sides
 
 
 @router.get("/containers")
@@ -633,7 +636,7 @@ def log_batch(batch_id: int, body: BatchLog):
             day = log.valid_date(body.date)
             if body.meal not in log.MEALS:
                 raise ValueError(f"meal must be one of {', '.join(log.MEALS)}")
-            item = batches.log_item(conn, batch_id, body.mode, body.value, body.tare_g, body.container_id)
+            item = batches.log_item(conn, batch_id, body.mode, body.value, body.tare_g, body.container_id, body.with_sides)
         except ValueError as err:
             bad(err)
         except LookupError:

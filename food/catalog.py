@@ -215,6 +215,7 @@ CREATE TABLE IF NOT EXISTS batches (
     net_g           REAL NOT NULL,        -- the cooked food alone
     boxes           INTEGER NOT NULL,
     box_weights     TEXT NOT NULL DEFAULT '[]',   -- grams per box when they were given
+    sides           TEXT NOT NULL DEFAULT '[]',   -- what goes into every box besides the batch: rice, bread …
     kcal            REAL NOT NULL,        -- the whole batch
     protein         REAL NOT NULL DEFAULT 0,
     carbs           REAL NOT NULL DEFAULT 0,
@@ -254,6 +255,8 @@ def migrate(conn: sqlite3.Connection) -> None:
     if "batch_id" not in {r[1] for r in conn.execute("PRAGMA table_info(food_log)")}:
         conn.execute("ALTER TABLE food_log ADD COLUMN batch_id INTEGER")   # the batch an entry was eaten from
     conn.execute("CREATE INDEX IF NOT EXISTS idx_food_log_batch ON food_log(batch_id)")
+    if "sides" not in {r[1] for r in conn.execute("PRAGMA table_info(batches)")}:
+        conn.execute("ALTER TABLE batches ADD COLUMN sides TEXT NOT NULL DEFAULT '[]'")
 
 
 def init() -> None:

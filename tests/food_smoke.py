@@ -961,6 +961,37 @@ check("containers and batches are in the backup", [c["name"] for c in exp["conta
 check("batch entries are marked in the AI export", "from a batch cooked in advance" in client.get("/api/food/export/day", params={"date": DB_}).text)
 check("a plain log entry still works as before", client.post("/api/food/log", json={"date": DB_, "meal": "lunch", "kcal": 100}).status_code == 200)
 
+# sides: 80 g of rice into every box, on top of the batch
+rice = client.post("/api/food/foods", json={"name": "Rýže suchá", "kcal_100g": 360, "protein_100g": 7, "carbs_100g": 78, "fat_100g": 1}).json()
+bs_ = client.post("/api/food/batches", json={"name": "Chilli s rýží", "cooked_on": DB_, "container_id": pot["id"], "gross_g": 2200,
+                                            "boxes": 4, **MACROS_, "sides": [{"food_ref": rice["ref"], "grams": "80"}]}).json()
+check("a side is kept per box as a snapshot (80 g rice = 288 kcal)", len(bs_["sides"]) == 1 and bs_["sides"][0]["grams"] == 80
+      and bs_["sides"][0]["kcal"] == 288 and bs_["sides_box"]["kcal"] == 288 and bs_["sides_box"]["carbs"] == 62.4)
+check("the batch itself is unchanged by the side (net 1200 g, 2000 kcal / 4 boxes)", bs_["net_g"] == 1200 and bs_["per_box"]["kcal"] == 500
+      and abs(bs_["per_100g"]["kcal"] - 166.67) < 0.01 and bs_["box_total"]["kcal"] == 788)
+rd = f"/api/food/batches/{bs_['id']}/log"
+whole = client.post(rd, json={"mode": "box", "value": 1, "date": DB_, "meal": "lunch"}).json()
+check("one box = the batch's share plus the whole side (500 + 288 kcal)", whole["entry"]["kcal"] == 788 and whole["entry"]["grams"] == 300
+      and whole["entry"]["carbs"] == 112.4 and "Rýže suchá 80 g" in whole["entry"]["name"] and whole["batch"]["remaining_g"] == 900)
+half = client.post(rd, json={"mode": "grams", "value": 150, "date": DB_, "meal": "lunch"}).json()
+check("half a box is half the rice", half["entry"]["kcal"] == 394 and "Rýže suchá 40 g" in half["entry"]["name"])
+plain = client.post(rd, json={"mode": "grams", "value": 300, "with_sides": False, "date": DB_, "meal": "lunch"}).json()
+check("the batch can be logged without the side", plain["entry"]["kcal"] == 500 and plain["entry"]["name"] == "Chilli s rýží")
+client.delete(f"/api/food/log/{whole['entry']['id']}")
+check("taking an entry back gives the batch's grams, not the rice", client.get(f"/api/food/batches/{bs_['id']}").json()["remaining_g"] == 750)
+bread = client.post("/api/food/foods", json={"name": "Chléb", "kcal_100g": 250, "carbs_100g": 50}).json()
+more = client.patch(f"/api/food/batches/{bs_['id']}", json={"sides": [{"food_ref": rice["ref"], "grams": 100}, {"food_ref": bread["ref"], "grams": 50}]}).json()
+check("the sides can be changed later; logged days keep their values", len(more["sides"]) == 2 and more["sides_box"]["kcal"] == 485
+      and client.get("/api/food/day", params={"date": DB_}).json()["entries"][-2]["kcal"] in (394, 500, 788))
+check("an unchanged patch leaves the sides alone", len(client.patch(f"/api/food/batches/{bs_['id']}", json={"name": "Chilli s rýží"}).json()["sides"]) == 2)
+check("sides can be removed", client.patch(f"/api/food/batches/{bs_['id']}", json={"sides": []}).json()["sides"] == [])
+check("a side needs a food and grams", client.post("/api/food/batches", json={"name": "X", "gross_g": 500, "boxes": 1, "kcal": 100,
+      "sides": [{"food_ref": "user:99999", "grams": 10}]}).status_code == 400
+      and client.post("/api/food/batches", json={"name": "X", "gross_g": 500, "boxes": 1, "kcal": 100,
+      "sides": [{"food_ref": rice["ref"], "grams": 0}]}).status_code == 400)
+check("a batch without sides logs as before", client.post(f"/api/food/batches/{fresh['id']}/log", json={"mode": "grams", "value": 100,
+      "date": DB_, "meal": "lunch"}).json()["entry"]["name"] == "Fresh")
+
 # the database from before batches: the column is added, the rows stay
 import sqlite3 as _sq  # noqa: E402
 old_db = Path(tempfile.mkdtemp()) / "old.db"

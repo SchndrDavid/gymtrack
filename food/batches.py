@@ -17,10 +17,12 @@ import sqlite3
 from datetime import date as Date
 
 from .catalog import get_food, get_foods, now_iso, num
+from .log import snapshot
 
 STORAGE = ("fridge", "freezer", "done")
 FRIDGE_DAYS = 3                       # older than this in the fridge gets a warning
 MODES = ("grams", "box", "fraction", "gross")
+MAX_SIDES = 8
 KEYS = ("kcal", "protein", "carbs", "fat")
 
 
@@ -127,6 +129,31 @@ def age_days(b: dict, today: Date | None = None) -> int:
     return max(0, ((today or Date.today()) - Date.fromisoformat(b["cooked_on"])).days)
 
 
+def clean_sides(conn: sqlite3.Connection, raw) -> list[dict]:
+    """What goes into every box besides the batch — 80 g of rice, a slice of bread — as a snapshot per box.
+
+    Each side is a food with the grams that go into ONE box, weighed the way the food is listed (dry rice as dry rice).
+    """
+    out = []
+    for x in raw or []:
+        if not isinstance(x, dict):
+            continue
+        food = get_food(conn, x.get("food_ref") or "")
+        if food is None:
+            raise ValueError(f"unknown food {x.get('food_ref')}")
+        grams = num(x.get("grams"), 0, 2000)
+        if not grams:
+            raise ValueError(f"{food['name']}: grams per box required")
+        out.append({"food_ref": x["food_ref"], "grams": round(grams, 1), **{k: v for k, v in snapshot(food, grams).items()}})
+    if len(out) > MAX_SIDES:
+        raise ValueError(f"at most {MAX_SIDES} sides")
+    return out
+
+
+def sides_total(sides: list[dict]) -> dict:
+    return {k: round(sum(s[k] for s in sides), 1) for k in KEYS}
+
+
 # ─── storing and reading ────────────────────────────────────────────────────
 
 def batch_dict(r, today: Date | None = None) -> dict:
@@ -138,6 +165,9 @@ def batch_dict(r, today: Date | None = None) -> dict:
     b["box_g"] = round(box_grams(b), 1)
     b["per_100g"] = per_100(b)
     b["per_box"] = per_box(b)
+    b["sides"] = json.loads(r["sides"] or "[]")
+    b["sides_box"] = sides_total(b["sides"])
+    b["box_total"] = {k: round(b["per_box"][k] + b["sides_box"][k], 1) for k in KEYS}
     b["age_days"] = age_days(b, today)
     b["old"] = b["storage"] == "fridge" and b["age_days"] > FRIDGE_DAYS and not b["archived"]
     b["remaining_boxes_g"] = round(b["remaining_g"] / b["box_g"], 1) if b["box_g"] else 0
@@ -206,6 +236,7 @@ def create(conn: sqlite3.Connection, raw: dict) -> dict:
         if sum(weights) > net * 1.02 + 1:
             raise ValueError("the boxes together weigh more than the batch")
     values = {
+        "sides": json.dumps(clean_sides(conn, raw.get("sides")), ensure_ascii=False),
         "name": name, "recipe_ref": ref, "cooked_on": cooked,
         "container_id": container["id"] if container else None,
         "container_name": container["name"] if container else None,
@@ -215,9 +246,9 @@ def create(conn: sqlite3.Connection, raw: dict) -> dict:
     }
     bid = conn.execute(
         """INSERT INTO batches (name, recipe_ref, cooked_on, container_id, container_name, tare_g, gross_g, net_g,
-               boxes, box_weights, kcal, protein, carbs, fat, remaining_g, remaining_boxes, created_at, updated_at)
+               boxes, box_weights, sides, kcal, protein, carbs, fat, remaining_g, remaining_boxes, created_at, updated_at)
            VALUES (:name, :recipe_ref, :cooked_on, :container_id, :container_name, :tare_g, :gross_g, :net_g,
-               :boxes, :box_weights, :kcal, :protein, :carbs, :fat, :remaining_g, :remaining_boxes, :stamp, :stamp)""",
+               :boxes, :box_weights, :sides, :kcal, :protein, :carbs, :fat, :remaining_g, :remaining_boxes, :stamp, :stamp)""",
         values).lastrowid
     return batch_dict(get_batch(conn, bid))
 
@@ -227,7 +258,7 @@ def update(conn: sqlite3.Connection, batch_id: int, patch: dict) -> dict:
     r = get_batch(conn, batch_id)
     if r is None:
         raise LookupError("no such batch")
-    b = {k: r[k] for k in ("name", "cooked_on", "storage", "archived", "remaining_g", "remaining_boxes")}
+    b = {k: r[k] for k in ("name", "cooked_on", "storage", "archived", "remaining_g", "remaining_boxes", "sides")}
     if patch.get("name") is not None:
         b["name"] = clean_name(patch["name"])
     if patch.get("cooked_on") is not None:
@@ -238,6 +269,8 @@ def update(conn: sqlite3.Connection, batch_id: int, patch: dict) -> dict:
         b["storage"] = patch["storage"]
     if patch.get("archived") is not None:
         b["archived"] = 1 if patch["archived"] else 0
+    if patch.get("sides") is not None:
+        b["sides"] = json.dumps(clean_sides(conn, patch["sides"]), ensure_ascii=False)
     if patch.get("remaining_g") is not None:
         v = num(patch["remaining_g"], 0, 50000)
         if v is None:
@@ -251,9 +284,9 @@ def update(conn: sqlite3.Connection, batch_id: int, patch: dict) -> dict:
             raise ValueError("remaining_boxes must be a number")
         b["remaining_boxes"] = round(v, 2)
     conn.execute("""UPDATE batches SET name=?, cooked_on=?, storage=?, archived=?, remaining_g=?,
-                        remaining_boxes=?, updated_at=? WHERE id=?""",
+                        remaining_boxes=?, sides=?, updated_at=? WHERE id=?""",
                  (b["name"], b["cooked_on"], b["storage"], b["archived"], b["remaining_g"],
-                  b["remaining_boxes"], now_iso(), batch_id))
+                  b["remaining_boxes"], b["sides"], now_iso(), batch_id))
     return batch_dict(get_batch(conn, batch_id))
 
 
@@ -276,7 +309,8 @@ def take(conn: sqlite3.Connection, batch_id: int, grams: float) -> None:
                  (round(left, 1), round(boxes, 2), storage, now_iso(), batch_id))
 
 
-def log_item(conn: sqlite3.Connection, batch_id: int, mode: str, value, tare=None, container_id=None) -> dict:
+def log_item(conn: sqlite3.Connection, batch_id: int, mode: str, value, tare=None, container_id=None,
+             with_sides: bool = True) -> dict:
     """What a log entry holds for a portion of the batch (nothing is written yet)."""
     r = get_batch(conn, batch_id)
     if r is None:
@@ -297,4 +331,10 @@ def log_item(conn: sqlite3.Connection, batch_id: int, mode: str, value, tare=Non
                 raise ValueError("tare (the empty box's weight) required")
     b = batch_dict(r)
     grams = grams_for(b, mode, v, t)
-    return {"name": b["name"], "grams": grams, **nutrition_for(b, grams)}
+    if not (with_sides and b["sides"]):
+        return {"name": b["name"], "grams": grams, **nutrition_for(b, grams)}
+    # The sides go in per box, so they follow the share of a box that is eaten: 150 g of a 300 g box is half the rice.
+    k = grams / box_grams(b)
+    nut = {m: r1(b[m] * grams / b["net_g"] + b["sides_box"][m] * k) for m in KEYS}
+    label = ", ".join(f"{s['name']} {r1(s['grams'] * k):g} g" for s in b["sides"])
+    return {"name": f"{b['name']} + {label}"[:200], "grams": grams, **nut}
